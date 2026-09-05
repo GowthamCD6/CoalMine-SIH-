@@ -2,19 +2,17 @@ import mysql from 'mysql2/promise';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import env from './env.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Resolve CA certificate path relative to server root
-const caCertPath = process.env.TIDB_CA_PATH
-  ? path.resolve(__dirname, '../../', process.env.TIDB_CA_PATH)
+const caCertPath = env.TIDB_CA_PATH
+  ? path.resolve(__dirname, '../../', env.TIDB_CA_PATH)
   : path.resolve(__dirname, '../../cert/isrgrootx1.pem');
 
-let sslConfig = {
+const sslConfig = {
   minVersion: 'TLSv1.2',
   rejectUnauthorized: true,
 };
@@ -26,11 +24,11 @@ if (fs.existsSync(caCertPath)) {
 }
 
 const pool = mysql.createPool({
-  host: process.env.TIDB_HOST,
-  port: parseInt(process.env.TIDB_PORT || '4000', 10),
-  user: process.env.TIDB_USER,
-  password: process.env.TIDB_PASSWORD,
-  database: process.env.TIDB_DATABASE || 'sys',
+  host: env.TIDB_HOST,
+  port: env.TIDB_PORT,
+  user: env.TIDB_USER,
+  password: env.TIDB_PASSWORD,
+  database: env.TIDB_DATABASE,
   ssl: sslConfig,
   waitForConnections: true,
   connectionLimit: 10,
@@ -38,6 +36,26 @@ const pool = mysql.createPool({
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
 });
+
+export const query = async (sql, params = []) => {
+  const [rows] = await pool.query(sql, params);
+  return rows;
+};
+
+export const withTransaction = async (callback) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const result = await callback(connection);
+    await connection.commit();
+    return result;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
 
 export const testConnection = async () => {
   try {

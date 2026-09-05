@@ -1,0 +1,434 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CoalMin REST API - SIH26024",
+    "description": "Production-grade REST API backend for CoalMin enterprise coal mining management system with TiDB database, role and subrole permission resolution, multi-tier RBAC, audit logging, and page hierarchy management.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000/api/v1",
+      "description": "Local Development Server v1"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Enter your JWT access token"
+      }
+    },
+    "schemas": {
+      "ResponseEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": { "type": "object" },
+          "message": { "type": "string", "example": "OK" },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "page": { "type": "integer", "example": 1 },
+              "limit": { "type": "integer", "example": 20 },
+              "total": { "type": "integer", "example": 100 },
+              "totalPages": { "type": "integer", "example": 5 }
+            }
+          }
+        }
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "message": { "type": "string", "example": "Human readable message" },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string", "example": "VALIDATION_ERROR" },
+              "details": { "type": "array", "items": { "type": "object" } }
+            }
+          }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["username", "email", "password", "first_name"],
+        "properties": {
+          "username": { "type": "string", "example": "miner_john" },
+          "email": { "type": "string", "format": "email", "example": "john@coalmin.org" },
+          "password": { "type": "string", "format": "password", "example": "SecretPass123" },
+          "first_name": { "type": "string", "example": "John" },
+          "last_name": { "type": "string", "example": "Doe" },
+          "phone": { "type": "string", "example": "+919876543210" },
+          "employee_code": { "type": "string", "example": "EMP-1029" }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["login", "password"],
+        "properties": {
+          "login": { "type": "string", "example": "john@coalmin.org" },
+          "password": { "type": "string", "format": "password", "example": "SecretPass123" },
+          "device_id": { "type": "string", "example": "browser-chrome-windows-11" }
+        }
+      },
+      "RefreshRequest": {
+        "type": "object",
+        "required": ["refresh_token"],
+        "properties": {
+          "refresh_token": { "type": "string" },
+          "device_id": { "type": "string", "example": "browser-chrome-windows-11" }
+        }
+      },
+      "Organization": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "name": { "type": "string", "example": "Eastern Coalfields Limited" },
+          "code": { "type": "string", "example": "ECL" },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"], "example": "ACTIVE" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Mine": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "organization_id": { "type": "integer", "example": 1 },
+          "name": { "type": "string", "example": "Rajmahal Open Cast Project" },
+          "code": { "type": "string", "example": "RJ-OCP" },
+          "mine_type": { "type": "string", "enum": ["OPEN_CAST", "UNDERGROUND", "MIXED"], "example": "OPEN_CAST" },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"], "example": "ACTIVE" }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "username": { "type": "string", "example": "johndoe" },
+          "email": { "type": "string", "example": "john@coalmin.org" },
+          "first_name": { "type": "string", "example": "John" },
+          "last_name": { "type": "string", "example": "Doe" },
+          "employee_code": { "type": "string", "example": "EMP-1029" },
+          "status": { "type": "string", "example": "ACTIVE" },
+          "last_login_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "System and database connectivity health check",
+        "tags": ["Health"],
+        "responses": {
+          "200": { "description": "System is healthy" }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "Register a new user account",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RegisterRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "User created successfully" },
+          "400": { "description": "Validation error" },
+          "409": { "description": "Duplicate username or email" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Authenticate user and issue JWT access/refresh token pair",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Login successful" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "summary": "Rotate refresh token session and issue fresh access token",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RefreshRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Tokens refreshed" },
+          "401": { "description": "Invalid or expired refresh token" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Revoke current user session",
+        "tags": ["Authentication"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Logged out" }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Get authenticated user profile with assigned subroles and resolved permissions",
+        "tags": ["Authentication"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Profile returned" }
+        }
+      }
+    },
+    "/organizations": {
+      "get": {
+        "summary": "List organizations with pagination, search, and status filter",
+        "tags": ["Organizations"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } },
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "ALL"] } },
+          { "name": "search", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "List returned" } }
+      },
+      "post": {
+        "summary": "Create new organization",
+        "tags": ["Organizations"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "code"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "code": { "type": "string" },
+                  "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Organization created" } }
+      }
+    },
+    "/organizations/{id}": {
+      "get": {
+        "summary": "Get organization by ID",
+        "tags": ["Organizations"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Organization returned" } }
+      },
+      "put": {
+        "summary": "Update organization by ID",
+        "tags": ["Organizations"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Organization updated" } }
+      },
+      "delete": {
+        "summary": "Deactivate organization (soft delete)",
+        "tags": ["Organizations"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Organization deactivated" } }
+      }
+    },
+    "/mines": {
+      "get": {
+        "summary": "List mines filterable by organization_id, mine_type, status",
+        "tags": ["Mines"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "organization_id", "in": "query", "schema": { "type": "integer" } },
+          { "name": "mine_type", "in": "query", "schema": { "type": "string", "enum": ["OPEN_CAST", "UNDERGROUND", "MIXED"] } }
+        ],
+        "responses": { "200": { "description": "Mines returned" } }
+      },
+      "post": {
+        "summary": "Create new mine",
+        "tags": ["Mines"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": { "201": { "description": "Mine created" } }
+      }
+    },
+    "/mines/{id}": {
+      "get": {
+        "summary": "Get mine by ID",
+        "tags": ["Mines"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Mine returned" } }
+      },
+      "put": {
+        "summary": "Update mine",
+        "tags": ["Mines"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Mine updated" } }
+      },
+      "delete": {
+        "summary": "Deactivate mine",
+        "tags": ["Mines"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Mine deactivated" } }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "List users with search and pagination",
+        "tags": ["Users"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": { "200": { "description": "Users list returned" } }
+      },
+      "post": {
+        "summary": "Admin provision new user",
+        "tags": ["Users"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": { "201": { "description": "User created" } }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "summary": "Get user by ID",
+        "tags": ["Users"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "User returned" } }
+      },
+      "put": {
+        "summary": "Update user",
+        "tags": ["Users"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "User updated" } }
+      },
+      "delete": {
+        "summary": "Deactivate user",
+        "tags": ["Users"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "User deactivated" } }
+      }
+    },
+    "/users/{id}/sessions": {
+      "get": {
+        "summary": "Get user active and historic sessions",
+        "tags": ["Users"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Sessions returned" } }
+      }
+    },
+    "/roles": {
+      "get": { "summary": "List roles", "tags": ["Roles"], "security": [{ "BearerAuth": [] }], "responses": { "200": { "description": "Roles list" } } },
+      "post": { "summary": "Create role", "tags": ["Roles"], "security": [{ "BearerAuth": [] }], "responses": { "201": { "description": "Role created" } } }
+    },
+    "/roles/{id}": {
+      "get": { "summary": "Get role by ID", "tags": ["Roles"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Role" } } },
+      "put": { "summary": "Update role", "tags": ["Roles"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Updated" } } },
+      "delete": { "summary": "Deactivate role", "tags": ["Roles"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Deactivated" } } }
+    },
+    "/roles/{roleId}/permissions": {
+      "get": { "summary": "Get permissions assigned to role", "tags": ["Role Permissions"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "roleId", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Permissions list" } } },
+      "post": { "summary": "Attach permission to role", "tags": ["Role Permissions"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "roleId", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "201": { "description": "Attached" } } }
+    },
+    "/roles/{roleId}/permissions/{permissionId}": {
+      "delete": { "summary": "Detach permission from role", "tags": ["Role Permissions"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "roleId", "in": "path", "required": true, "schema": { "type": "integer" } }, { "name": "permissionId", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Detached" } } }
+    },
+    "/subroles": {
+      "get": { "summary": "List subroles", "tags": ["Subroles"], "security": [{ "BearerAuth": [] }], "responses": { "200": { "description": "Subroles list" } } },
+      "post": { "summary": "Create subrole", "tags": ["Subroles"], "security": [{ "BearerAuth": [] }], "responses": { "201": { "description": "Subrole created" } } }
+    },
+    "/subroles/{id}": {
+      "get": { "summary": "Get subrole by ID", "tags": ["Subroles"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Subrole" } } },
+      "put": { "summary": "Update subrole", "tags": ["Subroles"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Updated" } } },
+      "delete": { "summary": "Deactivate subrole", "tags": ["Subroles"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Deactivated" } } }
+    },
+    "/subroles/{subroleId}/permissions": {
+      "get": { "summary": "Get permissions assigned to subrole", "tags": ["Subrole Permissions"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "subroleId", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Permissions list" } } },
+      "post": { "summary": "Attach permission to subrole", "tags": ["Subrole Permissions"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "subroleId", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "201": { "description": "Attached" } } }
+    },
+    "/subroles/{subroleId}/permissions/{permissionId}": {
+      "delete": { "summary": "Detach permission from subrole", "tags": ["Subrole Permissions"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "subroleId", "in": "path", "required": true, "schema": { "type": "integer" } }, { "name": "permissionId", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Detached" } } }
+    },
+    "/users/{userId}/subroles": {
+      "get": { "summary": "Get user subroles", "tags": ["User Subroles"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "userId", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Subroles assigned" } } },
+      "post": { "summary": "Assign subrole to user", "tags": ["User Subroles"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "userId", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "201": { "description": "Assigned" } } }
+    },
+    "/users/{userId}/subroles/{subroleId}": {
+      "patch": { "summary": "Update assignment status / expiry", "tags": ["User Subroles"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "userId", "in": "path", "required": true, "schema": { "type": "integer" } }, { "name": "subroleId", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Updated" } } },
+      "delete": { "summary": "Revoke subrole assignment", "tags": ["User Subroles"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "userId", "in": "path", "required": true, "schema": { "type": "integer" } }, { "name": "subroleId", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Revoked" } } }
+    },
+    "/subroles/{subroleId}/users": {
+      "get": { "summary": "Get users assigned to subrole", "tags": ["User Subroles"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "subroleId", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Users list" } } }
+    },
+    "/permissions": {
+      "get": { "summary": "List permissions", "tags": ["Permissions"], "security": [{ "BearerAuth": [] }], "responses": { "200": { "description": "Permissions list" } } },
+      "post": { "summary": "Create permission", "tags": ["Permissions"], "security": [{ "BearerAuth": [] }], "responses": { "201": { "description": "Permission created" } } }
+    },
+    "/permissions/{id}": {
+      "get": { "summary": "Get permission by ID", "tags": ["Permissions"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Permission" } } },
+      "put": { "summary": "Update permission", "tags": ["Permissions"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Updated" } } },
+      "delete": { "summary": "Delete permission", "tags": ["Permissions"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Deleted" } } }
+    },
+    "/pages": {
+      "get": { "summary": "List pages", "tags": ["Pages"], "security": [{ "BearerAuth": [] }], "responses": { "200": { "description": "Pages list" } } },
+      "post": { "summary": "Create page/menu", "tags": ["Pages"], "security": [{ "BearerAuth": [] }], "responses": { "201": { "description": "Page created" } } }
+    },
+    "/pages/tree": {
+      "get": { "summary": "Get hierarchical navigation tree filtered by requesting user's permissions", "tags": ["Pages"], "security": [{ "BearerAuth": [] }], "responses": { "200": { "description": "Navigation tree" } } }
+    },
+    "/pages/{id}": {
+      "get": { "summary": "Get page by ID", "tags": ["Pages"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Page" } } },
+      "put": { "summary": "Update page", "tags": ["Pages"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Updated" } } },
+      "delete": { "summary": "Deactivate page", "tags": ["Pages"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Deactivated" } } }
+    },
+    "/pages/{pageId}/permissions": {
+      "get": { "summary": "Get permissions assigned to page", "tags": ["Page Permissions"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "pageId", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Permissions list" } } },
+      "post": { "summary": "Attach permission to page", "tags": ["Page Permissions"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "pageId", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "201": { "description": "Attached" } } }
+    },
+    "/pages/{pageId}/permissions/{permissionId}": {
+      "delete": { "summary": "Detach permission from page", "tags": ["Page Permissions"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "pageId", "in": "path", "required": true, "schema": { "type": "integer" } }, { "name": "permissionId", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Detached" } } }
+    },
+    "/sessions/{id}": {
+      "get": { "summary": "Get session info", "tags": ["Sessions"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Session" } } },
+      "delete": { "summary": "Force-revoke session", "tags": ["Sessions"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Session revoked" } } }
+    },
+    "/audit-logs": {
+      "get": {
+        "summary": "Query audit logs with filtering and pagination",
+        "tags": ["Audit Logs"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "user_id", "in": "query", "schema": { "type": "integer" } },
+          { "name": "organization_id", "in": "query", "schema": { "type": "integer" } },
+          { "name": "mine_id", "in": "query", "schema": { "type": "integer" } },
+          { "name": "action", "in": "query", "schema": { "type": "string" } },
+          { "name": "entity_type", "in": "query", "schema": { "type": "string" } },
+          { "name": "startDate", "in": "query", "schema": { "type": "string", "format": "date-time" } },
+          { "name": "endDate", "in": "query", "schema": { "type": "string", "format": "date-time" } }
+        ],
+        "responses": { "200": { "description": "Audit logs list" } }
+      }
+    }
+  }
+}
