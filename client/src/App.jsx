@@ -9,6 +9,7 @@ import DashboardOverview from './components/views/DashboardOverview.jsx';
 import AdminManagement from './components/views/AdminManagement.jsx';
 import PagesManagement from './components/views/PagesManagement.jsx';
 import AuditLogsView from './components/views/AuditLogsView.jsx';
+import MobileSimulatorView from './components/views/MobileSimulatorView.jsx';
 
 import { api, subscribeToApiLogs, getAccessToken } from './services/api.js';
 import './App.css';
@@ -156,6 +157,10 @@ function App() {
 
           {activeTab === 'pages' && (
             <PagesManagement onShowToast={showToast} />
+          )}
+
+          {activeTab === 'mobile-app' && (
+            <MobileSimulatorView onShowToast={showToast} />
           )}
 
           {(activeTab === 'audit' || activeTab === 'audit-logs') && (

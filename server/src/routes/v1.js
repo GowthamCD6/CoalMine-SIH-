@@ -9,6 +9,8 @@ import permissionsRoutes from '../modules/permissions/permissions.routes.js';
 import rolePermissionsRoutes from '../modules/role-permissions/role-permissions.routes.js';
 import subrolePermissionsRoutes from '../modules/subrole-permissions/subrole-permissions.routes.js';
 import { userSubrolesRouter, subroleUsersRouter } from '../modules/user-subroles/user-subroles.routes.js';
+import delegationRouter from '../modules/user-subroles/delegation.routes.js';
+import mobileOpsRouter from '../modules/mobile-ops/mobile-ops.routes.js';
 import pagesRoutes from '../modules/pages/pages.routes.js';
 import pagePermissionsRoutes from '../modules/page-permissions/page-permissions.routes.js';
 import userSessionsRoutes from '../modules/user-sessions/user-sessions.routes.js';
@@ -45,6 +47,8 @@ router.get('/health', async (req, res) => {
 router.use('/auth', authRoutes);
 router.use('/organizations', organizationsRoutes);
 router.use('/mines', minesRoutes);
+router.use('/delegation', delegationRouter);
+router.use('/users/delegation-scope', delegationRouter);
 router.use('/users', usersRoutes);
 router.use('/users/:userId/subroles', userSubrolesRouter);
 router.use('/subroles/:subroleId/users', subroleUsersRouter);
@@ -57,5 +61,7 @@ router.use('/pages', pagesRoutes);
 router.use('/pages/:pageId/permissions', pagePermissionsRoutes);
 router.use('/sessions', userSessionsRoutes);
 router.use('/audit-logs', auditLogsRoutes);
+router.use('/mobile-ops', mobileOpsRouter);
+router.use('/', mobileOpsRouter);
 
 export default router;
