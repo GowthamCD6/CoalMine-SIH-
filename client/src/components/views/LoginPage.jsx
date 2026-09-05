@@ -252,7 +252,7 @@ export default function LoginPage({ onLoginSuccess }) {
 
           {/* Quick Credential Quickfill Helper */}
           <div style={{
-            marginTop: '1.75rem',
+            marginTop: '1.5rem',
             paddingTop: '1.25rem',
             borderTop: '1px solid #f1f5f9',
           }}>
@@ -265,31 +265,50 @@ export default function LoginPage({ onLoginSuccess }) {
               marginBottom: '8px',
               textAlign: 'center',
             }}>
-              Quick Logins (Seeded Admins)
+              Quick Logins (Multi-Tier Hierarchy)
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <button
                 type="button"
-                onClick={() => handleFillCredentials('admin@coalmin.org', 'Admin@12345')}
+                onClick={() => handleFillCredentials('superadmin', 'Admin@12345')}
                 style={{
                   padding: '7px 10px',
                   borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                  backgroundColor: '#f8fafc',
+                  border: '1px solid #fde68a',
+                  backgroundColor: '#fefce8',
                   fontSize: '0.78rem',
-                  color: '#334155',
+                  color: '#92400e',
                   cursor: 'pointer',
                   fontWeight: 600,
                   textAlign: 'left',
                 }}
               >
                 <div>👑 Super Admin</div>
-                <div style={{ fontSize: '0.7rem', color: '#64748b' }}>superadmin</div>
+                <div style={{ fontSize: '0.7rem', color: '#b45309' }}>superadmin (Global)</div>
               </button>
 
               <button
                 type="button"
-                onClick={() => handleFillCredentials('jaison7373@gmail.com', 'Admin@12345')}
+                onClick={() => handleFillCredentials('ecl_admin', 'Admin@12345')}
+                style={{
+                  padding: '7px 10px',
+                  borderRadius: '8px',
+                  border: '1px solid #bfdbfe',
+                  backgroundColor: '#eff6ff',
+                  fontSize: '0.78rem',
+                  color: '#1e40af',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  textAlign: 'left',
+                }}
+              >
+                <div>🏢 ECL Org Admin</div>
+                <div style={{ fontSize: '0.7rem', color: '#3b82f6' }}>ecl_admin (Org Tier)</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleFillCredentials('ecl_advisor', 'Admin@12345')}
                 style={{
                   padding: '7px 10px',
                   borderRadius: '8px',
@@ -302,8 +321,27 @@ export default function LoginPage({ onLoginSuccess }) {
                   textAlign: 'left',
                 }}
               >
-                <div>👤 Jaison Admin</div>
-                <div style={{ fontSize: '0.7rem', color: '#64748b' }}>jaison</div>
+                <div>👔 ECL Site Advisor</div>
+                <div style={{ fontSize: '0.7rem', color: '#64748b' }}>ecl_advisor (Org Scope)</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleFillCredentials('rj_mine_admin', 'Admin@12345')}
+                style={{
+                  padding: '7px 10px',
+                  borderRadius: '8px',
+                  border: '1px solid #a7f3d0',
+                  backgroundColor: '#ecfdf5',
+                  fontSize: '0.78rem',
+                  color: '#065f46',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  textAlign: 'left',
+                }}
+              >
+                <div>⛏️ Rajmahal Mine Admin</div>
+                <div style={{ fontSize: '0.7rem', color: '#059669' }}>rj_mine_admin (Mine Scope)</div>
               </button>
             </div>
           </div>
@@ -318,7 +356,7 @@ export default function LoginPage({ onLoginSuccess }) {
           fontSize: '0.78rem',
           color: '#64748b',
         }}>
-          Personnel accounts are provisioned exclusively by Super Administrators.
+          Personnel accounts are provisioned exclusively by authorized Administrators.
         </div>
       </div>
     </div>

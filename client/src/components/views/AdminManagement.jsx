@@ -18,7 +18,12 @@ import {
   Calendar,
   Lock,
   ArrowRight,
-  Shield
+  Shield,
+  Briefcase,
+  HardHat,
+  Crown,
+  AlertTriangle,
+  Info
 } from 'lucide-react';
 import { api } from '../../services/api.js';
 
@@ -30,6 +35,20 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
       setAdminTab(initialTab);
     }
   }, [initialTab]);
+
+  // Determine Current User Scope & Capabilities
+  const isSuperAdmin = currentUser?.permissions?.includes('*') || 
+    currentUser?.subroles?.some(s => s.role_code === 'SUPER_ADMIN' || s.subrole_code === 'FULL_ACCESS_ROOT');
+
+  // Find user's assigned Organization & Mine if applicable
+  const primarySubrole = currentUser?.subroles?.[0];
+  const userOrgId = primarySubrole?.organization_id || null;
+  const userOrgName = primarySubrole?.organization_name || null;
+  const userMineId = primarySubrole?.mine_id || null;
+  const userMineName = primarySubrole?.mine_name || null;
+
+  const isOrgAdmin = !isSuperAdmin && !!userOrgId && !userMineId;
+  const isMineAdmin = !isSuperAdmin && !!userMineId;
 
   // Data State
   const [organizations, setOrganizations] = useState([]);
@@ -47,7 +66,13 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
 
   const [isMineModalOpen, setIsMineModalOpen] = useState(false);
   const [editingMine, setEditingMine] = useState(null);
-  const [mineForm, setMineForm] = useState({ name: '', code: '', organization_id: '', mine_type: 'OPEN_CAST', status: 'ACTIVE' });
+  const [mineForm, setMineForm] = useState({
+    name: '',
+    code: '',
+    organization_id: userOrgId ? String(userOrgId) : '',
+    mine_type: 'OPEN_CAST',
+    status: 'ACTIVE'
+  });
 
   // Provision Admin Modals (Org Admin / Mine Admin)
   const [provisionModal, setProvisionModal] = useState(null); // { type: 'ORG' | 'MINE', target: {...} }
@@ -67,7 +92,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
   const [userForm, setUserForm] = useState({
     username: '',
     email: '',
-    password: '',
+    password: 'Admin@12345',
     first_name: '',
     last_name: '',
     phone: '',
@@ -78,10 +103,23 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
 
   // Role & Subrole Modals
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
-  const [roleForm, setRoleForm] = useState({ name: '', code: '', organization_id: '', mine_id: '', description: '', status: 'ACTIVE' });
+  const [roleForm, setRoleForm] = useState({
+    name: '',
+    code: '',
+    organization_id: userOrgId ? String(userOrgId) : '',
+    mine_id: userMineId ? String(userMineId) : '',
+    description: '',
+    status: 'ACTIVE'
+  });
 
   const [isSubroleModalOpen, setIsSubroleModalOpen] = useState(false);
-  const [subroleForm, setSubroleForm] = useState({ name: '', code: '', role_id: '', description: '', status: 'ACTIVE' });
+  const [subroleForm, setSubroleForm] = useState({
+    name: '',
+    code: '',
+    role_id: '',
+    description: '',
+    status: 'ACTIVE'
+  });
 
   // Manage Role/Subrole Permissions Modal
   const [permTarget, setPermTarget] = useState(null); // { type: 'ROLE' | 'SUBROLE', id: number, name: string }
@@ -105,7 +143,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
   const [testTargetMine, setTestTargetMine] = useState('');
   const [evalResult, setEvalResult] = useState(null);
 
-  // Fetch initial backend data
+  // Fetch backend data
   const loadData = async () => {
     setLoading(true);
     try {
@@ -133,7 +171,13 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
       setPermissions(permsList);
 
       if (orgsList.length > 0 && !mineForm.organization_id) {
-        setMineForm(prev => ({ ...prev, organization_id: String(orgsList[0].id) }));
+        setMineForm(prev => ({ ...prev, organization_id: String(userOrgId || orgsList[0].id) }));
+      }
+      if (orgsList.length > 0 && !roleForm.organization_id) {
+        setRoleForm(prev => ({ ...prev, organization_id: String(userOrgId || orgsList[0].id) }));
+      }
+      if (rolesList.length > 0 && !subroleForm.role_id) {
+        setSubroleForm(prev => ({ ...prev, role_id: String(rolesList[0].id) }));
       }
       if (usersList.length > 0 && !testUserId) {
         setTestUserId(String(usersList[0].id));
@@ -152,6 +196,10 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
   // Organization Save
   const handleSaveOrg = async (e) => {
     e.preventDefault();
+    if (!isSuperAdmin) {
+      if (onShowToast) onShowToast('Only Super Admin can create or edit organizations!', true);
+      return;
+    }
     try {
       if (editingOrg) {
         await api.updateOrganization(editingOrg.id, orgForm);
@@ -173,9 +221,10 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
   const handleSaveMine = async (e) => {
     e.preventDefault();
     try {
+      const orgIdToUse = isOrgAdmin ? userOrgId : Number(mineForm.organization_id);
       const payload = {
         ...mineForm,
-        organization_id: Number(mineForm.organization_id),
+        organization_id: orgIdToUse,
       };
       if (editingMine) {
         await api.updateMine(editingMine.id, payload);
@@ -186,7 +235,13 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
       }
       setIsMineModalOpen(false);
       setEditingMine(null);
-      setMineForm({ name: '', code: '', organization_id: organizations[0]?.id || '', mine_type: 'OPEN_CAST', status: 'ACTIVE' });
+      setMineForm({
+        name: '',
+        code: '',
+        organization_id: userOrgId ? String(userOrgId) : (organizations[0]?.id || ''),
+        mine_type: 'OPEN_CAST',
+        status: 'ACTIVE'
+      });
       loadData();
     } catch (err) {
       if (onShowToast) onShowToast(err.message || 'Error saving mine', true);
@@ -242,14 +297,78 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
         });
       }
 
-      // 4. Assign Admin User to this Subrole
+      // 4. Attach standard permissions for Org Admin or Mine Admin to subrole
+      const defaultOrgPermCodes = [
+        'ORGANIZATIONS_READ',
+        'ORGANIZATIONS_UPDATE',
+        'MINES_READ',
+        'MINES_CREATE',
+        'MINES_UPDATE',
+        'MINES_DELETE',
+        'USERS_READ',
+        'USERS_CREATE',
+        'USERS_UPDATE',
+        'USERS_DELETE',
+        'USERS_MANAGE_ROLES',
+        'ROLES_READ',
+        'ROLES_CREATE',
+        'ROLES_UPDATE',
+        'ROLES_DELETE',
+        'ROLES_MANAGE_PERMISSIONS',
+        'SUBROLES_READ',
+        'SUBROLES_CREATE',
+        'SUBROLES_UPDATE',
+        'SUBROLES_DELETE',
+        'SUBROLES_MANAGE_PERMISSIONS',
+        'PAGES_READ',
+        'SESSIONS_READ',
+        'SESSIONS_MANAGE',
+        'AUDIT_READ',
+      ];
+
+      const defaultMinePermCodes = [
+        'MINES_READ',
+        'MINES_UPDATE',
+        'USERS_READ',
+        'USERS_CREATE',
+        'USERS_UPDATE',
+        'USERS_DELETE',
+        'USERS_MANAGE_ROLES',
+        'ROLES_READ',
+        'ROLES_CREATE',
+        'ROLES_UPDATE',
+        'ROLES_DELETE',
+        'ROLES_MANAGE_PERMISSIONS',
+        'SUBROLES_READ',
+        'SUBROLES_CREATE',
+        'SUBROLES_UPDATE',
+        'SUBROLES_DELETE',
+        'SUBROLES_MANAGE_PERMISSIONS',
+        'PAGES_READ',
+        'SESSIONS_READ',
+        'AUDIT_READ',
+      ];
+
+      const codesToGrant = isOrg ? defaultOrgPermCodes : defaultMinePermCodes;
+      for (const pCode of codesToGrant) {
+        const found = permissions.find(p => p.code === pCode);
+        if (found) {
+          try {
+            await api.attachSubrolePermission(targetSubrole.id, found.id);
+          } catch (err) {
+            // Ignore if already attached
+          }
+        }
+      }
+
+      // 5. Assign Admin User to this Subrole
       await api.assignUserSubrole(newUser.id, {
         subrole_id: targetSubrole.id,
         status: 'ACTIVE',
       });
 
       if (onShowToast) {
-        onShowToast(`Provisioned ${adminForm.first_name || adminForm.username} as ${roleName}!`);
+        onShowToast(`Provisioned ${adminForm.first_name || adminForm.username} as ${roleName} with full permissions!`);
       }
 
       setProvisionModal(null);
@@ -260,7 +379,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
     }
   };
 
-  // User Save
+  // User Save (General Personnel Provisioning)
   const handleSaveUser = async (e) => {
     e.preventDefault();
     try {
@@ -295,11 +414,11 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
           });
         }
 
-        if (onShowToast) onShowToast(`User ${createdUser.username} provisioned!`);
+        if (onShowToast) onShowToast(`User ${createdUser.username} provisioned successfully!`);
       }
       setIsUserModalOpen(false);
       setEditingUser(null);
-      setUserForm({ username: '', email: '', password: '', first_name: '', last_name: '', phone: '', employee_code: '', status: 'ACTIVE', selected_subrole_id: '' });
+      setUserForm({ username: '', email: '', password: 'Admin@12345', first_name: '', last_name: '', phone: '', employee_code: '', status: 'ACTIVE', selected_subrole_id: '' });
       loadData();
     } catch (err) {
       if (onShowToast) onShowToast(err.message || 'Error saving user', true);
@@ -310,18 +429,29 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
   const handleSaveRole = async (e) => {
     e.preventDefault();
     try {
+      const orgIdToUse = isOrgAdmin ? userOrgId : Number(roleForm.organization_id);
+      const mineIdToUse = isMineAdmin ? userMineId : (roleForm.mine_id ? Number(roleForm.mine_id) : null);
+
       const payload = {
-        organization_id: Number(roleForm.organization_id),
-        mine_id: roleForm.mine_id ? Number(roleForm.mine_id) : null,
         name: roleForm.name,
-        code: roleForm.code.toUpperCase(),
+        code: roleForm.code,
+        organization_id: orgIdToUse,
+        mine_id: mineIdToUse,
         description: roleForm.description,
         status: roleForm.status,
       };
+
       await api.createRole(payload);
-      if (onShowToast) onShowToast(`Role ${payload.code} created!`);
+      if (onShowToast) onShowToast(`Role ${roleForm.name} created!`);
       setIsRoleModalOpen(false);
-      setRoleForm({ name: '', code: '', organization_id: organizations[0]?.id || '', mine_id: '', description: '', status: 'ACTIVE' });
+      setRoleForm({
+        name: '',
+        code: '',
+        organization_id: userOrgId ? String(userOrgId) : (organizations[0]?.id || ''),
+        mine_id: userMineId ? String(userMineId) : '',
+        description: '',
+        status: 'ACTIVE'
+      });
       loadData();
     } catch (err) {
       if (onShowToast) onShowToast(err.message || 'Error creating role', true);
@@ -333,14 +463,15 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
     e.preventDefault();
     try {
       const payload = {
-        role_id: Number(subroleForm.role_id),
         name: subroleForm.name,
-        code: subroleForm.code.toUpperCase(),
+        code: subroleForm.code,
+        role_id: Number(subroleForm.role_id),
         description: subroleForm.description,
         status: subroleForm.status,
       };
+
       await api.createSubrole(payload);
-      if (onShowToast) onShowToast(`Subrole ${payload.code} created!`);
+      if (onShowToast) onShowToast(`Subrole ${subroleForm.name} created!`);
       setIsSubroleModalOpen(false);
       setSubroleForm({ name: '', code: '', role_id: roles[0]?.id || '', description: '', status: 'ACTIVE' });
       loadData();
@@ -349,7 +480,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
     }
   };
 
-  // Manage Permissions
+  // Manage Permissions (Role / Subrole)
   const openPermModal = async (type, item) => {
     setPermTarget({ type, id: item.id, name: item.name });
     try {
@@ -449,67 +580,147 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
     if (!user) return;
 
     try {
-      const userDetails = await api.getUser(user.id);
-      const userSubroles = await api.getUserSubroles(user.id);
-      const subrolesData = userSubroles?.subroles || [];
+      const userSubrolesRes = await api.getUserSubroles(user.id);
+      const userSubs = userSubrolesRes?.subroles || [];
 
-      // Check effective permissions
-      let hasPerm = false;
-      let matchedScope = '';
+      // Check if user has root wildcard '*'
+      let hasRoot = false;
+      let matchingRole = null;
 
-      if (user.username === 'superadmin' || subrolesData.some(sr => sr.role_code === 'SUPER_ADMIN')) {
-        hasPerm = true;
-        matchedScope = 'Global Super Administrator clearance (Wildcard *)';
-      } else {
-        // Check matching role/subrole org and mine scope
-        for (const sr of subrolesData) {
-          if (testTargetOrg && Number(sr.organization_id) === Number(testTargetOrg)) {
-            hasPerm = true;
-            matchedScope = `Granted via ${sr.subrole_name} (Role: ${sr.role_name}) scoped to Org #${sr.organization_id}`;
-            break;
-          }
-          if (testTargetMine && Number(sr.mine_id) === Number(testTargetMine)) {
-            hasPerm = true;
-            matchedScope = `Granted via ${sr.subrole_name} (Role: ${sr.role_name}) scoped to Mine #${sr.mine_id}`;
-            break;
-          }
+      for (const s of userSubs) {
+        if (s.subrole_code === 'FULL_ACCESS_ROOT' || s.role_code === 'SUPER_ADMIN') {
+          hasRoot = true;
+          matchingRole = s;
+          break;
         }
       }
 
-      setEvalResult({
-        granted: hasPerm,
-        explanation: hasPerm ? matchedScope : `Denied (403): User '${user.username}' does not hold clearance for the specified organization/mine scope.`,
-        evaluatedUser: user.username,
-        time: new Date().toLocaleTimeString(),
-      });
+      if (hasRoot) {
+        setEvalResult({
+          granted: true,
+          explanation: `User '${user.username}' possesses Global Wildcard (*) Clearance via role '${matchingRole?.role_name}'. Unrestricted access to all Organizations and Mines.`,
+        });
+        return;
+      }
+
+      // Check Scoped matching
+      let granted = false;
+      let matchedSubrole = null;
+
+      for (const s of userSubs) {
+        const orgMatch = !s.organization_id || s.organization_id === Number(testTargetOrg || userOrgId);
+        const mineMatch = !s.mine_id || s.mine_id === Number(testTargetMine || userMineId);
+
+        if (orgMatch && mineMatch) {
+          granted = true;
+          matchedSubrole = s;
+          break;
+        }
+      }
+
+      if (granted) {
+        setEvalResult({
+          granted: true,
+          explanation: `Access Granted! Permission '${testPermCode}' satisfied under Scope [Org: ${matchedSubrole?.organization_name || 'All'}, Mine: ${matchedSubrole?.mine_name || 'All'}] via '${matchedSubrole?.subrole_name}'.`,
+        });
+      } else {
+        setEvalResult({
+          granted: false,
+          explanation: `Access Denied (403 Forbidden). User '${user.username}' does not hold required clearance for the specified Organization/Mine scope.`,
+        });
+      }
     } catch (err) {
       setEvalResult({
         granted: false,
-        explanation: err.message,
-        time: new Date().toLocaleTimeString(),
+        explanation: `Evaluation error: ${err.message}`,
       });
     }
   };
 
+  // Filtered views for current user role
+  const displayOrgs = isSuperAdmin
+    ? organizations
+    : organizations.filter(o => o.id === userOrgId);
+
+  const displayMines = isSuperAdmin
+    ? mines.filter(m => !mineOrgFilter || m.organization_id === Number(mineOrgFilter))
+    : isOrgAdmin
+      ? mines.filter(m => m.organization_id === userOrgId)
+      : mines.filter(m => m.id === userMineId);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {/* Top Banner */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '1400px', margin: '0 auto' }}>
+      {/* Header & Role Scope Banner */}
       <div style={{
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        flexDirection: 'column',
+        gap: '0.75rem',
         borderBottom: '1px solid #e2e8f0',
-        paddingBottom: '1rem',
+        paddingBottom: '1.25rem',
       }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Building2 size={26} color="#2563eb" />
-            Enterprise Multi-Tier Governance & RBAC
-          </h1>
-          <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.9rem' }}>
-            Hierarchical Administration: Super Admin &rarr; Org Admin &rarr; Mine Admin &rarr; Site Personnel
-          </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Building2 size={26} color="#2563eb" />
+              Multi-Tier Enterprise RBAC & Governance
+            </h1>
+            <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.9rem' }}>
+              Hierarchical Access Matrix: Super Admin &rarr; Organization Admin &rarr; Mine Admin &rarr; Site Personnel
+            </p>
+          </div>
+
+          {/* Current User Tier Badge */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px 14px',
+            borderRadius: '10px',
+            backgroundColor: isSuperAdmin ? '#fef3c7' : isOrgAdmin ? '#eff6ff' : '#ecfdf5',
+            border: `1px solid ${isSuperAdmin ? '#fde68a' : isOrgAdmin ? '#bfdbfe' : '#a7f3d0'}`,
+            color: isSuperAdmin ? '#92400e' : isOrgAdmin ? '#1e40af' : '#065f46',
+            fontSize: '0.85rem',
+            fontWeight: 700,
+          }}>
+            {isSuperAdmin && <Crown size={18} color="#d97706" />}
+            {isOrgAdmin && <Briefcase size={18} color="#2563eb" />}
+            {isMineAdmin && <HardHat size={18} color="#059669" />}
+            <span>
+              {isSuperAdmin && 'Tier 1: Global Super Administrator (Unrestricted Root Access)'}
+              {isOrgAdmin && `Tier 2: Organization Administrator (${userOrgName || 'Org #' + userOrgId})`}
+              {isMineAdmin && `Tier 3: Mine Administrator (${userMineName || 'Mine #' + userMineId})`}
+            </span>
+          </div>
         </div>
+
+        {/* Informational Guidance Alert */}
+        {!isSuperAdmin && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '10px 14px',
+            borderRadius: '8px',
+            backgroundColor: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            fontSize: '0.82rem',
+            color: '#475569',
+          }}>
+            <Info size={16} color="#2563eb" />
+            <div>
+              {isOrgAdmin && (
+                <span>
+                  <strong>Organization Governance Rules:</strong> You can create & manage <strong>Mines</strong> within <em>{userOrgName}</em>, provision <strong>Mine Admins</strong>, create organization users (e.g. Site Advisors), and manage Org/Mine roles. You cannot create other Organizations (Super Admin authority only).
+                </span>
+              )}
+              {isMineAdmin && (
+                <span>
+                  <strong>Mine Operational Rules:</strong> You manage <em>{userMineName}</em>. You can create mine personnel (Safety Officers, Engineers), define mine-specific roles/subroles, and assign clearances. You cannot create organizations or other mines.
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Tabs Navigation */}
@@ -523,10 +734,11 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
         borderTop: '1px solid #e2e8f0',
         borderLeft: '1px solid #e2e8f0',
         borderRight: '1px solid #e2e8f0',
+        overflowX: 'auto'
       }}>
         {[
-          { id: 'orgs', label: '1. Organizations Hub', icon: Building2, count: organizations.length },
-          { id: 'mines', label: '2. Mines Directory', icon: Layers, count: mines.length },
+          { id: 'orgs', label: '1. Organizations Hub', icon: Building2, count: displayOrgs.length },
+          { id: 'mines', label: '2. Mines Directory', icon: Layers, count: displayMines.length },
           { id: 'users', label: '3. Users & Provisioning', icon: Users, count: users.length },
           { id: 'rbac', label: '4. Roles & Subroles (RBAC)', icon: ShieldCheck, count: roles.length },
           { id: 'evaluator', label: '5. Scoped RBAC Tester', icon: Terminal, tag: 'Live Engine' },
@@ -552,6 +764,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
                 borderLeft: 'none',
                 borderRight: 'none',
                 cursor: 'pointer',
+                whiteSpace: 'nowrap'
               }}
             >
               <Icon size={16} />
@@ -576,33 +789,49 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
       {/* TAB 1: ORGANIZATIONS HUB */}
       {adminTab === 'orgs' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div style={{ fontSize: '0.9rem', color: '#64748b' }}>
-              Super Admin can create Organizations and provision dedicated <strong>Organization Admins</strong>.
+              {isSuperAdmin
+                ? 'Super Admin can create Organizations and provision dedicated Organization Admins.'
+                : `You are viewing your assigned organization: ${userOrgName || 'Active Organization'}.`}
             </div>
-            <button
-              onClick={() => {
-                setEditingOrg(null);
-                setOrgForm({ name: '', code: '', status: 'ACTIVE' });
-                setIsOrgModalOpen(true);
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                backgroundColor: '#2563eb',
-                color: '#ffffff',
-                border: 'none',
+            {isSuperAdmin ? (
+              <button
+                onClick={() => {
+                  setEditingOrg(null);
+                  setOrgForm({ name: '', code: '', status: 'ACTIVE' });
+                  setIsOrgModalOpen(true);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                }}
+              >
+                <Plus size={16} />
+                Create Organization
+              </button>
+            ) : (
+              <span style={{
+                fontSize: '0.78rem',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                backgroundColor: '#f1f5f9',
+                color: '#64748b',
                 fontWeight: 600,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-              }}
-            >
-              <Plus size={16} />
-              Create Organization
-            </button>
+                border: '1px solid #cbd5e1'
+              }}>
+                Organization Creation: Super Admin Only
+              </span>
+            )}
           </div>
 
           <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
@@ -618,7 +847,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
                 </tr>
               </thead>
               <tbody>
-                {organizations.map((org) => {
+                {displayOrgs.map((org) => {
                   const orgMines = mines.filter(m => m.organization_id === org.id);
                   return (
                     <tr key={org.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -640,47 +869,52 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
                       </td>
                       <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', gap: '6px' }}>
-                          <button
-                            onClick={() => {
-                              setProvisionModal({ type: 'ORG', target: org });
-                              setAdminForm({
-                                username: `${org.code.toLowerCase()}_admin`,
-                                email: `admin@${org.code.toLowerCase()}.coalmin.org`,
-                                password: 'Admin@12345',
-                                first_name: `${org.code} Admin`,
-                                last_name: 'Lead',
-                                phone: '+91',
-                                employee_code: `EMP-${org.code}-01`,
-                              });
-                            }}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              padding: '4px 10px',
-                              borderRadius: '6px',
-                              backgroundColor: '#eff6ff',
-                              border: '1px solid #bfdbfe',
-                              color: '#1d4ed8',
-                              fontWeight: 600,
-                              fontSize: '0.78rem',
-                              cursor: 'pointer',
-                            }}
-                            title="Provision dedicated Org Administrator credentials"
-                          >
-                            <KeyRound size={13} />
-                            Provision Org Admin
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingOrg(org);
-                              setOrgForm({ name: org.name, code: org.code, status: org.status });
-                              setIsOrgModalOpen(true);
-                            }}
-                            style={{ padding: '4px 8px', borderRadius: '6px', backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', cursor: 'pointer' }}
-                          >
-                            <Edit2 size={13} color="#2563eb" />
-                          </button>
+                          {isSuperAdmin && (
+                            <button
+                              onClick={() => {
+                                setProvisionModal({ type: 'ORG', target: org });
+                                setAdminForm({
+                                  username: `${org.code.toLowerCase().replace(/[^a-z0-9]/g, '_')}_admin`,
+                                  email: `admin@${org.code.toLowerCase().replace(/[^a-z0-9]/g, '')}.coalmin.org`,
+                                  password: 'Admin@12345',
+                                  first_name: `${org.name.split(' ')[0]} Admin`,
+                                  last_name: 'Lead',
+                                  phone: '+919876500101',
+                                  employee_code: `EMP-${org.code}-01`,
+                                });
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                backgroundColor: '#eff6ff',
+                                border: '1px solid #bfdbfe',
+                                color: '#1d4ed8',
+                                fontWeight: 600,
+                                fontSize: '0.78rem',
+                                cursor: 'pointer',
+                              }}
+                              title="Provision dedicated Org Administrator credentials"
+                            >
+                              <KeyRound size={13} />
+                              Provision Org Admin
+                            </button>
+                          )}
+                          {isSuperAdmin && (
+                            <button
+                              onClick={() => {
+                                setEditingOrg(org);
+                                setOrgForm({ name: org.name, code: org.code, status: org.status });
+                                setIsOrgModalOpen(true);
+                              }}
+                              style={{ padding: '4px 8px', borderRadius: '6px', backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', cursor: 'pointer' }}
+                              title="Edit organization"
+                            >
+                              <Edit2 size={13} color="#2563eb" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -695,43 +929,61 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
       {/* TAB 2: MINES DIRECTORY */}
       {adminTab === 'mines' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>Filter by Org:</span>
-              <select
-                value={mineOrgFilter}
-                onChange={(e) => setMineOrgFilter(e.target.value)}
-                style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
-              >
-                <option value="">All Organizations</option>
-                {organizations.map(o => (
-                  <option key={o.id} value={o.id}>{o.name} ({o.code})</option>
-                ))}
-              </select>
+              {isSuperAdmin && (
+                <>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>Filter by Org:</span>
+                  <select
+                    value={mineOrgFilter}
+                    onChange={(e) => setMineOrgFilter(e.target.value)}
+                    style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                  >
+                    <option value="">All Organizations</option>
+                    {organizations.map(o => (
+                      <option key={o.id} value={o.id}>{o.name} ({o.code})</option>
+                    ))}
+                  </select>
+                </>
+              )}
+              {isOrgAdmin && (
+                <span style={{ fontSize: '0.85rem', color: '#475569' }}>
+                  Managing Mining Sites for <strong>{userOrgName}</strong>. You can create mines and provision Mine Admins.
+                </span>
+              )}
             </div>
-            <button
-              onClick={() => {
-                setEditingMine(null);
-                setMineForm({ name: '', code: '', organization_id: organizations[0]?.id || '', mine_type: 'OPEN_CAST', status: 'ACTIVE' });
-                setIsMineModalOpen(true);
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                backgroundColor: '#2563eb',
-                color: '#ffffff',
-                border: 'none',
-                fontWeight: 600,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-              }}
-            >
-              <Plus size={16} />
-              Create Mine Site
-            </button>
+
+            {(isSuperAdmin || isOrgAdmin) && (
+              <button
+                onClick={() => {
+                  setEditingMine(null);
+                  setMineForm({
+                    name: '',
+                    code: '',
+                    organization_id: userOrgId ? String(userOrgId) : (organizations[0]?.id || ''),
+                    mine_type: 'OPEN_CAST',
+                    status: 'ACTIVE'
+                  });
+                  setIsMineModalOpen(true);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                }}
+              >
+                <Plus size={16} />
+                Create Mine Site
+              </button>
+            )}
           </div>
 
           <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
@@ -748,50 +1000,49 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
                 </tr>
               </thead>
               <tbody>
-                {mines
-                  .filter(m => !mineOrgFilter || m.organization_id === Number(mineOrgFilter))
-                  .map((mine) => (
-                    <tr key={mine.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '12px 16px', color: '#64748b' }}>#{mine.id}</td>
-                      <td style={{ padding: '12px 16px', fontWeight: 600, color: '#0f172a' }}>{mine.name}</td>
-                      <td style={{ padding: '12px 16px', color: '#059669', fontFamily: 'monospace' }}>{mine.code}</td>
-                      <td style={{ padding: '12px 16px', color: '#64748b' }}>{mine.organization_name || `Org #${mine.organization_id}`}</td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span style={{
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          fontSize: '0.75rem',
-                          fontWeight: '700',
-                          backgroundColor: '#f1f5f9',
-                          color: '#334155',
-                        }}>
-                          {mine.mine_type}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span style={{
-                          padding: '2px 8px',
-                          borderRadius: '10px',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          backgroundColor: mine.status === 'ACTIVE' ? '#dcfce7' : '#fee2e2',
-                          color: mine.status === 'ACTIVE' ? '#166534' : '#991b1b',
-                        }}>
-                          {mine.status}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                        <div style={{ display: 'inline-flex', gap: '6px' }}>
+                {displayMines.map((mine) => (
+                  <tr key={mine.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '12px 16px', color: '#64748b' }}>#{mine.id}</td>
+                    <td style={{ padding: '12px 16px', fontWeight: 600, color: '#0f172a' }}>{mine.name}</td>
+                    <td style={{ padding: '12px 16px', color: '#059669', fontFamily: 'monospace' }}>{mine.code}</td>
+                    <td style={{ padding: '12px 16px', color: '#64748b' }}>{mine.organization_name || `Org #${mine.organization_id}`}</td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        fontSize: '0.75rem',
+                        fontWeight: '700',
+                        backgroundColor: '#f1f5f9',
+                        color: '#334155',
+                      }}>
+                        {mine.mine_type}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: '10px',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        backgroundColor: mine.status === 'ACTIVE' ? '#dcfce7' : '#fee2e2',
+                        color: mine.status === 'ACTIVE' ? '#166534' : '#991b1b',
+                      }}>
+                        {mine.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                      <div style={{ display: 'inline-flex', gap: '6px' }}>
+                        {(isSuperAdmin || isOrgAdmin) && (
                           <button
                             onClick={() => {
                               setProvisionModal({ type: 'MINE', target: mine });
                               setAdminForm({
-                                username: `${mine.code.toLowerCase().replace('-', '_')}_admin`,
-                                email: `admin@${mine.code.toLowerCase().replace('-', '')}.coalmin.org`,
+                                username: `${mine.code.toLowerCase().replace(/[^a-z0-9]/g, '_')}_admin`,
+                                email: `admin@${mine.code.toLowerCase().replace(/[^a-z0-9]/g, '')}.coalmin.org`,
                                 password: 'Admin@12345',
-                                first_name: `${mine.name} Mine`,
+                                first_name: `${mine.name.split(' ')[0]} Mine`,
                                 last_name: 'Admin',
-                                phone: '+91',
+                                phone: '+919876500201',
                                 employee_code: `EMP-MINE-${mine.id}`,
                               });
                             }}
@@ -813,6 +1064,8 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
                             <KeyRound size={13} />
                             Provision Mine Admin
                           </button>
+                        )}
+                        {(isSuperAdmin || isOrgAdmin) && (
                           <button
                             onClick={() => {
                               setEditingMine(mine);
@@ -826,13 +1079,15 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
                               setIsMineModalOpen(true);
                             }}
                             style={{ padding: '4px 8px', borderRadius: '6px', backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', cursor: 'pointer' }}
+                            title="Edit mine site"
                           >
                             <Edit2 size={13} color="#2563eb" />
                           </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -842,7 +1097,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
       {/* TAB 3: USERS & PROVISIONING */}
       {adminTab === 'users' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div style={{ position: 'relative', width: '320px' }}>
               <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
               <input
@@ -856,7 +1111,17 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
             <button
               onClick={() => {
                 setEditingUser(null);
-                setUserForm({ username: '', email: '', password: 'Admin@12345', first_name: '', last_name: '', phone: '', employee_code: '', status: 'ACTIVE', selected_subrole_id: '' });
+                setUserForm({
+                  username: '',
+                  email: '',
+                  password: 'Admin@12345',
+                  first_name: '',
+                  last_name: '',
+                  phone: '',
+                  employee_code: '',
+                  status: 'ACTIVE',
+                  selected_subrole_id: ''
+                });
                 setIsUserModalOpen(true);
               }}
               style={{
@@ -914,25 +1179,48 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
                         </span>
                       </td>
                       <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                        <button
-                          onClick={() => openUserSubrolesModal(u)}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            padding: '4px 10px',
-                            borderRadius: '6px',
-                            backgroundColor: '#f1f5f9',
-                            border: '1px solid #cbd5e1',
-                            color: '#0f172a',
-                            fontWeight: 600,
-                            fontSize: '0.78rem',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <Shield size={13} color="#2563eb" />
-                          Manage Subroles
-                        </button>
+                        <div style={{ display: 'inline-flex', gap: '6px' }}>
+                          <button
+                            onClick={() => openUserSubrolesModal(u)}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '4px 10px',
+                              borderRadius: '6px',
+                              backgroundColor: '#f1f5f9',
+                              border: '1px solid #cbd5e1',
+                              color: '#0f172a',
+                              fontWeight: 600,
+                              fontSize: '0.78rem',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <Shield size={13} color="#2563eb" />
+                            Manage Subroles
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingUser(u);
+                              setUserForm({
+                                username: u.username,
+                                email: u.email,
+                                password: '',
+                                first_name: u.first_name,
+                                last_name: u.last_name || '',
+                                phone: u.phone || '',
+                                employee_code: u.employee_code || '',
+                                status: u.status,
+                                selected_subrole_id: '',
+                              });
+                              setIsUserModalOpen(true);
+                            }}
+                            style={{ padding: '4px 8px', borderRadius: '6px', backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', cursor: 'pointer' }}
+                            title="Edit user details"
+                          >
+                            <Edit2 size={13} color="#2563eb" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -946,14 +1234,21 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
       {adminTab === 'rbac' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* Action Bar */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div style={{ fontSize: '0.9rem', color: '#64748b' }}>
-              Roles belong to an <strong>Organization</strong> (or <strong>Mine</strong>). Subroles belong to exactly one Role.
+              Roles belong to an <strong>Organization</strong> (or <strong>Mine</strong>). Subroles inherit permissions and are assigned directly to Users.
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button
                 onClick={() => {
-                  setRoleForm({ name: '', code: '', organization_id: organizations[0]?.id || '', mine_id: '', description: '', status: 'ACTIVE' });
+                  setRoleForm({
+                    name: '',
+                    code: '',
+                    organization_id: userOrgId ? String(userOrgId) : (organizations[0]?.id || ''),
+                    mine_id: userMineId ? String(userMineId) : '',
+                    description: '',
+                    status: 'ACTIVE'
+                  });
                   setIsRoleModalOpen(true);
                 }}
                 style={{
@@ -1001,111 +1296,118 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
 
           {/* Roles & Subroles Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.25rem' }}>
-            {roles.map((role) => {
-              const roleSubroles = subroles.filter(sr => sr.role_id === role.id);
-              return (
-                <div key={role.id} style={{
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '12px',
-                  padding: '1.25rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1rem',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                }}>
-                  {/* Role Header */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a' }}>{role.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#2563eb', fontFamily: 'monospace', marginTop: '2px' }}>{role.code}</div>
-                    </div>
-                    <span style={{
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      backgroundColor: role.mine_id ? '#ecfdf5' : '#eff6ff',
-                      color: role.mine_id ? '#047857' : '#1d4ed8',
-                    }}>
-                      {role.mine_id ? `Mine #${role.mine_id} Scope` : `Org #${role.organization_id} Scope`}
-                    </span>
-                  </div>
-
-                  <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b' }}>
-                    {role.description || 'No description provided.'}
-                  </p>
-
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                      onClick={() => openPermModal('ROLE', role)}
-                      style={{
-                        flex: 1,
-                        padding: '6px',
-                        borderRadius: '6px',
-                        backgroundColor: '#f8fafc',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        color: '#334155',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '4px',
-                      }}
-                    >
-                      <Shield size={13} color="#2563eb" />
-                      Role Permissions
-                    </button>
-                  </div>
-
-                  {/* Subroles Section */}
-                  <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '0.75rem' }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', marginBottom: '8px' }}>
-                      Subroles ({roleSubroles.length}):
-                    </div>
-                    {roleSubroles.length === 0 ? (
-                      <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>No subroles attached yet.</div>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        {roleSubroles.map((sr) => (
-                          <div key={sr.id} style={{
-                            padding: '6px 10px',
-                            borderRadius: '6px',
-                            backgroundColor: '#f8fafc',
-                            border: '1px solid #e2e8f0',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                          }}>
-                            <div>
-                              <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0f172a' }}>{sr.name}</div>
-                              <div style={{ fontSize: '0.7rem', color: '#059669', fontFamily: 'monospace' }}>{sr.code}</div>
-                            </div>
-                            <button
-                              onClick={() => openPermModal('SUBROLE', sr)}
-                              style={{
-                                padding: '3px 8px',
-                                borderRadius: '4px',
-                                border: '1px solid #cbd5e1',
-                                background: '#ffffff',
-                                fontSize: '0.72rem',
-                                fontWeight: 600,
-                                color: '#059669',
-                                cursor: 'pointer',
-                              }}
-                            >
-                              Permissions
-                            </button>
-                          </div>
-                        ))}
+            {roles
+              .filter(role => {
+                if (isSuperAdmin) return true;
+                if (isOrgAdmin) return role.organization_id === userOrgId;
+                if (isMineAdmin) return role.mine_id === userMineId;
+                return true;
+              })
+              .map((role) => {
+                const roleSubroles = subroles.filter(sr => sr.role_id === role.id);
+                return (
+                  <div key={role.id} style={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    padding: '1.25rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  }}>
+                    {/* Role Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a' }}>{role.name}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#2563eb', fontFamily: 'monospace', marginTop: '2px' }}>{role.code}</div>
                       </div>
-                    )}
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        backgroundColor: role.mine_id ? '#ecfdf5' : '#eff6ff',
+                        color: role.mine_id ? '#047857' : '#1d4ed8',
+                      }}>
+                        {role.mine_id ? `Mine #${role.mine_id} Scope` : `Org #${role.organization_id} Scope`}
+                      </span>
+                    </div>
+
+                    <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b' }}>
+                      {role.description || 'No description provided.'}
+                    </p>
+
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button
+                        onClick={() => openPermModal('ROLE', role)}
+                        style={{
+                          flex: 1,
+                          padding: '6px',
+                          borderRadius: '6px',
+                          backgroundColor: '#f8fafc',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          color: '#334155',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <Shield size={13} color="#2563eb" />
+                        Role Permissions
+                      </button>
+                    </div>
+
+                    {/* Subroles Section */}
+                    <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '0.75rem' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', marginBottom: '8px' }}>
+                        Subroles ({roleSubroles.length}):
+                      </div>
+                      {roleSubroles.length === 0 ? (
+                        <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>No subroles attached yet.</div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          {roleSubroles.map((sr) => (
+                            <div key={sr.id} style={{
+                              padding: '6px 10px',
+                              borderRadius: '6px',
+                              backgroundColor: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}>
+                              <div>
+                                <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0f172a' }}>{sr.name}</div>
+                                <div style={{ fontSize: '0.7rem', color: '#059669', fontFamily: 'monospace' }}>{sr.code}</div>
+                              </div>
+                              <button
+                                onClick={() => openPermModal('SUBROLE', sr)}
+                                style={{
+                                  padding: '3px 8px',
+                                  borderRadius: '4px',
+                                  border: '1px solid #cbd5e1',
+                                  background: '#ffffff',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 600,
+                                  color: '#059669',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                Permissions
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </div>
       )}
@@ -1126,7 +1428,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
               Live Multi-Tier Scope Resolution Tester
             </h3>
             <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.85rem' }}>
-              Test how the backend engine resolves user clearance across Organization and Mine scopes.
+              Test how the backend engine evaluates permission clearance across hierarchical Organization and Mine scopes.
             </p>
           </div>
 
@@ -1300,6 +1602,132 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
         </div>
       )}
 
+      {/* GENERAL USER PROVISIONING MODAL */}
+      {isUserModalOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: '#ffffff', borderRadius: '16px', width: '100%', maxWidth: '520px',
+            padding: '1.5rem', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
+                {editingUser ? `Edit User: ${editingUser.username}` : 'Provision Personnel Account'}
+              </h3>
+              <button onClick={() => setIsUserModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveUser} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '3px' }}>First Name *</label>
+                  <input
+                    type="text" required value={userForm.first_name}
+                    onChange={(e) => setUserForm({ ...userForm, first_name: e.target.value })}
+                    style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '3px' }}>Last Name</label>
+                  <input
+                    type="text" value={userForm.last_name}
+                    onChange={(e) => setUserForm({ ...userForm, last_name: e.target.value })}
+                    style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                  />
+                </div>
+              </div>
+
+              {!editingUser && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '3px' }}>Username *</label>
+                  <input
+                    type="text" required value={userForm.username}
+                    onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
+                    style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                  />
+                </div>
+              )}
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '3px' }}>Email Address *</label>
+                <input
+                  type="email" required value={userForm.email}
+                  onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '3px' }}>
+                  {editingUser ? 'New Password (Leave blank to keep unchanged)' : 'Initial Password *'}
+                </label>
+                <input
+                  type="text" required={!editingUser} value={userForm.password}
+                  onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '3px' }}>Employee Code</label>
+                  <input
+                    type="text" value={userForm.employee_code}
+                    onChange={(e) => setUserForm({ ...userForm, employee_code: e.target.value })}
+                    style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '3px' }}>Phone Number</label>
+                  <input
+                    type="text" value={userForm.phone}
+                    onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
+                    style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                  />
+                </div>
+              </div>
+
+              {!editingUser && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '3px' }}>
+                    Assign Initial Subrole Clearance (Optional)
+                  </label>
+                  <select
+                    value={userForm.selected_subrole_id}
+                    onChange={(e) => setUserForm({ ...userForm, selected_subrole_id: e.target.value })}
+                    style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                  >
+                    <option value="">None (Can be assigned later)</option>
+                    {subroles.map(sr => (
+                      <option key={sr.id} value={sr.id}>{sr.name} ({sr.code}) - Role: {sr.role_name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '0.5rem' }}>
+                <button
+                  type="button" onClick={() => setIsUserModalOpen(false)}
+                  style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', background: 'none', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{ padding: '8px 16px', borderRadius: '6px', backgroundColor: '#2563eb', color: '#ffffff', border: 'none', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  {editingUser ? 'Save Changes' : 'Provision User'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* CREATE / EDIT ORG MODAL */}
       {isOrgModalOpen && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
@@ -1309,7 +1737,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
             </h3>
             <form onSubmit={handleSaveOrg} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>Name *</label>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>Organization Name *</label>
                 <input
                   type="text" required value={orgForm.name}
                   onChange={(e) => setOrgForm({ ...orgForm, name: e.target.value })}
@@ -1317,7 +1745,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>Code *</label>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>Organization Code *</label>
                 <input
                   type="text" required value={orgForm.code}
                   onChange={(e) => setOrgForm({ ...orgForm, code: e.target.value.toUpperCase() })}
@@ -1344,9 +1772,10 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>Parent Organization *</label>
                 <select
+                  disabled={isOrgAdmin}
                   value={mineForm.organization_id}
                   onChange={(e) => setMineForm({ ...mineForm, organization_id: e.target.value })}
-                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: isOrgAdmin ? '#f1f5f9' : '#ffffff' }}
                 >
                   {organizations.map(o => (
                     <option key={o.id} value={o.id}>{o.name} ({o.code})</option>
@@ -1399,9 +1828,10 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '3px' }}>Parent Organization *</label>
                 <select
+                  disabled={isOrgAdmin || isMineAdmin}
                   value={roleForm.organization_id}
                   onChange={(e) => setRoleForm({ ...roleForm, organization_id: e.target.value })}
-                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: (isOrgAdmin || isMineAdmin) ? '#f1f5f9' : '#ffffff' }}
                 >
                   {organizations.map(o => (
                     <option key={o.id} value={o.id}>{o.name} ({o.code})</option>
@@ -1409,11 +1839,14 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
                 </select>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '3px' }}>Mine Scope (Optional - Leave blank for Org-wide)</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '3px' }}>
+                  Mine Scope (Optional - Leave blank for Org-wide Role like Site Advisor)
+                </label>
                 <select
+                  disabled={isMineAdmin}
                   value={roleForm.mine_id}
                   onChange={(e) => setRoleForm({ ...roleForm, mine_id: e.target.value })}
-                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: isMineAdmin ? '#f1f5f9' : '#ffffff' }}
                 >
                   <option value="">None (Organization-wide)</option>
                   {mines.filter(m => m.organization_id === Number(roleForm.organization_id)).map(m => (
@@ -1425,6 +1858,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '3px' }}>Role Name *</label>
                 <input
                   type="text" required value={roleForm.name}
+                  placeholder="e.g. Corporate Site Advisor"
                   onChange={(e) => setRoleForm({ ...roleForm, name: e.target.value })}
                   style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
                 />
@@ -1433,6 +1867,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '3px' }}>Role Code *</label>
                 <input
                   type="text" required value={roleForm.code}
+                  placeholder="e.g. ECL_SITE_ADVISOR"
                   onChange={(e) => setRoleForm({ ...roleForm, code: e.target.value.toUpperCase() })}
                   style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
                 />
@@ -1441,6 +1876,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '3px' }}>Description</label>
                 <input
                   type="text" value={roleForm.description}
+                  placeholder="Operational responsibilities and scope"
                   onChange={(e) => setRoleForm({ ...roleForm, description: e.target.value })}
                   style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
                 />
@@ -1476,6 +1912,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '3px' }}>Subrole Name *</label>
                 <input
                   type="text" required value={subroleForm.name}
+                  placeholder="e.g. Senior Advisory Clearance"
                   onChange={(e) => setSubroleForm({ ...subroleForm, name: e.target.value })}
                   style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
                 />
@@ -1484,6 +1921,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '3px' }}>Subrole Code *</label>
                 <input
                   type="text" required value={subroleForm.code}
+                  placeholder="e.g. ECL_SR_ADVISOR"
                   onChange={(e) => setSubroleForm({ ...subroleForm, code: e.target.value.toUpperCase() })}
                   style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
                 />
@@ -1492,6 +1930,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '3px' }}>Description</label>
                 <input
                   type="text" value={subroleForm.description}
+                  placeholder="Granular authorization clearance"
                   onChange={(e) => setSubroleForm({ ...subroleForm, description: e.target.value })}
                   style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
                 />
