@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mining Safety & Operations - SIH 2026</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-helmet-safety brand-icon"></i>
+                <div class="brand-text">
+                    <h1>NexusMine</h1>
+                    <span class="badge">SIH 2026 / PS-26024</span>
+                </div>
+            </div>
+
+            <nav class="nav-menu" id="nav-menu">
+                <!-- Navigation is static now, no longer injected by JS -->
+                
+                <div class="nav-category">Common Pages</div>
+                <a class="nav-item active" id="nav-login" onclick="window.renderView('login')">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Login & Authentication</span>
+                </a>
+                <a class="nav-item" id="nav-dashboard" onclick="window.renderView('dashboard')">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a class="nav-item" id="nav-inspections" onclick="window.renderView('inspections')">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                    <span>Inspections & Violations</span>
+                </a>
+                <a class="nav-item" id="nav-emergency" onclick="window.renderView('emergency')">
+                    <i class="fa-solid fa-truck-medical"></i>
+                    <span>Emergency & SOS Console</span>
+                </a>
+
+                <div class="nav-category">Web-Only Pages</div>
+                <a class="nav-item" id="nav-command-map" onclick="window.renderView('command-map')">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                    <span>National GIS Command Map</span>
+                </a>
+                <a class="nav-item" id="nav-analytics" onclick="window.renderView('analytics')">
+                    <i class="fa-solid fa-brain"></i>
+                    <span>AI Risk Analytics</span>
+                </a>
+                <a class="nav-item" id="nav-audit-log" onclick="window.renderView('audit-log')">
+                    <i class="fa-solid fa-link"></i>
+                    <span>Blockchain Audit Log</span>
+                </a>
+                <a class="nav-item" id="nav-compliance" onclick="window.renderView('compliance')">
+                    <i class="fa-solid fa-file-contract"></i>
+                    <span>Compliance & Statutory Hub</span>
+                </a>
+                <a class="nav-item" id="nav-resources" onclick="window.renderView('resources')">
+                    <i class="fa-solid fa-tractor"></i>
+                    <span>Resource Allocation</span>
+                </a>
+                <a class="nav-item" id="nav-admin" onclick="window.renderView('admin')">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>System Administration</span>
+                </a>
+
+                <div class="nav-category">Mobile-Only Pages</div>
+                <a class="nav-item" id="nav-hazard-cam" onclick="window.renderView('hazard-cam')">
+                    <i class="fa-solid fa-camera"></i>
+                    <span>Hazard Reporting Camera</span>
+                </a>
+                <a class="nav-item" id="nav-offline-sync" onclick="window.renderView('offline-sync')">
+                    <i class="fa-solid fa-wifi"></i>
+                    <span>Offline-First Sync Center</span>
+                </a>
+                <a class="nav-item" id="nav-sos-button" onclick="window.renderView('sos-button')">
+                    <i class="fa-solid fa-bell"></i>
+                    <span>Emergency SOS Panic Button</span>
+                </a>
+                <a class="nav-item" id="nav-rfid-pass" onclick="window.renderView('rfid-pass')">
+                    <i class="fa-solid fa-id-badge"></i>
+                    <span>Beacon Proximity Pass</span>
+                </a>
+                <a class="nav-item" id="nav-ocr-scanner" onclick="window.renderView('ocr-scanner')">
+                    <i class="fa-solid fa-file-lines"></i>
+                    <span>OCR Document Scanner</span>
+                </a>
+            </nav>
+
+            <div class="user-profile">
+                <img src="https://ui-avatars.com/api/?name=Admin+User&background=3b82f6&color=fff" alt="User Avatar">
+                <div class="user-info">
+                    <span class="user-name">System Admin</span>
+                    <span class="user-role">Superuser</span>
+                </div>
+                <i class="fa-solid fa-gear"></i>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="content-area">
+            <header class="top-header">
+                <div class="search-bar">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" placeholder="Search mines, personnel, or alerts...">
+                </div>
+                <div class="header-actions">
+                    <button class="action-btn" title="Notifications">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="notification-dot"></span>
+                    </button>
+                    <button class="action-btn danger" title="Emergency Broadcast" id="header-sos-btn">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </button>
+                </div>
+            </header>
+
+            <div class="view-container" id="view-container">
+                <!-- ALL HTML PAGES ARE NOW HERE. ONLY ONE IS VISIBLE AT A TIME. -->
+
+                <!-- 1. LOGIN -->
+                <section id="page-login" class="page-section active-page">
+                    <div class="view-header">
+                        <h2 class="view-title"><i class="fa-solid fa-shield-halved"></i> Login & Authentication</h2>
+                        <p class="view-desc">Handles role-based secure user authentication, multi-factor authentication (MFA), and secure entry routing.</p>
+                    </div>
+                    <div class="auth-card">
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <i class="fa-solid fa-helmet-safety" style="font-size: 48px; color: var(--primary); margin-bottom: 16px;"></i>
+                            <h2>NexusMine Auth</h2>
+                            <p style="color: var(--text-muted); font-size: 14px; margin-top: 8px;">Restricted Access Protocol</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Employee ID / Terminal Node</label>
+                            <div style="position: relative;">
+                                <i class="fa-solid fa-user" style="position: absolute; left: 14px; top: 12px; color: var(--text-muted);"></i>
+                                <input type="text" class="form-input" value="EMP-9482-AD" style="padding-left: 40px;" readonly>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Passphrase</label>
+                            <div style="position: relative;">
+                                <i class="fa-solid fa-lock" style="position: absolute; left: 14px; top: 12px; color: var(--text-muted);"></i>
+                                <input type="password" class="form-input" value="********" style="padding-left: 40px;" readonly>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top: 24px;">
+                            <label class="form-label">MFA Biometric / Hardware Token</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" class="form-input" value="649 218" style="text-align: center; letter-spacing: 4px; font-weight: bold;" readonly>
+                                <button class="action-btn" style="border-radius: 6px; width: 44px; height: auto;" onclick="window.showToast('Fingerprint scanned successfully')">
+                                    <i class="fa-solid fa-fingerprint"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button class="action-btn" style="width: 100%; border-radius: 8px; background: var(--primary); color: #fff; height: 48px; margin-top: 30px;" onclick="window.renderView('dashboard')">
+                            AUTHENTICATE & ENTER
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 2. DASHBOARD -->
+                <section id="page-dashboard" class="page-section">
+                    <div class="view-header">
+                        <h2 class="view-title"><i class="fa-solid fa-chart-pie"></i> Dashboard</h2>
+                        <p class="view-desc">Primary landing page displaying role-specific key performance indicators, live status summaries, and operational summaries.</p>
+                    </div>
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">Active Personnel Underground</span>
+                                <div class="card-icon blue"><i class="fa-solid fa-users"></i></div>
+                            </div>
+                            <div class="card-value">1,248</div>
+                            <div class="card-trend trend-up"><i class="fa-solid fa-arrow-up"></i> 12 across 4 zones</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">Open Violations / Actions</span>
+                                <div class="card-icon yellow"><i class="fa-solid fa-clipboard-list"></i></div>
+                            </div>
+                            <div class="card-value">34</div>
+                            <div class="card-trend trend-down"><i class="fa-solid fa-arrow-down"></i> 5 resolved today</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">Air Quality Index (AQI)</span>
+                                <div class="card-icon green"><i class="fa-solid fa-wind"></i></div>
+                            </div>
+                            <div class="card-value">Optimal</div>
+                            <div class="card-trend trend-up"><i class="fa-solid fa-check"></i> All sensors nominal</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">Active SOS Alerts</span>
+                                <div class="card-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            </div>
+                            <div class="card-value">0</div>
+                            <div class="card-trend trend-up"><i class="fa-solid fa-check-circle"></i> Clear</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-grid" style="grid-template-columns: 2fr 1fr; margin-top: 24px;">
+                        <div class="card">
+                            <h3 style="margin-bottom: 16px;">Production Output vs Target (Tons)</h3>
+                            <div class="chart-container" style="height: 250px;">
+                                <canvas id="dashboardChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="card" style="padding: 0; overflow: hidden;">
+                            <h3 style="margin: 24px 24px 16px;">Live Operations Feed</h3>
+                            <table class="data-table">
+                                <tbody>
+                                    <tr>
+                                        <td><span style="color: var(--text-muted);">10:42 AM</span></td>
+                                        <td>Shift 2 Attendance Sync</td>
+                                        <td><span class="status-badge status-active">Done</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span style="color: var(--text-muted);">10:15 AM</span></td>
+                                        <td>Explosives Inventory</td>
+                                        <td><span class="status-badge status-active">Done</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span style="color: var(--text-muted);">09:30 AM</span></td>
+                                        <td>O2 Sensor Calib (Level 4)</td>
+                                        <td><span class="status-badge status-active">Done</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span style="color: var(--text-muted);">08:15 AM</span></td>
+                                        <td>Vent Shaft Insp</td>
+                                        <td><span class="status-badge status-warning">Wait</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. INSPECTIONS -->
+                <section id="page-inspections" class="page-section">
+                    <div class="view-header">
+                        <h2 class="view-title"><i class="fa-solid fa-clipboard-check"></i> Inspections & Violations</h2>
+                        <p class="view-desc">The tracking ledger where users view, log, and update safety observations, statutory violations, and remediation deadlines.</p>
+                    </div>
+                    <div style="display: flex; gap: 16px; margin-bottom: 24px;">
+                        <div class="search-bar" style="width: 300px; background: var(--bg-surface);">
+                            <i class="fa-solid fa-search"></i>
+                            <input type="text" placeholder="Search violation ID or type...">
+                        </div>
+                        <button class="action-btn" style="width: auto; padding: 0 20px; border-radius: 8px; background: var(--primary); color: #fff;" onclick="window.showToast('New Inspection Report Opened')">
+                            <i class="fa-solid fa-plus"></i> New Inspection
+                        </button>
+                    </div>
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Observation Type</th>
+                                    <th>Inspector</th>
+                                    <th>Location</th>
+                                    <th>Deadline</th>
+                                    <th>Severity</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>#V-992</td>
+                                    <td>Roof Support Degradation</td>
+                                    <td>S. Verma</td>
+                                    <td>Jharia - Level 3</td>
+                                    <td>2026-09-05</td>
+                                    <td><span style="color: var(--danger);"><i class="fa-solid fa-circle" style="font-size: 10px;"></i> High</span></td>
+                                    <td><span class="status-badge status-warning">In Progress</span></td>
+                                </tr>
+                                <tr>
+                                    <td>#V-991</td>
+                                    <td>Missing PPE (Contractor)</td>
+                                    <td>M. Singh</td>
+                                    <td>Godavari - Zone B</td>
+                                    <td>2026-09-01</td>
+                                    <td><span style="color: var(--warning);"><i class="fa-solid fa-circle" style="font-size: 10px;"></i> Medium</span></td>
+                                    <td><span class="status-badge status-warning">Pending Review</span></td>
+                                </tr>
+                                <tr>
+                                    <td>#S-402</td>
+                                    <td>Routine Vent Shaft Check</td>
+                                    <td>Auto-Sensor</td>
+                                    <td>Talcher - Shaft 4</td>
+                                    <td>2026-08-30</td>
+                                    <td><span style="color: var(--success);"><i class="fa-solid fa-circle" style="font-size: 10px;"></i> Low</span></td>
+                                    <td><span class="status-badge status-active">Resolved</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 4. EMERGENCY -->
+                <section id="page-emergency" class="page-section">
+                    <div class="view-header">
+                        <h2 class="view-title"><i class="fa-solid fa-truck-medical"></i> Emergency & SOS Console</h2>
+                        <p class="view-desc">Active crisis response screen used to trigger or view evacuation alerts, broadcast emergency notifications, and track distress signals.</p>
+                    </div>
+                    <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+                        <div class="card" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.05);">
+                            <h3 style="color: var(--danger); margin-bottom: 16px;"><i class="fa-solid fa-tower-broadcast"></i> Global Broadcast System</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 24px;">Trigger instant alarms across all surface sirens and underground digital pagers.</p>
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <button class="action-btn danger" style="width: 100%; border-radius: 8px; font-weight: 700; letter-spacing: 1px;" onclick="window.showToast('EVACUATION BROADCAST SENT!', true)">
+                                    TRIGGER FULL EVACUATION
+                                </button>
+                                <button class="action-btn" style="width: 100%; border-radius: 8px; border-color: var(--warning); color: var(--warning);" onclick="window.showToast('Muster Alarm Triggered', true)">
+                                    SOUND MUSTER ALARM
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h3 style="margin-bottom: 16px;">Active SOS Signals</h3>
+                            <div style="text-align: center; padding: 24px 0; color: var(--success);" id="sos-status">
+                                <i class="fa-solid fa-shield-check" style="font-size: 48px; margin-bottom: 16px;"></i>
+                                <p>No active distress signals detected.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card" style="margin-top: 24px;">
+                        <h3 style="margin-bottom: 16px;">Incident Communication Log</h3>
+                        <div class="audit-feed" style="max-height: 200px;">
+                            <div class="audit-item">
+                                <span style="color: var(--text-muted); font-size: 12px;">Today 08:00 AM</span><br>
+                                <strong>System:</strong> Routine radio check completed. All nodes responsive.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. COMMAND MAP -->
+                <section id="page-command-map" class="page-section">
+                    <div class="view-header">
+                        <h2 class="view-title"><i class="fa-solid fa-map-location-dot"></i> National GIS Command Map</h2>
+                        <p class="view-desc">A wide-screen interactive map displaying hundreds of mines across India with thermal overlays, regional clusters, and live telemetry drill-downs.</p>
+                    </div>
+                    <div id="gis-map" class="chart-container leaflet-container" style="height: 600px; border: 1px solid var(--border-light);"></div>
+                    <div class="dashboard-grid" style="margin-top: 24px;">
+                        <div class="card">
+                            <div class="card-header"><span class="card-title">Jharia Cluster</span><div class="card-icon red"><i class="fa-solid fa-fire"></i></div></div>
+                            <div class="card-value">1 Crit</div>
+                            <div class="card-trend trend-down">Sub-surface heating detected</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. ANALYTICS -->
+                <section id="page-analytics" class="page-section">
+                    <div class="view-header">
+                        <h2 class="view-title"><i class="fa-solid fa-brain"></i> AI Risk Analytics</h2>
+                        <p class="view-desc">Renders complex machine learning trend charts, equipment failure forecasts, and regional risk heatmaps.</p>
+                    </div>
+                    <div class="dashboard-grid">
+                        <div class="card" style="grid-column: span 2;">
+                            <h3 style="margin-bottom: 16px;">Equipment Failure Forecast (Next 30 Days)</h3>
+                            <div class="chart-container">
+                                <canvas id="predictiveChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h3 style="margin-bottom: 16px;">Risk Factors Heatmap</h3>
+                            <div class="chart-container">
+                                <canvas id="radarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 7. AUDIT LOG -->
+                <section id="page-audit-log" class="page-section">
+                    <div class="view-header">
+                        <h2 class="view-title"><i class="fa-solid fa-link"></i> Blockchain Audit Log</h2>
+                        <p class="view-desc">Provides a deep-dive developer/auditor view to inspect cryptographic audit trails and version histories of statutory filings.</p>
+                    </div>
+                    <div class="dashboard-grid" style="grid-template-columns: 1fr 2fr;">
+                        <div class="card">
+                            <h3 style="margin-bottom: 16px;">Network Status</h3>
+                            <div style="margin-bottom: 12px; display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-muted);">Consensus</span>
+                                <span style="color: var(--success);"><i class="fa-solid fa-check"></i> Achieved</span>
+                            </div>
+                        </div>
+                        <div class="card" style="font-family: monospace; font-size: 13px;">
+                            <h3 style="margin-bottom: 16px; font-family: 'Outfit', sans-serif;">Live Immutable Ledger Feed</h3>
+                            <div class="audit-feed">
+                                <div class="audit-item">
+                                    <span style="color: var(--primary);">[2026-08-31 08:45:12]</span> 
+                                    <span style="color: var(--success);">TX SUCCESS</span> 
+                                    <br>Hash: <span style="color: var(--text-muted);">0x9f86d081...</span>
+                                    <br>Payload: Statutory Form 4A Submission (Env)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 8. COMPLIANCE -->
+                <section id="page-compliance" class="page-section">
+                    <div class="view-header">
+                        <h2 class="view-title"><i class="fa-solid fa-file-contract"></i> Compliance & Statutory Hub</h2>
+                        <p class="view-desc">Manages heavy tabular ledgers for national environmental clearances, labor licenses, and multi-mine regulatory filings.</p>
+                    </div>
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Document Title</th>
+                                    <th>Expiry Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Form 1: Environmental Clearance</td>
+                                    <td>2027-12-31</td>
+                                    <td><span class="status-badge status-active">Valid</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 9. RESOURCES -->
+                <section id="page-resources" class="page-section">
+                    <div class="view-header">
+                        <h2 class="view-title"><i class="fa-solid fa-tractor"></i> Resource Allocation</h2>
+                        <p class="view-desc">Wide-screen interfaces for managing cross-mine machinery dispatch rosters, payroll auditing, and large-scale labor deployment.</p>
+                    </div>
+                    <div class="kanban-board">
+                        <div class="kanban-col">
+                            <div class="kanban-header">
+                                <span><i class="fa-solid fa-warehouse" style="color: var(--success);"></i> Central Depot</span>
+                            </div>
+                            <div class="kanban-card">
+                                <div style="font-weight: 500;">Excavator EX-400</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 10. ADMIN -->
+                <section id="page-admin" class="page-section">
+                    <div class="view-header">
+                        <h2 class="view-title"><i class="fa-solid fa-user-shield"></i> System Administration</h2>
+                        <p class="view-desc">Platform-wide security configurations, user onboarding, and enterprise role-permission matrix management.</p>
+                    </div>
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <h3 style="margin: 24px 24px 16px;">Role-Based Access Control (RBAC) Matrix</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Role Name</th>
+                                    <th>View Data</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Superadmin</td>
+                                    <td><i class="fa-solid fa-check" style="color: var(--success);"></i></td>
+                                    <td><i class="fa-solid fa-pen" style="color: var(--primary); cursor: pointer;"></i></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- MOBILE SIMULATOR WRAPPER PATTERNS -->
+                
+                <!-- 11. HAZARD CAM -->
+                <section id="page-hazard-cam" class="page-section">
+                    <div class="view-header" style="text-align: center;">
+                        <h2 class="view-title" style="justify-content: center;"><i class="fa-solid fa-camera"></i> Hazard Reporting Camera</h2>
+                        <p class="view-desc" style="margin: 0 auto;">Automatically embeds precise GPS coordinates, offline timestamps, and underground zone tags into captured photos.</p>
+                        <div style="margin-top: 10px; display: inline-block; background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">Mobile Field Agent View</div>
+                    </div>
+                    <div class="mobile-simulator-wrapper">
+                        <div class="mobile-device">
+                            <div class="mobile-screen">
+                                <div class="mobile-header">
+                                    <i class="fa-solid fa-bars" style="color: var(--text-muted);"></i>
+                                    <span class="mobile-title">Hazard</span>
+                                    <i class="fa-regular fa-bell" style="color: var(--text-muted);"></i>
+                                </div>
+                                <div class="mobile-content" style="padding: 0;">
+                                    <div class="camera-viewfinder">
+                                        <div class="camera-overlay"><div class="camera-corners"></div></div>
+                                        <div class="geotag-info">LAT: 23.7957° N<br>LON: 86.4304° E<br>DEPTH: -120m</div>
+                                    </div>
+                                    <button class="mobile-fab" style="left: 50%; transform: translateX(-50%); width: 70px; height: 70px; bottom: 20px; border: 4px solid #fff; background: rgba(255,255,255,0.3);" onclick="window.showToast('Hazard photo captured & geotagged')">
+                                        <div style="width: 50px; height: 50px; background: #fff; border-radius: 25px;"></div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 12. OFFLINE SYNC -->
+                <section id="page-offline-sync" class="page-section">
+                    <div class="view-header" style="text-align: center;">
+                        <h2 class="view-title" style="justify-content: center;"><i class="fa-solid fa-wifi"></i> Offline-First Sync Center</h2>
+                        <p class="view-desc" style="margin: 0 auto;">Manages local storage for workers in zero-signal caves, syncing automatically once a surface beacon is reached.</p>
+                        <div style="margin-top: 10px; display: inline-block; background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">Mobile Field Agent View</div>
+                    </div>
+                    <div class="mobile-simulator-wrapper">
+                        <div class="mobile-device">
+                            <div class="mobile-screen">
+                                <div class="mobile-header">
+                                    <i class="fa-solid fa-bars" style="color: var(--text-muted);"></i>
+                                    <span class="mobile-title">Offline</span>
+                                    <i class="fa-regular fa-bell" style="color: var(--text-muted);"></i>
+                                </div>
+                                <div class="mobile-content">
+                                    <div style="text-align: center; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                        <i class="fa-solid fa-satellite-dish" style="font-size: 32px; color: var(--success); margin-bottom: 12px;"></i>
+                                        <h3>Surface Beacon Detected</h3>
+                                        <p style="color: var(--text-muted); font-size: 13px;">Auto-syncing data payloads...</p>
+                                    </div>
+                                    <h4 style="margin: 20px 0 10px;">Queue</h4>
+                                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 10px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <div style="font-weight: 500; font-size: 14px;">Hazard Report #402</div>
+                                            </div>
+                                            <i class="fa-solid fa-check" style="color: var(--success);"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 13. SOS BUTTON -->
+                <section id="page-sos-button" class="page-section">
+                    <div class="view-header" style="text-align: center;">
+                        <h2 class="view-title" style="justify-content: center;"><i class="fa-solid fa-bell"></i> Emergency SOS Panic Button</h2>
+                        <p class="view-desc" style="margin: 0 auto;">A high-contrast, tactile screen trigger optimized for low-light/gloves that blasts location to surface rescue.</p>
+                        <div style="margin-top: 10px; display: inline-block; background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">Mobile Field Agent View</div>
+                    </div>
+                    <div class="mobile-simulator-wrapper">
+                        <div class="mobile-device">
+                            <div class="mobile-screen">
+                                <div class="mobile-header">
+                                    <i class="fa-solid fa-bars" style="color: var(--text-muted);"></i>
+                                    <span class="mobile-title">Emergency</span>
+                                    <i class="fa-regular fa-bell" style="color: var(--text-muted);"></i>
+                                </div>
+                                <div class="mobile-content" style="display: flex; flex-direction: column; justify-content: center; align-items: center; background: #000;">
+                                    <p style="color: var(--text-muted); text-align: center; margin-bottom: 40px; font-size: 14px;">Tap to instantly trigger distress beacon.<br>Location: Zone B (Deep)</p>
+                                    <div style="width: 200px; height: 200px; border-radius: 50%; background: var(--danger); display: flex; justify-content: center; align-items: center; box-shadow: 0 0 40px rgba(239, 68, 68, 0.5); cursor: pointer; border: 8px solid rgba(255,255,255,0.2); animation: pulse 2s infinite;" onclick="window.showToast('DISTRESS BEACON ACTIVATED! Help is on the way.', true)">
+                                        <span style="color: #fff; font-size: 32px; font-weight: 700; letter-spacing: 2px;">S O S</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 14. RFID PASS -->
+                <section id="page-rfid-pass" class="page-section">
+                    <div class="view-header" style="text-align: center;">
+                        <h2 class="view-title" style="justify-content: center;"><i class="fa-solid fa-id-badge"></i> Beacon Proximity Access Pass</h2>
+                        <p class="view-desc" style="margin: 0 auto;">Generates digital ID passes with QR codes and handles automatic entry/exit logging via tunnel scanners.</p>
+                        <div style="margin-top: 10px; display: inline-block; background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">Mobile Field Agent View</div>
+                    </div>
+                    <div class="mobile-simulator-wrapper">
+                        <div class="mobile-device">
+                            <div class="mobile-screen">
+                                <div class="mobile-header">
+                                    <i class="fa-solid fa-bars" style="color: var(--text-muted);"></i>
+                                    <span class="mobile-title">Beacon</span>
+                                    <i class="fa-regular fa-bell" style="color: var(--text-muted);"></i>
+                                </div>
+                                <div class="mobile-content">
+                                    <div style="background: #fff; border-radius: 16px; padding: 20px; color: #000; text-align: center; margin-top: 20px;">
+                                        <div style="font-size: 20px; font-weight: 700; margin-bottom: 5px;">Ramesh Kumar</div>
+                                        <div style="color: #666; font-size: 14px; margin-bottom: 20px;">ID: EMP-8492 | Sr. Technician</div>
+                                        <div style="width: 200px; height: 200px; background: url('https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg') center/contain no-repeat; margin: 0 auto 20px;"></div>
+                                        <div style="background: #f0fdf4; color: #16a34a; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+                                            <i class="fa-solid fa-check-circle"></i> Cleared for Zones A, B, C
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 15. OCR SCANNER -->
+                <section id="page-ocr-scanner" class="page-section">
+                    <div class="view-header" style="text-align: center;">
+                        <h2 class="view-title" style="justify-content: center;"><i class="fa-solid fa-file-lines"></i> OCR Document Scanner</h2>
+                        <p class="view-desc" style="margin: 0 auto;">Uses the phone camera to instantly scan and convert physical logbooks and handwritten sheets into digital text.</p>
+                        <div style="margin-top: 10px; display: inline-block; background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">Mobile Field Agent View</div>
+                    </div>
+                    <div class="mobile-simulator-wrapper">
+                        <div class="mobile-device">
+                            <div class="mobile-screen">
+                                <div class="mobile-header">
+                                    <i class="fa-solid fa-bars" style="color: var(--text-muted);"></i>
+                                    <span class="mobile-title">OCR</span>
+                                    <i class="fa-regular fa-bell" style="color: var(--text-muted);"></i>
+                                </div>
+                                <div class="mobile-content" style="padding: 0; background: #000;">
+                                    <div style="height: calc(100% - 100px); background: url('https://images.unsplash.com/photo-1554774853-719586f82d77?auto=format&fit=crop&w=800&q=80') center/cover; position: relative;">
+                                        <div style="position: absolute; inset: 40px 20px; border: 2px dashed rgba(255,255,255,0.8); background: rgba(59, 130, 246, 0.2);">
+                                            <div class="scanning-line"></div>
+                                        </div>
+                                    </div>
+                                    <div style="height: 100px; background: #1e1e1e; display: flex; justify-content: center; align-items: center;">
+                                        <button class="mobile-fab" style="position: static; transform: none; width: 60px; height: 60px; box-shadow: none;" onclick="window.showToast('Text extracted: 452 words')">
+                                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toast">
+        <i class="fa-solid fa-circle-info"></i>
+        <span id="toast-message">Action completed</span>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
