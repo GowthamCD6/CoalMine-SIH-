@@ -1,0 +1,16 @@
+[
+  {
+    "id": "ATT-1788603653-TEST-MINE-001",
+    "worker_id": "TEST-MINE-001",
+    "name": "Ramesh Sharma",
+    "role": "Underground Drill Operator",
+    "shift": "Morning Shift (06:00 - 14:00)",
+    "mine_site": "Dhanbad Central Pit #4 (Seam IX)",
+    "date": "2026-09-05",
+    "time": "15:50:53",
+    "status": "Present - On Time",
+    "confidence": "100.0%",
+    "verification_type": "AI Face Recognition (ResNet-18)",
+    "timestamp": "2026-09-05T15:50:53.548154"
+  }
+]

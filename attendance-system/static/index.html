@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coal Mine Smart Attendance System | ML Facial Recognition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body class="dark-theme">
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <div class="brand-logo">
+        <i class="fa-solid fa-helmet-safety"></i>
+      </div>
+      <div>
+        <h1 class="brand-title">MINESCAN AI <span class="badge">ML ATTENDANCE</span></h1>
+        <p class="brand-subtitle">Automated Facial Biometric Worker Attendance System</p>
+      </div>
+    </div>
+
+    <div class="nav-status">
+      <div class="status-indicator">
+        <span class="pulse-dot"></span>
+        <span>ML Engine: <strong>ResNet-18 + DNN Active</strong></span>
+      </div>
+      <div class="site-pill">
+        <i class="fa-solid fa-location-dot"></i>
+        <span>Dhanbad Central Pit #4</span>
+      </div>
+      <div class="clock-pill" id="liveClock">
+        --:--:--
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="main-wrapper">
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="scanner-tab">
+        <i class="fa-solid fa-camera-viewfinder"></i> Live AI Scanner & Attendance
+      </button>
+      <button class="tab-btn" data-tab="register-tab">
+        <i class="fa-solid fa-user-plus"></i> Admin Worker Registration
+      </button>
+      <button class="tab-btn" data-tab="ledger-tab">
+        <i class="fa-solid fa-clipboard-list"></i> Daily Attendance Ledger
+      </button>
+      <button class="tab-btn" data-tab="workers-tab">
+        <i class="fa-solid fa-users"></i> Registered Workers (<span id="workerCountBadge">0</span>)
+      </button>
+    </nav>
+
+    <!-- Top KPI Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon icon-blue"><i class="fa-solid fa-users-gear"></i></div>
+        <div class="stat-data">
+          <span class="stat-label">Total Registered</span>
+          <span class="stat-value" id="kpiTotalWorkers">0</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-green"><i class="fa-solid fa-user-check"></i></div>
+        <div class="stat-data">
+          <span class="stat-label">Present Today</span>
+          <span class="stat-value" id="kpiPresent">0</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-amber"><i class="fa-solid fa-user-xmark"></i></div>
+        <div class="stat-data">
+          <span class="stat-label">Absent / Unreported</span>
+          <span class="stat-value" id="kpiAbsent">0</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-purple"><i class="fa-solid fa-chart-pie"></i></div>
+        <div class="stat-data">
+          <span class="stat-label">Shift Attendance Rate</span>
+          <span class="stat-value" id="kpiRate">0%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 1: LIVE ATTENDANCE SCANNER -->
+    <section id="scanner-tab" class="tab-content active">
+      <div class="scanner-layout">
+        <!-- Video Viewfinder Card -->
+        <div class="card viewfinder-card">
+          <div class="card-header">
+            <div class="header-title">
+              <i class="fa-solid fa-video"></i>
+              <h3>Real-Time Facial Recognition Portal</h3>
+            </div>
+            <div class="viewfinder-controls">
+              <label class="toggle-container">
+                <input type="checkbox" id="autoScanToggle" checked />
+                <span class="toggle-slider"></span>
+                <span class="toggle-text">Continuous Auto-Scan</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="video-container">
+            <video id="webcam" autoplay playsinline muted></video>
+            <canvas id="overlayCanvas"></canvas>
+            
+            <!-- Scanning Reticle Animation -->
+            <div class="scan-laser-line" id="scanLaser"></div>
+            
+            <!-- Camera Inactive Fallback -->
+            <div class="camera-fallback" id="cameraFallback">
+              <i class="fa-solid fa-camera-viewfinder"></i>
+              <p id="cameraFallbackMsg">Camera feed not active or permission pending</p>
+              <div class="fallback-btns">
+                <button class="btn btn-primary" id="startCamBtn">
+                  <i class="fa-solid fa-camera"></i> Allow / Start Camera
+                </button>
+                <button class="btn btn-secondary" id="scannerUploadBtn">
+                  <i class="fa-solid fa-upload"></i> Scan From Photo
+                </button>
+              </div>
+              <input type="file" id="scannerFileInput" accept="image/*" style="display: none;" />
+              <small class="cam-hint">Make sure you open <code>http://localhost:8000</code> in Chrome/Edge</small>
+            </div>
+
+            <!-- Face Bounding Box Info Overlay -->
+            <div class="detection-overlay-badge" id="detectionBadge" style="display: none;">
+              <i class="fa-solid fa-id-badge"></i>
+              <span id="detectionText">Detecting face...</span>
+            </div>
+          </div>
+
+          <!-- Bottom Action Controls -->
+          <div class="viewfinder-actions">
+            <div class="action-btn-group">
+              <button class="btn btn-primary" id="manualScanBtn">
+                <i class="fa-solid fa-expand"></i> Capture & Mark Attendance
+              </button>
+              <button class="btn btn-secondary" id="scanPhotoFileBtn">
+                <i class="fa-solid fa-file-image"></i> Upload & Scan Photo
+              </button>
+              <button class="btn btn-secondary" id="switchCameraBtn">
+                <i class="fa-solid fa-arrows-rotate"></i> Switch Camera
+              </button>
+            </div>
+            <div class="threshold-selector">
+              <label for="thresholdInput">ML Match Threshold:</label>
+              <input type="range" id="thresholdInput" min="0.50" max="0.85" step="0.01" value="0.62" />
+              <span id="thresholdVal">62%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-Time Recognition Stream / Activity Log -->
+        <div class="card scanner-sidebar">
+          <div class="card-header">
+            <div class="header-title">
+              <i class="fa-solid fa-bolt"></i>
+              <h3>Live Verification Activity</h3>
+            </div>
+            <button class="btn-text" id="clearLiveFeedBtn">Clear</button>
+          </div>
+
+          <!-- Last Verified Worker Banner -->
+          <div class="last-verified-card" id="lastVerifiedCard" style="display: none;">
+            <div class="verified-ribbon"><i class="fa-solid fa-circle-check"></i> ATTENDANCE VERIFIED</div>
+            <div class="verified-body">
+              <img id="lastVerifiedPhoto" src="" alt="Worker Photo" class="verified-avatar" />
+              <div class="verified-details">
+                <h4 id="lastVerifiedName">--</h4>
+                <p><span class="badge-role" id="lastVerifiedRole">--</span></p>
+                <div class="verified-meta">
+                  <span><i class="fa-solid fa-id-card"></i> <span id="lastVerifiedId">--</span></span>
+                  <span><i class="fa-solid fa-clock"></i> <span id="lastVerifiedTime">--</span></span>
+                </div>
+                <div class="confidence-bar-wrap">
+                  <div class="confidence-bar" id="lastVerifiedConfBar" style="width: 0%"></div>
+                  <span class="confidence-text" id="lastVerifiedConfText">0% Match</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Feed Stream Items -->
+          <div class="live-activity-stream" id="liveActivityStream">
+            <div class="empty-state">
+              <i class="fa-solid fa-radar"></i>
+              <p>Standing by for facial scan detection...</p>
+              <small>Position face in front of camera</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: ADMIN WORKER REGISTRATION -->
+    <section id="register-tab" class="tab-content">
+      <div class="register-grid">
+        <!-- Form Left Column -->
+        <div class="card">
+          <div class="card-header">
+            <div class="header-title">
+              <i class="fa-solid fa-user-plus"></i>
+              <h3>Worker Profile Registration</h3>
+            </div>
+          </div>
+
+          <form id="registerWorkerForm" class="styled-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="regWorkerId">Worker Employee ID <span class="req">*</span></label>
+                <input type="text" id="regWorkerId" placeholder="e.g. MINER-1082" required />
+              </div>
+              <div class="form-group">
+                <label for="regName">Full Name <span class="req">*</span></label>
+                <input type="text" id="regName" placeholder="e.g. Rajesh Kumar" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="regRole">Role / Designation <span class="req">*</span></label>
+                <select id="regRole" required>
+                  <option value="Underground Drill Operator">Underground Drill Operator</option>
+                  <option value="Mine Safety Inspector">Mine Safety Inspector</option>
+                  <option value="Excavator & Loader Operator">Excavator & Loader Operator</option>
+                  <option value="Blasting & Explosives Tech">Blasting & Explosives Tech</option>
+                  <option value="Electrical & Maintenance Tech">Electrical & Maintenance Tech</option>
+                  <option value="Ventilation & Air Quality Tech">Ventilation & Air Quality Tech</option>
+                  <option value="Heavy Dumper Driver">Heavy Dumper Driver</option>
+                  <option value="Mine Shift Supervisor">Mine Shift Supervisor</option>
+                  <option value="Shaft & Hoist Operator">Shaft & Hoist Operator</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="regShift">Assigned Shift <span class="req">*</span></label>
+                <select id="regShift" required>
+                  <option value="Morning Shift (06:00 - 14:00)">Morning Shift (06:00 - 14:00)</option>
+                  <option value="Afternoon Shift (14:00 - 22:00)">Afternoon Shift (14:00 - 22:00)</option>
+                  <option value="Night Shift (22:00 - 06:00)">Night Shift (22:00 - 06:00)</option>
+                  <option value="General Shift (09:00 - 17:00)">General Shift (09:00 - 17:00)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="regMineSite">Mine Location / Pit Seam <span class="req">*</span></label>
+              <select id="regMineSite" required>
+                <option value="Dhanbad Central Pit #4 (Seam IX)">Dhanbad Central Pit #4 (Seam IX)</option>
+                <option value="Jharia Underground Incline #2">Jharia Underground Incline #2</option>
+                <option value="Korba Open Cast Project B">Korba Open Cast Project B</option>
+                <option value="Raniganj Deep Shaft Section 5">Raniganj Deep Shaft Section 5</option>
+                <option value="Singrauli Surface Mine Site">Singrauli Surface Mine Site</option>
+              </select>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary btn-lg" id="submitRegisterBtn">
+                <i class="fa-solid fa-fingerprint"></i> Save Worker & Train ML Embeddings
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Photo Capture / Upload Right Column -->
+        <div class="card">
+          <div class="card-header">
+            <div class="header-title">
+              <i class="fa-solid fa-camera"></i>
+              <h3>Facial Capture & Biometric Enrollment</h3>
+            </div>
+          </div>
+
+          <div class="capture-wrapper">
+            <div class="capture-tabs">
+              <button class="capture-tab-btn active" id="capCamTabBtn">
+                <i class="fa-solid fa-camera"></i> Live Admin Camera Snap
+              </button>
+              <button class="capture-tab-btn" id="capUploadTabBtn">
+                <i class="fa-solid fa-upload"></i> Upload Photo File
+              </button>
+            </div>
+
+            <!-- Live Admin Camera Snap View -->
+            <div class="capture-panel" id="capCamPanel">
+              <div class="reg-cam-container">
+                <video id="regWebcam" autoplay playsinline muted></video>
+                <div class="face-guide-oval">
+                  <div class="face-guide-text">Align Face Inside Guide</div>
+                </div>
+              </div>
+              <div class="reg-cam-actions">
+                <button class="btn btn-secondary" id="regStartCamBtn">
+                  <i class="fa-solid fa-video"></i> Start Reg Camera
+                </button>
+                <button class="btn btn-success" id="regSnapBtn">
+                  <i class="fa-solid fa-camera-retro"></i> Snap Photo
+                </button>
+              </div>
+            </div>
+
+            <!-- File Upload View -->
+            <div class="capture-panel" id="capUploadPanel" style="display: none;">
+              <div class="drop-zone" id="regDropZone">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <p>Drag and drop worker photo here or click to browse</p>
+                <span>Supports JPG, PNG (Clear front face)</span>
+                <input type="file" id="regFileInput" accept="image/*" style="display: none;" />
+              </div>
+            </div>
+
+            <!-- Captured Preview Box -->
+            <div class="captured-preview-box" id="capturedPreviewBox" style="display: none;">
+              <h4>Captured Biometric Face Photo:</h4>
+              <div class="preview-img-wrap">
+                <img id="capturedImgPreview" src="" alt="Captured Face" />
+                <button class="btn-circle btn-danger" id="discardPhotoBtn" title="Discard and Retake">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+              <p class="preview-success-note"><i class="fa-solid fa-circle-check"></i> Ready for ResNet-18 Feature Extraction</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: ATTENDANCE LEDGER -->
+    <section id="ledger-tab" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div class="header-title">
+            <i class="fa-solid fa-clipboard-check"></i>
+            <h3>Attendance Ledger & Audit Trail</h3>
+          </div>
+          <div class="ledger-actions">
+            <input type="date" id="ledgerDateFilter" class="input-date" />
+            <div class="search-wrap">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="ledgerSearchInput" placeholder="Search by name, ID, or role..." />
+            </div>
+            <button class="btn btn-secondary" id="exportCsvBtn">
+              <i class="fa-solid fa-file-csv"></i> Export CSV
+            </button>
+            <button class="btn btn-danger-outline" id="clearAttendanceBtn">
+              <i class="fa-solid fa-trash-can"></i> Clear Ledger
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="styled-table" id="attendanceTable">
+            <thead>
+              <tr>
+                <th>Record ID</th>
+                <th>Worker</th>
+                <th>Role</th>
+                <th>Shift</th>
+                <th>Date</th>
+                <th>Check-in Time</th>
+                <th>Status</th>
+                <th>ML Confidence</th>
+                <th>Verification Engine</th>
+              </tr>
+            </thead>
+            <tbody id="attendanceTableBody">
+              <tr>
+                <td colspan="9" class="table-empty">Loading attendance records...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: REGISTERED WORKERS DIRECTORY -->
+    <section id="workers-tab" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div class="header-title">
+            <i class="fa-solid fa-address-book"></i>
+            <h3>Enrolled Mine Personnel Directory</h3>
+          </div>
+          <div class="workers-actions">
+            <div class="search-wrap">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="workersSearchInput" placeholder="Search workers..." />
+            </div>
+            <button class="btn btn-primary" id="goToRegisterTabBtn">
+              <i class="fa-solid fa-user-plus"></i> Register New Worker
+            </button>
+          </div>
+        </div>
+
+        <div class="workers-grid" id="workersDirectoryGrid">
+          <!-- Dynamically populated worker cards -->
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Audio Chimes for Attendance Feedback -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
