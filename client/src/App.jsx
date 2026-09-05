@@ -125,7 +125,7 @@ function App() {
           serverStatus={serverStatus}
           onRefreshStatus={checkStatus}
           isRefreshing={isRefreshing}
-          onToggleDiagnostics={() => setDiagnosticsOpen(!diagnosticsOpen)}
+          onToggleDiagnostics={() => setActiveTab('audit-logs')}
           diagnosticsCount={diagnosticsLogs.length}
           currentUser={currentUser}
           onLogout={async () => {
@@ -158,18 +158,11 @@ function App() {
             <PagesManagement onShowToast={showToast} />
           )}
 
-          {activeTab === 'audit' && (
+          {(activeTab === 'audit' || activeTab === 'audit-logs') && (
             <AuditLogsView onShowToast={showToast} />
           )}
         </main>
       </div>
-
-      {/* Slide-Up Diagnostics Console Drawer */}
-      <DiagnosticsDrawer
-        isOpen={diagnosticsOpen}
-        onClose={() => setDiagnosticsOpen(false)}
-        currentUser={currentUser}
-      />
 
       {/* Global Toast Alert */}
       <Toast toast={toast} onClose={() => setToast(null)} />

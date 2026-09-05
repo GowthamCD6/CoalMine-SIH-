@@ -49,21 +49,24 @@ async function request(endpoint, options = {}, isLegacy = false) {
       headers,
     });
 
-    const latency = Math.round(performance.now() - startTime);
-    let responseData = null;
-
-    try {
-      responseData = await response.json();
-    } catch {
-      responseData = null;
+    let requestPayload = null;
+    if (options.body) {
+      try {
+        requestPayload = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+      } catch {
+        requestPayload = options.body;
+      }
     }
 
     const logEntry = {
       id: Math.random().toString(36).substring(2, 9),
       timestamp: new Date().toLocaleTimeString(),
+      isoTimestamp: new Date().toISOString(),
       method: options.method || 'GET',
       endpoint,
       url,
+      headers,
+      requestPayload,
       status: response.status,
       latencyMs: latency,
       success: response.ok,

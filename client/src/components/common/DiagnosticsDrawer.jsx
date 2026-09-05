@@ -9,18 +9,29 @@ import {
   Clock, 
   Trash2,
   Lock,
-  ArrowRight
+  ArrowRight,
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Check,
+  Code2,
+  FileJson,
+  Search
 } from 'lucide-react';
 import { subscribeToApiLogs, getAccessToken } from '../../services/api.js';
 
 export default function DiagnosticsDrawer({ isOpen, onClose, currentUser }) {
   const [logs, setLogs] = useState([]);
   const [activeTab, setActiveTab] = useState('requests'); // 'requests' | 'rbac' | 'token'
+  const [expandedLogId, setExpandedLogId] = useState(null);
+  const [copiedField, setCopiedField] = useState(null);
+  const [searchFilter, setSearchFilter] = useState('');
+  const [selectedMethod, setSelectedMethod] = useState('');
   
   // Live Scope Test Tool State
-  const [testPermission, setTestPermission] = useState('mines:manage');
+  const [testPermission, setTestPermission] = useState('MINES_CREATE');
   const [testOrgId, setTestOrgId] = useState('1');
-  const [testMineId, setTestMineId] = useState('2');
+  const [testMineId, setTestMineId] = useState('');
   const [testResult, setTestResult] = useState(null);
 
   useEffect(() => {
@@ -30,40 +41,41 @@ export default function DiagnosticsDrawer({ isOpen, onClose, currentUser }) {
     return unsubscribe;
   }, []);
 
+  const handleCopy = (text, fieldKey) => {
+    navigator.clipboard.writeText(typeof text === 'string' ? text : JSON.stringify(text, null, 2));
+    setCopiedField(fieldKey);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
   const handleEvaluateScope = () => {
-    // Client-side mirror of rbac.middleware.js logic
-    const userRole = currentUser?.role || 'Superadmin';
-    const userScope = currentUser?.scope_type || 'GLOBAL';
-    const userOrg = currentUser?.organization_id;
-    const userMine = currentUser?.mine_id;
+    const isSuper = currentUser?.permissions?.includes('*');
+    const userSubroles = currentUser?.subroles || [];
 
     let granted = false;
-    let reason = '';
+    let explanation = '';
 
-    if (userScope === 'GLOBAL' || userRole === 'Superadmin') {
+    if (isSuper) {
       granted = true;
-      reason = 'Granted via Global Superadmin authority';
-    } else if (userScope === 'ORGANIZATION') {
-      if (Number(testOrgId) === Number(userOrg)) {
+      explanation = 'Access Granted via Global Superadmin Wildcard (*) clearance.';
+    } else {
+      const match = userSubroles.find(s => {
+        const orgMatch = !testOrgId || !s.organization_id || s.organization_id === Number(testOrgId);
+        const mineMatch = !testMineId || !s.mine_id || s.mine_id === Number(testMineId);
+        return orgMatch && mineMatch;
+      });
+
+      if (match) {
         granted = true;
-        reason = `Granted: User organization (#${userOrg}) matches target organization (#${testOrgId})`;
+        explanation = `Access Granted under scope [Org #${match.organization_id || 'All'}, Mine #${match.mine_id || 'All'}] via role '${match.role_name}'.`;
       } else {
         granted = false;
-        reason = `Denied: Scope mismatch. User belongs to Org #${userOrg}, target is Org #${testOrgId}`;
-      }
-    } else if (userScope === 'MINE') {
-      if (Number(testMineId) === Number(userMine)) {
-        granted = true;
-        reason = `Granted: User mine assignment (#${userMine}) matches target mine (#${testMineId})`;
-      } else {
-        granted = false;
-        reason = `Denied: Scope mismatch. User restricted to Mine #${userMine}, target is Mine #${testMineId}`;
+        explanation = `Access Denied (403 Forbidden). Scope requirements not satisfied for Org #${testOrgId || 'Any'} Mine #${testMineId || 'Any'}.`;
       }
     }
 
     setTestResult({
       granted,
-      reason,
+      explanation,
       evaluatedAt: new Date().toLocaleTimeString(),
       checkedRule: `requirePermission('${testPermission}', { scope: '${testMineId ? 'mine' : 'organization'}' })`,
     });
@@ -71,47 +83,61 @@ export default function DiagnosticsDrawer({ isOpen, onClose, currentUser }) {
 
   if (!isOpen) return null;
 
+  const filteredLogs = logs.filter(log => {
+    const matchSearch = !searchFilter || 
+      log.endpoint.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      log.method.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      String(log.status).includes(searchFilter);
+    const matchMethod = !selectedMethod || log.method === selectedMethod;
+    return matchSearch && matchMethod;
+  });
+
   return (
     <div style={{
       position: 'fixed',
       bottom: 0,
       left: 0,
       right: 0,
-      height: '380px',
+      height: '420px',
       backgroundColor: '#ffffff',
-      borderTop: '2px solid var(--primary)',
-      boxShadow: '0 -10px 25px -5px rgba(15, 23, 42, 0.15)',
-      zIndex: 100,
+      borderTop: '2px solid #2563eb',
+      boxShadow: '0 -10px 25px -5px rgba(15, 23, 42, 0.2)',
+      zIndex: 1000,
       display: 'flex',
       flexDirection: 'column',
-      animation: 'slideUp 0.25s ease-out',
+      fontFamily: 'Inter, system-ui, sans-serif',
+      animation: 'slideUp 0.2s ease-out',
     }}>
-      {/* Header */}
+      {/* Drawer Header */}
       <div style={{
         padding: '0.75rem 1.5rem',
-        backgroundColor: 'var(--bg-surface-subtle)',
-        borderBottom: '1px solid var(--border-subtle)',
+        backgroundColor: '#0f172a',
+        borderBottom: '1px solid #1e293b',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
+        color: '#ffffff'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Terminal size={18} color="var(--primary)" />
-            <h3 style={{ fontSize: '0.95rem', margin: 0 }}>API & RBAC Scope Diagnostics Console</h3>
+            <Terminal size={18} color="#60a5fa" />
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0, color: '#f8fafc' }}>
+              Real-Time HTTP Traffic & Payload Inspector
+            </h3>
           </div>
 
-          <div style={{ display: 'flex', gap: '4px' }}>
+          <div style={{ display: 'flex', gap: '4px', backgroundColor: '#1e293b', padding: '3px', borderRadius: '8px' }}>
             <button
               onClick={() => setActiveTab('requests')}
               style={{
-                padding: '4px 10px',
+                padding: '4px 12px',
                 fontSize: '0.75rem',
-                borderRadius: 'var(--radius-sm)',
+                borderRadius: '6px',
                 fontWeight: 600,
-                backgroundColor: activeTab === 'requests' ? '#ffffff' : 'transparent',
-                color: activeTab === 'requests' ? 'var(--primary)' : 'var(--text-muted)',
-                boxShadow: activeTab === 'requests' ? 'var(--shadow-xs)' : 'none',
+                border: 'none',
+                backgroundColor: activeTab === 'requests' ? '#2563eb' : 'transparent',
+                color: '#ffffff',
+                cursor: 'pointer',
               }}
             >
               HTTP Requests ({logs.length})
@@ -119,126 +145,270 @@ export default function DiagnosticsDrawer({ isOpen, onClose, currentUser }) {
             <button
               onClick={() => setActiveTab('rbac')}
               style={{
-                padding: '4px 10px',
+                padding: '4px 12px',
                 fontSize: '0.75rem',
-                borderRadius: 'var(--radius-sm)',
+                borderRadius: '6px',
                 fontWeight: 600,
-                backgroundColor: activeTab === 'rbac' ? '#ffffff' : 'transparent',
-                color: activeTab === 'rbac' ? 'var(--primary)' : 'var(--text-muted)',
-                boxShadow: activeTab === 'rbac' ? 'var(--shadow-xs)' : 'none',
+                border: 'none',
+                backgroundColor: activeTab === 'rbac' ? '#2563eb' : 'transparent',
+                color: '#ffffff',
+                cursor: 'pointer',
               }}
             >
-              RBAC Scope Evaluator
+              Scope Engine Simulator
             </button>
             <button
               onClick={() => setActiveTab('token')}
               style={{
-                padding: '4px 10px',
+                padding: '4px 12px',
                 fontSize: '0.75rem',
-                borderRadius: 'var(--radius-sm)',
+                borderRadius: '6px',
                 fontWeight: 600,
-                backgroundColor: activeTab === 'token' ? '#ffffff' : 'transparent',
-                color: activeTab === 'token' ? 'var(--primary)' : 'var(--text-muted)',
-                boxShadow: activeTab === 'token' ? 'var(--shadow-xs)' : 'none',
+                border: 'none',
+                backgroundColor: activeTab === 'token' ? '#2563eb' : 'transparent',
+                color: '#ffffff',
+                cursor: 'pointer',
               }}
             >
-              JWT Session Info
+              Active Session JWT
             </button>
           </div>
         </div>
 
         <button 
           onClick={onClose}
-          style={{ padding: '4px', borderRadius: '4px', color: 'var(--text-muted)' }}
-          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
+          style={{ padding: '6px', borderRadius: '6px', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+          onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
+          onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
         >
           <X size={18} />
         </button>
       </div>
 
-      {/* Content Body */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.5rem' }}>
+      {/* Drawer Body */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.5rem', backgroundColor: '#f8fafc' }}>
         {activeTab === 'requests' && (
-          <div>
-            {logs.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                No API requests logged yet. Perform actions like fetching or updating data to observe requests.
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {/* Filter Bar */}
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', width: '280px' }}>
+                <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                <input
+                  type="text"
+                  placeholder="Filter requests by endpoint or status..."
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                  style={{ width: '100%', padding: '6px 10px 6px 30px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8rem', backgroundColor: '#ffffff' }}
+                />
+              </div>
+
+              <select
+                value={selectedMethod}
+                onChange={(e) => setSelectedMethod(e.target.value)}
+                style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8rem', backgroundColor: '#ffffff' }}
+              >
+                <option value="">All HTTP Methods</option>
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+              </select>
+
+              <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: 'auto' }}>
+                Click on any request to expand and inspect its <strong>Request Payload</strong> and <strong>Response Data</strong>
+              </span>
+            </div>
+
+            {filteredLogs.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2.5rem', color: '#94a3b8', fontSize: '0.85rem' }}>
+                No API requests recorded matching your filter.
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {logs.map((log) => {
+                {filteredLogs.map((log) => {
                   const isSuccess = log.status >= 200 && log.status < 300;
                   const isValidation = log.status === 400;
                   const isForbidden = log.status === 403;
+                  const isExpanded = expandedLogId === log.id;
 
                   return (
                     <div
                       key={log.id}
                       style={{
-                        padding: '10px 14px',
-                        borderRadius: 'var(--radius-md)',
-                        backgroundColor: isSuccess ? '#f8fafc' : isValidation ? '#fffbeb' : '#fef2f2',
-                        border: `1px solid ${isSuccess ? 'var(--border-subtle)' : isValidation ? 'var(--warning-border)' : 'var(--danger-border)'}`,
+                        borderRadius: '8px',
+                        backgroundColor: '#ffffff',
+                        border: `1px solid ${isExpanded ? '#2563eb' : isSuccess ? '#e2e8f0' : isValidation ? '#fde68a' : '#fecaca'}`,
                         fontSize: '0.8rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '6px',
+                        overflow: 'hidden',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                        transition: 'border-color 0.15s ease',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      {/* Summary Row */}
+                      <div
+                        onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
+                        style={{
+                          padding: '10px 14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          cursor: 'pointer',
+                          backgroundColor: isExpanded ? '#eff6ff' : 'transparent',
+                        }}
+                      >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          {isExpanded ? <ChevronDown size={16} color="#2563eb" /> : <ChevronRight size={16} color="#94a3b8" />}
                           <span style={{
                             fontWeight: 700,
-                            padding: '2px 6px',
+                            padding: '2px 7px',
                             borderRadius: '4px',
-                            backgroundColor: log.method === 'GET' ? '#eff6ff' : log.method === 'POST' ? '#f0fdf4' : '#fff7ed',
-                            color: log.method === 'GET' ? '#1d4ed8' : log.method === 'POST' ? '#15803d' : '#c2410c',
-                            fontSize: '0.7rem',
+                            backgroundColor: log.method === 'GET' ? '#eff6ff' : log.method === 'POST' ? '#f0fdf4' : log.method === 'PUT' ? '#fff7ed' : '#fef2f2',
+                            color: log.method === 'GET' ? '#1d4ed8' : log.method === 'POST' ? '#15803d' : log.method === 'PUT' ? '#c2410c' : '#dc2626',
+                            fontSize: '0.72rem',
                           }}>
                             {log.method}
                           </span>
-                          <span style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--text-main)' }}>
+                          <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#0f172a' }}>
                             {log.endpoint}
                           </span>
+                          {log.requestPayload && (
+                            <span style={{
+                              fontSize: '0.68rem',
+                              padding: '1px 5px',
+                              borderRadius: '4px',
+                              backgroundColor: '#e2e8f0',
+                              color: '#334155',
+                              fontWeight: 600
+                            }}>
+                              Payload Body
+                            </span>
+                          )}
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <span style={{
                             padding: '2px 8px',
-                            borderRadius: 'var(--radius-full)',
+                            borderRadius: '10px',
                             fontWeight: 700,
                             fontSize: '0.72rem',
-                            backgroundColor: isSuccess ? 'var(--success-light)' : 'var(--danger-light)',
-                            color: isSuccess ? 'var(--success-text)' : 'var(--danger-text)',
+                            backgroundColor: isSuccess ? '#dcfce7' : isForbidden ? '#fee2e2' : '#fef3c7',
+                            color: isSuccess ? '#166534' : isForbidden ? '#991b1b' : '#92400e',
                           }}>
                             {log.status === 0 ? 'NETWORK_ERR' : `HTTP ${log.status}`}
                           </span>
-                          <span style={{ color: 'var(--text-light)', fontSize: '0.75rem' }}>
+                          <span style={{ color: '#64748b', fontSize: '0.75rem' }}>
                             {log.latencyMs}ms
                           </span>
-                          <span style={{ color: 'var(--text-light)', fontSize: '0.75rem' }}>
+                          <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
                             {log.timestamp}
                           </span>
                         </div>
                       </div>
 
-                      {/* Error details breakdown */}
-                      {log.response?.error?.details && (
+                      {/* Expanded Payload & Response Detail Section */}
+                      {isExpanded && (
                         <div style={{
-                          backgroundColor: '#ffffff',
-                          padding: '6px 10px',
-                          borderRadius: '4px',
-                          border: '1px solid var(--warning-border)',
-                          marginTop: '4px',
+                          padding: '12px 14px',
+                          borderTop: '1px solid #e2e8f0',
+                          backgroundColor: '#f8fafc',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '10px',
                         }}>
-                          <span style={{ fontWeight: 600, color: 'var(--warning-text)' }}>Validation Issues:</span>
-                          <ul style={{ paddingLeft: '1.2rem', marginTop: '2px', color: 'var(--text-body)' }}>
-                            {log.response.error.details.map((issue, idx) => (
-                              <li key={idx}>
-                                <code>{issue.field}</code>: {issue.message}
-                              </li>
-                            ))}
-                          </ul>
+                          {/* URL & Method info */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ fontSize: '0.78rem', color: '#475569', wordBreak: 'break-all' }}>
+                              <strong>Target URL:</strong> <code>{log.url}</code>
+                            </div>
+                            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                              Timestamp: {log.isoTimestamp || log.timestamp}
+                            </span>
+                          </div>
+
+                          {/* Request Payload and Response side-by-side grid */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '10px' }}>
+                            {/* Request Payload Box */}
+                            <div style={{
+                              backgroundColor: '#ffffff',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '6px',
+                              overflow: 'hidden'
+                            }}>
+                              <div style={{
+                                padding: '6px 10px',
+                                backgroundColor: '#f1f5f9',
+                                borderBottom: '1px solid #cbd5e1',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                              }}>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155' }}>
+                                  📤 Request Payload (Body)
+                                </span>
+                                {log.requestPayload && (
+                                  <button
+                                    onClick={() => handleCopy(log.requestPayload, `req-${log.id}`)}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'none', border: 'none', color: '#2563eb', fontSize: '0.7rem', cursor: 'pointer', fontWeight: 600 }}
+                                  >
+                                    {copiedField === `req-${log.id}` ? <Check size={12} color="#16a34a" /> : <Copy size={12} />}
+                                    {copiedField === `req-${log.id}` ? 'Copied' : 'Copy'}
+                                  </button>
+                                )}
+                              </div>
+                              <pre style={{
+                                margin: 0,
+                                padding: '8px 10px',
+                                fontSize: '0.75rem',
+                                maxHeight: '180px',
+                                overflowY: 'auto',
+                                fontFamily: 'monospace',
+                                color: log.requestPayload ? '#0f172a' : '#94a3b8'
+                              }}>
+                                {log.requestPayload ? JSON.stringify(log.requestPayload, null, 2) : 'No request body payload (Query params only)'}
+                              </pre>
+                            </div>
+
+                            {/* Response Payload Box */}
+                            <div style={{
+                              backgroundColor: '#ffffff',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '6px',
+                              overflow: 'hidden'
+                            }}>
+                              <div style={{
+                                padding: '6px 10px',
+                                backgroundColor: '#f1f5f9',
+                                borderBottom: '1px solid #cbd5e1',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                              }}>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155' }}>
+                                  📥 Response Data (HTTP {log.status})
+                                </span>
+                                {log.response && (
+                                  <button
+                                    onClick={() => handleCopy(log.response, `res-${log.id}`)}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'none', border: 'none', color: '#2563eb', fontSize: '0.7rem', cursor: 'pointer', fontWeight: 600 }}
+                                  >
+                                    {copiedField === `res-${log.id}` ? <Check size={12} color="#16a34a" /> : <Copy size={12} />}
+                                    {copiedField === `res-${log.id}` ? 'Copied' : 'Copy'}
+                                  </button>
+                                )}
+                              </div>
+                              <pre style={{
+                                margin: 0,
+                                padding: '8px 10px',
+                                fontSize: '0.75rem',
+                                maxHeight: '180px',
+                                overflowY: 'auto',
+                                fontFamily: 'monospace',
+                                color: isSuccess ? '#0f172a' : '#991b1b'
+                              }}>
+                                {log.response ? JSON.stringify(log.response, null, 2) : 'No response content'}
+                              </pre>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -249,130 +419,116 @@ export default function DiagnosticsDrawer({ isOpen, onClose, currentUser }) {
           </div>
         )}
 
+        {/* RBAC SIMULATOR TAB */}
         {activeTab === 'rbac' && (
-          <div>
-            <div style={{ marginBottom: '1rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-              Simulate and test how <code>server/src/middlewares/rbac.middleware.js</code> checks permissions with Organization vs Mine scoping for the active user.
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ fontSize: '0.82rem', color: '#475569' }}>
+              Simulate how the backend RBAC middleware evaluates scope clearance for <strong>{currentUser?.username || 'Current User'}</strong>.
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr) auto', gap: '1rem', alignItems: 'flex-end', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '4px' }}>
                   Permission Code
                 </label>
                 <select
                   value={testPermission}
                   onChange={(e) => setTestPermission(e.target.value)}
-                  className="input-white"
-                  style={{ height: '38px', fontSize: '0.8rem' }}
+                  style={{ width: '100%', padding: '7px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8rem' }}
                 >
-                  <option value="mines:manage">mines:manage</option>
-                  <option value="organizations:manage">organizations:manage</option>
-                  <option value="users:manage">users:manage</option>
-                  <option value="emergency:broadcast">emergency:broadcast</option>
-                  <option value="inspections:create">inspections:create</option>
+                  <option value="MINES_CREATE">MINES_CREATE</option>
+                  <option value="MINES_READ">MINES_READ</option>
+                  <option value="ORGANIZATIONS_CREATE">ORGANIZATIONS_CREATE</option>
+                  <option value="USERS_CREATE">USERS_CREATE</option>
+                  <option value="ROLES_CREATE">ROLES_CREATE</option>
                 </select>
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '4px' }}>
                   Target Organization ID
                 </label>
                 <input
                   type="number"
                   value={testOrgId}
                   onChange={(e) => setTestOrgId(e.target.value)}
-                  className="input-white"
-                  style={{ height: '38px', fontSize: '0.8rem' }}
+                  style={{ width: '100%', padding: '7px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8rem' }}
                   placeholder="e.g. 1"
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                  Target Mine ID
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                  Target Mine ID (Optional)
                 </label>
                 <input
                   type="number"
                   value={testMineId}
                   onChange={(e) => setTestMineId(e.target.value)}
-                  className="input-white"
-                  style={{ height: '38px', fontSize: '0.8rem' }}
-                  placeholder="e.g. 2"
+                  style={{ width: '100%', padding: '7px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8rem' }}
+                  placeholder="e.g. 1"
                 />
               </div>
-
-              <button
-                onClick={handleEvaluateScope}
-                style={{
-                  height: '38px',
-                  padding: '0 16px',
-                  backgroundColor: 'var(--primary)',
-                  color: '#ffffff',
-                  borderRadius: 'var(--radius-md)',
-                  fontWeight: 600,
-                  fontSize: '0.8rem',
-                }}
-              >
-                Evaluate Access
-              </button>
             </div>
+
+            <button
+              onClick={handleEvaluateScope}
+              style={{
+                alignSelf: 'flex-start',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                backgroundColor: '#2563eb',
+                color: '#ffffff',
+                border: 'none',
+                fontWeight: 600,
+                fontSize: '0.8rem',
+                cursor: 'pointer'
+              }}
+            >
+              Evaluate Scope Access
+            </button>
 
             {testResult && (
               <div style={{
-                padding: '14px',
-                borderRadius: 'var(--radius-md)',
-                backgroundColor: testResult.granted ? 'var(--success-light)' : 'var(--danger-light)',
-                border: `1px solid ${testResult.granted ? 'var(--success-border)' : 'var(--danger-border)'}`,
+                padding: '12px',
+                borderRadius: '8px',
+                backgroundColor: testResult.granted ? '#f0fdf4' : '#fef2f2',
+                border: `1px solid ${testResult.granted ? '#bbf7d0' : '#fecaca'}`,
                 display: 'flex',
-                alignItems: 'flex-start',
-                gap: '12px',
+                alignItems: 'center',
+                gap: '10px',
+                fontSize: '0.82rem'
               }}>
-                {testResult.granted ? (
-                  <CheckCircle2 size={22} color="var(--success)" />
-                ) : (
-                  <ShieldAlert size={22} color="var(--danger)" />
-                )}
+                {testResult.granted ? <CheckCircle2 size={18} color="#16a34a" /> : <ShieldAlert size={18} color="#dc2626" />}
                 <div>
-                  <div style={{
-                    fontWeight: 700,
-                    fontSize: '0.9rem',
-                    color: testResult.granted ? 'var(--success-text)' : 'var(--danger-text)',
-                    marginBottom: '2px',
-                  }}>
-                    {testResult.granted ? 'ACCESS GRANTED (200 OK)' : 'ACCESS DENIED (403 FORBIDDEN)'}
+                  <div style={{ fontWeight: 700, color: testResult.granted ? '#166534' : '#991b1b' }}>
+                    {testResult.granted ? 'Access Allowed' : 'Access Denied'}
                   </div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-body)', marginBottom: '4px' }}>
-                    {testResult.reason}
-                  </div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-                    Rule Evaluated: {testResult.checkedRule} • At {testResult.evaluatedAt}
-                  </div>
+                  <div style={{ color: '#334155', marginTop: '2px' }}>{testResult.explanation}</div>
                 </div>
               </div>
             )}
           </div>
         )}
 
+        {/* TOKEN TAB */}
         {activeTab === 'token' && (
-          <div style={{ fontSize: '0.85rem' }}>
-            <div style={{ marginBottom: '1rem' }}>
-              <strong>Current User Session:</strong> {currentUser?.username || 'Guest'} ({currentUser?.role || 'None'})
-            </div>
-            <div style={{ marginBottom: '0.5rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-              JWT Bearer Access Token in LocalStorage:
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ fontSize: '0.82rem', color: '#475569' }}>
+              JWT Bearer Access Token stored for the current session:
             </div>
             <pre style={{
-              backgroundColor: '#f8fafc',
-              border: '1px solid var(--border-subtle)',
-              padding: '10px',
-              borderRadius: 'var(--radius-md)',
+              backgroundColor: '#ffffff',
+              border: '1px solid #cbd5e1',
+              borderRadius: '8px',
+              padding: '1rem',
               fontSize: '0.75rem',
-              overflowX: 'auto',
-              fontFamily: 'monospace',
-              color: 'var(--primary)',
+              wordBreak: 'break-all',
+              whiteSpace: 'pre-wrap',
+              margin: 0,
+              fontFamily: 'monospace'
             }}>
-              {getAccessToken() || 'No active JWT token stored (using mock fallback)'}
+              {getAccessToken() || 'No active JWT token found in localStorage.'}
             </pre>
           </div>
         )}

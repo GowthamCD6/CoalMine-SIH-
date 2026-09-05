@@ -36,7 +36,7 @@ export default function Sidebar({ activeTab, onSelectTab }) {
     {
       title: 'Compliance & Audit',
       items: [
-        { id: 'audit', label: 'Immutable Audit Trail', icon: FileText },
+        { id: 'audit-logs', label: 'Audit Logs & Payloads', icon: FileText },
       ],
     },
   ];
