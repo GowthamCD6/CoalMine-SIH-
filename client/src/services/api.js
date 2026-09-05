@@ -49,6 +49,15 @@ async function request(endpoint, options = {}, isLegacy = false) {
       headers,
     });
 
+    const latency = Math.round(performance.now() - startTime);
+    let responseData = null;
+
+    try {
+      responseData = await response.json();
+    } catch {
+      responseData = null;
+    }
+
     let requestPayload = null;
     if (options.body) {
       try {
