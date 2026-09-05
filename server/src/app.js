@@ -20,7 +20,7 @@ const app = express();
 
 // Security HTTP headers
 app.use(helmet({
-  contentSecurityPolicy: false, // Allows Swagger UI assets
+  contentSecurityPolicy: false, // Allows Swagger UI assets-
 }));
 
 // CORS Configuration

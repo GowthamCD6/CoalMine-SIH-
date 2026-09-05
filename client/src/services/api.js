@@ -1,19 +1,7 @@
-import {
-  initialOrganizations,
-  initialMines,
-  initialUsers,
-  initialRoles,
-  initialPermissions,
-  initialInspections,
-  initialComplianceDocs,
-  initialMachinery,
-  initialBlockchainLogs,
-} from '../data/mockData.js';
-
 const API_BASE_URL = 'http://localhost:5000/api/v1';
 const LEGACY_API_URL = 'http://localhost:5000/api';
 
-// In-Memory Diagnostics Log Bus for the Diagnostics Drawer
+// In-Memory Diagnostics Log Bus for Diagnostics Drawer
 const diagnosticListeners = new Set();
 const apiLogs = [];
 
@@ -31,10 +19,13 @@ const broadcastLog = (logEntry) => {
 
 // Local storage token helpers
 export const getAccessToken = () => localStorage.getItem('coalmin_access_token');
+export const getRefreshToken = () => localStorage.getItem('coalmin_refresh_token');
+
 export const setAuthTokens = (access, refresh) => {
   if (access) localStorage.setItem('coalmin_access_token', access);
   if (refresh) localStorage.setItem('coalmin_refresh_token', refresh);
 };
+
 export const clearAuthTokens = () => {
   localStorage.removeItem('coalmin_access_token');
   localStorage.removeItem('coalmin_refresh_token');
@@ -85,12 +76,11 @@ async function request(endpoint, options = {}, isLegacy = false) {
       const errorObj = new Error(responseData?.message || `HTTP ${response.status}: Request failed`);
       errorObj.status = response.status;
       errorObj.data = responseData;
-      
-      // Check for structured Zod validation errors from error.middleware.js
-      if (responseData?.error?.code === 'VALIDATION_ERROR' || responseData?.code === 'VALIDATION_ERROR') {
+
+      if (responseData?.error?.code === 'VALIDATION_ERROR') {
         errorObj.isValidationError = true;
         errorObj.fieldErrors = {};
-        const issues = responseData?.error?.details || responseData?.details || [];
+        const issues = responseData?.error?.details || [];
         issues.forEach((issue) => {
           if (issue.field) {
             errorObj.fieldErrors[issue.field] = issue.message;
@@ -98,19 +88,16 @@ async function request(endpoint, options = {}, isLegacy = false) {
         });
       }
 
-      // Check for Scoped RBAC error
       if (response.status === 403) {
         errorObj.isForbidden = true;
-        errorObj.scopeDenied = true;
       }
 
       throw errorObj;
     }
 
-    return responseData?.data || responseData;
+    return responseData?.data !== undefined ? responseData.data : responseData;
   } catch (err) {
     if (!err.status) {
-      // Network failure / Server offline
       broadcastLog({
         id: Math.random().toString(36).substring(2, 9),
         timestamp: new Date().toLocaleTimeString(),
@@ -120,295 +107,156 @@ async function request(endpoint, options = {}, isLegacy = false) {
         status: 0,
         latencyMs: Math.round(performance.now() - startTime),
         success: false,
-        error: err.message,
+        response: { message: err.message || 'Connection failed / Server offline' },
       });
     }
     throw err;
   }
 }
 
-// In-Memory mutable store for fallback data so user updates persist across views
-let fallbackOrgs = [...initialOrganizations];
-let fallbackMines = [...initialMines];
-let fallbackUsers = [...initialUsers];
-let fallbackInspections = [...initialInspections];
-let fallbackMachinery = [...initialMachinery];
+// Build query string helper
+const toQueryString = (params = {}) => {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, val]) => {
+    if (val !== undefined && val !== null && val !== '') {
+      query.append(key, val);
+    }
+  });
+  const qs = query.toString();
+  return qs ? `?${qs}` : '';
+};
 
 export const api = {
-  // System Health
-  async getHealth() {
+  // Health & Server Status
+  getHealth: async () => {
     try {
       const data = await request('/health');
-      return { online: true, ...data };
+      return { online: true, database: data?.database || 'connected', raw: data };
     } catch {
-      try {
-        const legacy = await request('/health', {}, true);
-        return { online: true, ...legacy };
-      } catch {
-        return { online: false, database: 'offline', uptime: 0 };
-      }
+      return { online: false, database: 'offline', raw: null };
     }
   },
 
-  // Legacy Telemetry Stats
-  async getStats() {
-    try {
-      return await request('/stats', {}, true);
-    } catch {
-      return {
-        minesActive: fallbackMines.filter((m) => m.status === 'ACTIVE').length,
-        productionTodayTons: 4520,
-        sensorsOnline: 148,
-        operationalEfficiency: '94.8%',
-      };
+  getDbStatus: () => request('/db-status', {}, true),
+
+  // Auth
+  login: async (login, password, device_id = 'web-dashboard') => {
+    const res = await request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ login, password, device_id }),
+    });
+    if (res?.tokens) {
+      setAuthTokens(res.tokens.accessToken, res.tokens.refreshToken);
     }
+    return res;
   },
 
-  // Authentication
-  async login(login, password) {
+  register: async (userData) => {
+    return request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  },
+
+  refreshToken: async () => {
+    const refresh = getRefreshToken();
+    if (!refresh) throw new Error('No refresh token available');
+    const res = await request('/auth/refresh', {
+      method: 'POST',
+      body: JSON.stringify({ refresh_token: refresh }),
+    });
+    if (res?.tokens) {
+      setAuthTokens(res.tokens.accessToken, res.tokens.refreshToken);
+    }
+    return res;
+  },
+
+  logout: async () => {
     try {
-      const res = await request('/auth/login', {
+      const refresh = getRefreshToken();
+      await request('/auth/logout', {
         method: 'POST',
-        body: JSON.stringify({ login, password }),
+        body: JSON.stringify({ refresh_token: refresh }),
       });
-      if (res?.tokens?.accessToken) {
-        setAuthTokens(res.tokens.accessToken, res.tokens.refreshToken);
-      }
-      return res;
-    } catch (err) {
-      // If server is unreachable, allow demo login for preset roles
-      if (!err.status || err.status >= 500) {
-        const user = fallbackUsers.find((u) => u.email === login || u.username === login) || fallbackUsers[0];
-        const mockToken = 'mock-jwt-token-' + user.id;
-        setAuthTokens(mockToken, 'mock-refresh-token');
-        return { user, tokens: { accessToken: mockToken } };
-      }
-      throw err;
+    } finally {
+      clearAuthTokens();
     }
   },
 
-  async register(userData) {
-    try {
-      return await request('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(userData),
-      });
-    } catch (err) {
-      if (!err.status || err.status >= 500) {
-        const newUser = {
-          id: Date.now(),
-          ...userData,
-          status: 'ACTIVE',
-          role: 'Field Technician',
-          scope_type: 'MINE',
-          scope_target: 'Local Site',
-        };
-        fallbackUsers.push(newUser);
-        return newUser;
-      }
-      throw err;
-    }
-  },
-
-  async getMe() {
-    try {
-      return await request('/auth/me');
-    } catch {
-      return fallbackUsers[0];
-    }
-  },
-
-  logout() {
-    clearAuthTokens();
-  },
+  getMe: () => request('/auth/me'),
 
   // Organizations
-  async getOrganizations() {
-    try {
-      const res = await request('/organizations');
-      if (Array.isArray(res)) return res;
-      if (res?.items && Array.isArray(res.items)) return res.items;
-      return fallbackOrgs;
-    } catch {
-      return fallbackOrgs;
-    }
-  },
-
-  async createOrganization(data) {
-    try {
-      return await request('/organizations', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-    } catch (err) {
-      if (err.isValidationError) throw err;
-      const created = { id: Date.now(), ...data, status: data.status || 'ACTIVE', minesCount: 0 };
-      fallbackOrgs.unshift(created);
-      return created;
-    }
-  },
-
-  async updateOrganization(id, data) {
-    try {
-      return await request(`/organizations/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      });
-    } catch (err) {
-      if (err.isValidationError) throw err;
-      fallbackOrgs = fallbackOrgs.map((org) => (org.id === Number(id) ? { ...org, ...data } : org));
-      return { id, ...data };
-    }
-  },
+  getOrganizations: (params) => request(`/organizations${toQueryString(params)}`),
+  getOrganization: (id) => request(`/organizations/${id}`),
+  createOrganization: (data) => request('/organizations', { method: 'POST', body: JSON.stringify(data) }),
+  updateOrganization: (id, data) => request(`/organizations/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteOrganization: (id) => request(`/organizations/${id}`, { method: 'DELETE' }),
 
   // Mines
-  async getMines(params = {}) {
-    try {
-      const query = new URLSearchParams(params).toString();
-      const res = await request(`/mines${query ? `?${query}` : ''}`);
-      if (Array.isArray(res)) return res;
-      if (res?.items && Array.isArray(res.items)) return res.items;
-      return fallbackMines;
-    } catch {
-      return fallbackMines;
-    }
-  },
-
-  async createMine(data) {
-    try {
-      return await request('/mines', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-    } catch (err) {
-      if (err.isValidationError) throw err;
-      const created = { id: Date.now(), ...data, status: data.status || 'ACTIVE', personnelUnderground: 120, methaneLevel: '0.10%' };
-      fallbackMines.unshift(created);
-      return created;
-    }
-  },
-
-  async updateMine(id, data) {
-    try {
-      return await request(`/mines/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      });
-    } catch (err) {
-      if (err.isValidationError) throw err;
-      fallbackMines = fallbackMines.map((m) => (m.id === Number(id) ? { ...m, ...data } : m));
-      return { id, ...data };
-    }
-  },
+  getMines: (params) => request(`/mines${toQueryString(params)}`),
+  getMine: (id) => request(`/mines/${id}`),
+  createMine: (data) => request('/mines', { method: 'POST', body: JSON.stringify(data) }),
+  updateMine: (id, data) => request(`/mines/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteMine: (id) => request(`/mines/${id}`, { method: 'DELETE' }),
 
   // Users
-  async getUsers() {
-    try {
-      const res = await request('/users');
-      if (Array.isArray(res)) return res;
-      if (res?.items && Array.isArray(res.items)) return res.items;
-      return fallbackUsers;
-    } catch {
-      return fallbackUsers;
-    }
-  },
+  getUsers: (params) => request(`/users${toQueryString(params)}`),
+  getUser: (id) => request(`/users/${id}`),
+  createUser: (data) => request('/users', { method: 'POST', body: JSON.stringify(data) }),
+  updateUser: (id, data) => request(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteUser: (id) => request(`/users/${id}`, { method: 'DELETE' }),
+  getUserSessions: (userId) => request(`/users/${userId}/sessions`),
 
-  async createUser(data) {
-    try {
-      return await request('/users', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-    } catch (err) {
-      if (err.isValidationError) throw err;
-      const created = { id: Date.now(), ...data, status: data.status || 'ACTIVE' };
-      fallbackUsers.unshift(created);
-      return created;
-    }
-  },
+  // Roles
+  getRoles: (params) => request(`/roles${toQueryString(params)}`),
+  getRole: (id) => request(`/roles/${id}`),
+  createRole: (data) => request('/roles', { method: 'POST', body: JSON.stringify(data) }),
+  updateRole: (id, data) => request(`/roles/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteRole: (id) => request(`/roles/${id}`, { method: 'DELETE' }),
+  getRolePermissions: (roleId) => request(`/roles/${roleId}/permissions`),
+  attachRolePermission: (roleId, permission_id) => request(`/roles/${roleId}/permissions`, { method: 'POST', body: JSON.stringify({ permission_id }) }),
+  detachRolePermission: (roleId, permissionId) => request(`/roles/${roleId}/permissions/${permissionId}`, { method: 'DELETE' }),
 
-  // Roles & Permissions
-  async getRoles() {
-    try {
-      const res = await request('/roles');
-      return Array.isArray(res) ? res : fallbackRoles;
-    } catch {
-      return initialRoles;
-    }
-  },
+  // Subroles
+  getSubroles: (params) => request(`/subroles${toQueryString(params)}`),
+  getSubrole: (id) => request(`/subroles/${id}`),
+  createSubrole: (data) => request('/subroles', { method: 'POST', body: JSON.stringify(data) }),
+  updateSubrole: (id, data) => request(`/subroles/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteSubrole: (id) => request(`/subroles/${id}`, { method: 'DELETE' }),
+  getSubrolePermissions: (subroleId) => request(`/subroles/${subroleId}/permissions`),
+  attachSubrolePermission: (subroleId, permission_id) => request(`/subroles/${subroleId}/permissions`, { method: 'POST', body: JSON.stringify({ permission_id }) }),
+  detachSubrolePermission: (subroleId, permissionId) => request(`/subroles/${subroleId}/permissions/${permissionId}`, { method: 'DELETE' }),
 
-  async getPermissions() {
-    try {
-      const res = await request('/permissions');
-      return Array.isArray(res) ? res : initialPermissions;
-    } catch {
-      return initialPermissions;
-    }
-  },
+  // User Subroles
+  getUserSubroles: (userId) => request(`/users/${userId}/subroles`),
+  assignUserSubrole: (userId, data) => request(`/users/${userId}/subroles`, { method: 'POST', body: JSON.stringify(data) }),
+  updateUserSubrole: (userId, subroleId, data) => request(`/users/${userId}/subroles/${subroleId}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  unassignUserSubrole: (userId, subroleId) => request(`/users/${userId}/subroles/${subroleId}`, { method: 'DELETE' }),
+  getSubroleUsers: (subroleId) => request(`/subroles/${subroleId}/users`),
 
-  // Inspections
-  getInspections() {
-    return [...fallbackInspections];
-  },
+  // Permissions
+  getPermissions: (params) => request(`/permissions${toQueryString(params)}`),
+  getPermission: (id) => request(`/permissions/${id}`),
+  createPermission: (data) => request('/permissions', { method: 'POST', body: JSON.stringify(data) }),
+  updatePermission: (id, data) => request(`/permissions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deletePermission: (id) => request(`/permissions/${id}`, { method: 'DELETE' }),
 
-  createInspection(inspection) {
-    const created = {
-      id: 'V-' + Math.floor(100 + Math.random() * 900),
-      ...inspection,
-      status: 'In Progress',
-    };
-    fallbackInspections.unshift(created);
-    return created;
-  },
-
-  updateInspectionStatus(id, newStatus) {
-    fallbackInspections = fallbackInspections.map((item) =>
-      item.id === id ? { ...item, status: newStatus } : item
-    );
-    return fallbackInspections;
-  },
-
-  // Compliance Documents
-  getComplianceDocs() {
-    return [...initialComplianceDocs];
-  },
-
-  // Machinery
-  getMachinery() {
-    return [...fallbackMachinery];
-  },
-
-  moveMachineryLocation(id, targetLocation) {
-    fallbackMachinery = fallbackMachinery.map((item) =>
-      item.id === id ? { ...item, location: targetLocation } : item
-    );
-    return fallbackMachinery;
-  },
-
-  // Blockchain Logs
-  getBlockchainLogs() {
-    return [...initialBlockchainLogs];
-  },
-
-  // Audit Logs
-  async getAuditLogs() {
-    try {
-      const res = await request('/audit-logs');
-      return Array.isArray(res) ? res : initialBlockchainLogs;
-    } catch {
-      return initialBlockchainLogs;
-    }
-  },
+  // Pages
+  getPages: (params) => request(`/pages${toQueryString(params)}`),
+  getPageTree: () => request('/pages/tree'),
+  getPage: (id) => request(`/pages/${id}`),
+  createPage: (data) => request('/pages', { method: 'POST', body: JSON.stringify(data) }),
+  updatePage: (id, data) => request(`/pages/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deletePage: (id) => request(`/pages/${id}`, { method: 'DELETE' }),
+  getPagePermissions: (pageId) => request(`/pages/${pageId}/permissions`),
+  attachPagePermission: (pageId, permission_id) => request(`/pages/${pageId}/permissions`, { method: 'POST', body: JSON.stringify({ permission_id }) }),
+  detachPagePermission: (pageId, permissionId) => request(`/pages/${pageId}/permissions/${permissionId}`, { method: 'DELETE' }),
 
   // Sessions
-  async getSessions() {
-    try {
-      return await request('/sessions');
-    } catch {
-      return [
-        { id: 1, device_id: 'Chrome on Windows 11 (Host)', ip_address: '127.0.0.1', created_at: new Date().toISOString(), status: 'Active' },
-        { id: 2, device_id: 'Android Mobile Field Unit #08', ip_address: '192.168.1.45', created_at: new Date(Date.now() - 3600000).toISOString(), status: 'Active' },
-      ];
-    }
-  },
+  revokeSession: (sessionId) => request(`/sessions/${sessionId}`, { method: 'DELETE' }),
+
+  // Audit Logs
+  getAuditLogs: (params) => request(`/audit-logs${toQueryString(params)}`),
 };
+
+export default api;

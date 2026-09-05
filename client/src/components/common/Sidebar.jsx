@@ -2,59 +2,41 @@ import React from 'react';
 import {
   Pickaxe,
   Activity,
-  ClipboardCheck,
-  Truck,
-  MapPin,
-  Brain,
-  Link,
-  FileCheck,
-  Tractor,
-  UserCheck,
-  Camera,
-  Wifi,
-  Radio,
+  Building2,
+  Users,
+  ShieldCheck,
+  FolderTree,
   FileText,
-  AlertOctagon,
-  Shield,
-  Layers,
   ChevronRight,
-  Sparkles,
+  Database,
 } from 'lucide-react';
 
-export default function Sidebar({ activeTab, onSelectTab, inspectionCount = 6, emergencyCount = 0 }) {
+export default function Sidebar({ activeTab, onSelectTab }) {
   const navSections = [
     {
-      title: 'Operations & Safety',
+      title: 'Platform Overview',
       items: [
-        { id: 'telemetry', label: 'Operational Overview', icon: Activity },
-        { id: 'inspections', label: 'Inspections & Violations', icon: ClipboardCheck, badge: inspectionCount, badgeColor: 'warning' },
-        { id: 'emergency', label: 'Emergency & SOS Console', icon: AlertOctagon, badge: emergencyCount > 0 ? emergencyCount : null, badgeColor: 'danger' },
+        { id: 'dashboard', label: 'System Overview & Health', icon: Activity },
       ],
     },
     {
-      title: 'Enterprise Hubs (Web)',
+      title: 'Core Enterprise Entities',
       items: [
-        { id: 'command-map', label: 'National GIS Command Map', icon: MapPin },
-        { id: 'analytics', label: 'AI Risk Analytics', icon: Brain },
-        { id: 'blockchain', label: 'Blockchain Audit Log', icon: Link },
-        { id: 'compliance', label: 'Compliance & Statutory Hub', icon: FileCheck },
-        { id: 'resources', label: 'Resource Allocation', icon: Tractor },
+        { id: 'organizations', label: 'Organizations & Mines', icon: Building2 },
+        { id: 'users', label: 'User Directory & Provisioning', icon: Users },
       ],
     },
     {
-      title: 'Administration & RBAC',
+      title: 'Access Control & Navigation',
       items: [
-        { id: 'admin', label: 'System Admin & Scoped RBAC', icon: UserCheck },
+        { id: 'rbac', label: 'Roles & Subroles (RBAC)', icon: ShieldCheck },
+        { id: 'pages', label: 'Pages & Hierarchy Tree', icon: FolderTree },
       ],
     },
     {
-      title: 'Mobile Field Simulators',
+      title: 'Compliance & Audit',
       items: [
-        { id: 'mobile-hazard-cam', label: 'Hazard Camera Geotagger', icon: Camera, tag: 'Mobile' },
-        { id: 'mobile-offline-sync', label: 'Offline-First Sync Center', icon: Wifi, tag: 'Mobile' },
-        { id: 'mobile-sos-button', label: 'Emergency SOS Panic Trigger', icon: Radio, tag: 'Mobile' },
-        { id: 'mobile-rfid-pass', label: 'Beacon Proximity RFID Pass', icon: Shield, tag: 'Mobile' },
-        { id: 'mobile-ocr-scanner', label: 'OCR Document Scanner', icon: FileText, tag: 'Mobile' },
+        { id: 'audit', label: 'Immutable Audit Trail', icon: FileText },
       ],
     },
   ];
@@ -63,7 +45,7 @@ export default function Sidebar({ activeTab, onSelectTab, inspectionCount = 6, e
     <aside style={{
       width: '280px',
       backgroundColor: '#ffffff',
-      borderRight: '1px solid var(--border-subtle)',
+      borderRight: '1px solid var(--border-subtle, #e2e8f0)',
       display: 'flex',
       flexDirection: 'column',
       height: '100vh',
@@ -71,7 +53,7 @@ export default function Sidebar({ activeTab, onSelectTab, inspectionCount = 6, e
       top: 0,
       zIndex: 50,
       flexShrink: 0,
-      boxShadow: 'var(--shadow-xs)',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
     }}>
       {/* Brand Header */}
       <div style={{
@@ -80,7 +62,7 @@ export default function Sidebar({ activeTab, onSelectTab, inspectionCount = 6, e
         alignItems: 'center',
         padding: '0 1.5rem',
         gap: '12px',
-        borderBottom: '1px solid var(--border-subtle)',
+        borderBottom: '1px solid var(--border-subtle, #e2e8f0)',
       }}>
         <div style={{
           width: '38px',
@@ -99,59 +81,56 @@ export default function Sidebar({ activeTab, onSelectTab, inspectionCount = 6, e
           <div style={{
             fontSize: '1.15rem',
             fontWeight: 800,
-            color: 'var(--text-main)',
-            fontFamily: 'var(--font-display)',
+            color: '#0f172a',
+            letterSpacing: '-0.02em',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            lineHeight: 1.1,
           }}>
-            <span>CoalMin</span>
+            CoalMin
             <span style={{
               fontSize: '0.65rem',
-              fontWeight: 700,
-              backgroundColor: 'var(--primary-light)',
-              color: 'var(--primary)',
-              padding: '2px 6px',
+              backgroundColor: '#eff6ff',
+              color: '#2563eb',
+              border: '1px solid #bfdbfe',
+              padding: '1px 5px',
               borderRadius: '4px',
-              border: '1px solid var(--primary-border)',
+              fontWeight: 700,
             }}>
               SIH26024
             </span>
           </div>
-          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-            Enterprise Mining Operations
-          </span>
+          <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>
+            TiDB Cloud Management API
+          </div>
         </div>
       </div>
 
-      {/* Navigation Links Scrollable List */}
-      <nav style={{
+      {/* Nav List */}
+      <div style={{
         flex: 1,
         overflowY: 'auto',
-        padding: '1rem 0.85rem',
+        padding: '1.25rem 0.75rem',
         display: 'flex',
         flexDirection: 'column',
-        gap: '1.25rem',
+        gap: '1.5rem',
       }}>
-        {navSections.map((section, idx) => (
+        {navSections.map((sec, idx) => (
           <div key={idx}>
             <div style={{
               fontSize: '0.7rem',
-              fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
-              color: 'var(--text-light)',
-              padding: '0 0.65rem',
-              marginBottom: '6px',
+              fontWeight: 700,
+              color: '#94a3b8',
+              padding: '0 0.75rem 0.5rem',
             }}>
-              {section.title}
+              {sec.title}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-              {section.items.map((item) => {
-                const IconComponent = item.icon;
+              {sec.items.map((item) => {
+                const Icon = item.icon;
                 const isActive = activeTab === item.id;
-
                 return (
                   <button
                     key={item.id}
@@ -159,88 +138,50 @@ export default function Sidebar({ activeTab, onSelectTab, inspectionCount = 6, e
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '9px 12px',
-                      borderRadius: 'var(--radius-md)',
-                      backgroundColor: isActive ? 'var(--primary-light)' : 'transparent',
-                      color: isActive ? 'var(--primary)' : 'var(--text-body)',
-                      fontWeight: isActive ? 600 : 500,
-                      fontSize: '0.84rem',
+                      gap: '10px',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      backgroundColor: isActive ? '#eff6ff' : 'transparent',
+                      color: isActive ? '#2563eb' : '#475569',
+                      fontWeight: isActive ? 700 : 500,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
                       textAlign: 'left',
-                      border: isActive ? '1px solid var(--primary-border)' : '1px solid transparent',
-                      transition: 'all var(--transition-fast)',
+                      transition: 'all 0.15s ease',
+                      width: '100%',
                     }}
                     onMouseEnter={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.backgroundColor = 'var(--bg-surface-subtle)';
-                        e.currentTarget.style.color = 'var(--text-main)';
-                      }
+                      if (!isActive) e.currentTarget.style.backgroundColor = '#f8fafc';
                     }}
                     onMouseLeave={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                        e.currentTarget.style.color = 'var(--text-body)';
-                      }
+                      if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <IconComponent
-                        size={17}
-                        color={isActive ? 'var(--primary)' : 'var(--text-muted)'}
-                      />
-                      <span>{item.label}</span>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      {item.badge != null && (
-                        <span style={{
-                          fontSize: '0.7rem',
-                          fontWeight: 700,
-                          padding: '1px 6px',
-                          borderRadius: '10px',
-                          backgroundColor: item.badgeColor === 'danger' ? 'var(--danger-light)' : 'var(--warning-light)',
-                          color: item.badgeColor === 'danger' ? 'var(--danger-text)' : 'var(--warning-text)',
-                          border: `1px solid ${item.badgeColor === 'danger' ? 'var(--danger-border)' : 'var(--warning-border)'}`,
-                        }}>
-                          {item.badge}
-                        </span>
-                      )}
-                      {item.tag && (
-                        <span style={{
-                          fontSize: '0.65rem',
-                          fontWeight: 600,
-                          padding: '1px 5px',
-                          borderRadius: '4px',
-                          backgroundColor: '#f1f5f9',
-                          color: '#475569',
-                          border: '1px solid #e2e8f0',
-                        }}>
-                          {item.tag}
-                        </span>
-                      )}
-                    </div>
+                    <Icon size={18} color={isActive ? '#2563eb' : '#64748b'} />
+                    <span style={{ flex: 1 }}>{item.label}</span>
+                    {isActive && <ChevronRight size={14} color="#2563eb" />}
                   </button>
                 );
               })}
             </div>
           </div>
         ))}
-      </nav>
+      </div>
 
-      {/* Sidebar Footer Info */}
+      {/* DB Connection Status Widget Footer */}
       <div style={{
         padding: '1rem',
-        borderTop: '1px solid var(--border-subtle)',
-        backgroundColor: '#fafafa',
-        fontSize: '0.75rem',
-        color: 'var(--text-muted)',
+        borderTop: '1px solid var(--border-subtle, #e2e8f0)',
+        backgroundColor: '#f8fafc',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-          <span style={{ fontWeight: 600 }}>TiDB Cloud Hybrid</span>
-          <span style={{ color: 'var(--success)', fontWeight: 600 }}>Connected</span>
-        </div>
-        <div style={{ fontSize: '0.7rem', color: 'var(--text-light)' }}>
-          Ministry of Coal • Smart India Hackathon
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Database size={16} color="#059669" />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#0f172a' }}>TiDB MySQL 8.0+</div>
+            <div style={{ fontSize: '0.7rem', color: '#16a34a' }}>SSL Pool Connected</div>
+          </div>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
         </div>
       </div>
     </aside>

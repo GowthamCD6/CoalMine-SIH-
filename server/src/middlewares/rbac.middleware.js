@@ -64,10 +64,17 @@ export const requirePermission = (permissionCode, options = {}) => {
 
     const permissions = req.resolvedPermissions;
 
-    // Filter permissions matching the required permission code or superadmin '*'
-    const matching = permissions.filter(
-      (p) => p.permission_code === permissionCode || p.permission_code === '*' || p.permission_code === 'ALL_PERMISSIONS'
+    // Check if user has global superadmin wildcard '*' or 'ALL_PERMISSIONS'
+    const isGlobalSuperAdmin = permissions.some(
+      (p) => p.permission_code === '*' || p.permission_code === 'ALL_PERMISSIONS'
     );
+
+    if (isGlobalSuperAdmin) {
+      return next();
+    }
+
+    // Filter permissions matching the required permission code
+    const matching = permissions.filter((p) => p.permission_code === permissionCode);
 
     if (matching.length === 0) {
       throw ApiError.forbidden(`Missing required permission: ${permissionCode}`);

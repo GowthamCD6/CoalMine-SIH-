@@ -1,41 +1,30 @@
 import React, { useState } from 'react';
 import { 
   Search, 
-  Bell, 
-  AlertTriangle, 
   Activity, 
   Terminal, 
   User, 
   LogOut, 
   ShieldCheck, 
-  RefreshCw 
+  RefreshCw,
+  BookOpen
 } from 'lucide-react';
 
 export default function Header({
   serverStatus,
   onRefreshStatus,
   isRefreshing,
-  onTriggerEmergency,
   onToggleDiagnostics,
   diagnosticsCount,
   currentUser,
   onOpenAuth,
   onLogout,
-  onSearch,
 }) {
-  const [searchValue, setSearchValue] = useState('');
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (onSearch) onSearch(searchValue);
-  };
-
   return (
     <header style={{
       height: '70px',
       backgroundColor: '#ffffff',
-      borderBottom: '1px solid var(--border-subtle)',
+      borderBottom: '1px solid #e2e8f0',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -43,55 +32,24 @@ export default function Header({
       position: 'sticky',
       top: 0,
       zIndex: 40,
-      boxShadow: 'var(--shadow-xs)',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
     }}>
-      {/* Search Bar */}
-      <form onSubmit={handleSearchSubmit} style={{ position: 'relative', width: '380px' }}>
-        <Search size={18} style={{
-          position: 'absolute',
-          left: '14px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          color: 'var(--text-light)',
-        }} />
-        <input
-          type="text"
-          placeholder="Search mines, violations, personnel, or equipment..."
-          value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
-          className="input-white"
-          style={{
-            paddingLeft: '40px',
-            paddingRight: '60px',
-            height: '40px',
-            borderRadius: 'var(--radius-full)',
-            backgroundColor: 'var(--bg-surface-subtle)',
-            border: '1px solid transparent',
-            fontSize: '0.85rem',
-          }}
-          onFocus={(e) => {
-            e.target.style.backgroundColor = '#ffffff';
-            e.target.style.borderColor = 'var(--primary)';
-          }}
-          onBlur={(e) => {
-            if (!searchValue) e.target.style.backgroundColor = 'var(--bg-surface-subtle)';
-            e.target.style.borderColor = 'transparent';
-          }}
-        />
+      {/* Title / Scope info */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#0f172a' }}>
+          CoalMin REST API Management
+        </span>
         <span style={{
-          position: 'absolute',
-          right: '12px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          fontSize: '0.7rem',
-          color: 'var(--text-light)',
-          background: '#ffffff',
-          border: '1px solid var(--border-subtle)',
-          padding: '2px 6px',
-          borderRadius: '4px',
-          fontWeight: 600,
-        }}>⌘K</span>
-      </form>
+          fontSize: '0.72rem',
+          padding: '2px 8px',
+          borderRadius: '12px',
+          backgroundColor: '#eff6ff',
+          color: '#2563eb',
+          fontWeight: '600',
+        }}>
+          Express 4.21 + TiDB
+        </span>
+      </div>
 
       {/* Right Actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -101,17 +59,20 @@ export default function Header({
           alignItems: 'center',
           gap: '8px',
           padding: '6px 12px',
-          backgroundColor: serverStatus.online ? 'var(--success-light)' : 'var(--warning-light)',
-          border: `1px solid ${serverStatus.online ? 'var(--success-border)' : 'var(--warning-border)'}`,
-          borderRadius: 'var(--radius-full)',
+          backgroundColor: serverStatus.online ? '#ecfdf5' : '#fef2f2',
+          border: `1px solid ${serverStatus.online ? '#a7f3d0' : '#fecaca'}`,
+          borderRadius: '20px',
           fontSize: '0.8rem',
           fontWeight: 600,
-          color: serverStatus.online ? 'var(--success-text)' : 'var(--warning-text)',
+          color: serverStatus.online ? '#065f46' : '#991b1b',
         }}>
-          <div className="pulse-dot" style={{
-            backgroundColor: serverStatus.online ? 'var(--success)' : 'var(--warning)',
+          <span style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            backgroundColor: serverStatus.online ? '#10b981' : '#ef4444',
           }} />
-          <span>{serverStatus.online ? 'Node API v1 Online' : 'Demo / Standalone Mode'}</span>
+          <span>{serverStatus.online ? 'TiDB Cloud API Online' : 'Backend Offline'}</span>
           <button 
             onClick={onRefreshStatus}
             title="Recheck Server Health"
@@ -120,65 +81,65 @@ export default function Header({
               alignItems: 'center', 
               color: 'inherit',
               padding: '2px',
-              borderRadius: '4px',
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer',
             }}
           >
-            <RefreshCw size={13} className={isRefreshing ? 'spin-animation' : ''} />
+            <RefreshCw size={13} className={isRefreshing ? 'animate-spin' : ''} />
           </button>
         </div>
 
-        {/* Emergency SOS Broadcast Header Button */}
-        <button
-          onClick={onTriggerEmergency}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '7px 14px',
-            backgroundColor: 'var(--danger)',
-            color: '#ffffff',
-            borderRadius: 'var(--radius-md)',
-            fontWeight: 700,
-            fontSize: '0.8rem',
-            letterSpacing: '0.03em',
-            boxShadow: '0 2px 8px rgba(239, 68, 68, 0.35)',
-            border: 'none',
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--danger)'}
-        >
-          <AlertTriangle size={15} />
-          <span>EMERGENCY SOS</span>
-        </button>
-
-        {/* API Diagnostics Drawer Toggle */}
-        <button
-          onClick={onToggleDiagnostics}
-          title="Open API & RBAC Scope Diagnostics Console"
+        {/* Swagger Docs Link */}
+        <a
+          href="http://localhost:5000/api/docs"
+          target="_blank"
+          rel="noreferrer"
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
             padding: '7px 12px',
             backgroundColor: '#ffffff',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-md)',
+            border: '1px solid #cbd5e1',
+            borderRadius: '8px',
             fontSize: '0.8rem',
-            color: 'var(--text-body)',
+            color: '#334155',
             fontWeight: 600,
+            textDecoration: 'none',
           }}
-          onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--border-hover)'}
-          onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
         >
-          <Terminal size={15} color="var(--primary)" />
-          <span>API Diagnostics</span>
+          <BookOpen size={15} color="#2563eb" />
+          <span>Swagger Docs</span>
+        </a>
+
+        {/* API Diagnostics Drawer Toggle */}
+        <button
+          onClick={onToggleDiagnostics}
+          title="Open API & Diagnostics Inspector"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '7px 12px',
+            backgroundColor: '#ffffff',
+            border: '1px solid #cbd5e1',
+            borderRadius: '8px',
+            fontSize: '0.8rem',
+            color: '#334155',
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          <Terminal size={15} color="#2563eb" />
+          <span>API Inspector</span>
           {diagnosticsCount > 0 && (
             <span style={{
-              backgroundColor: 'var(--primary-light)',
-              color: 'var(--primary)',
+              backgroundColor: '#dbeafe',
+              color: '#1e40af',
               fontSize: '0.7rem',
               padding: '1px 6px',
-              borderRadius: 'var(--radius-full)',
+              borderRadius: '10px',
               fontWeight: 700,
             }}>
               {diagnosticsCount}
@@ -186,22 +147,22 @@ export default function Header({
           )}
         </button>
 
-        {/* User Profile / Switch Role Badge */}
-        {currentUser ? (
+        {/* User Profile / Auth */}
+        {currentUser && (
           <div style={{
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
             padding: '4px 10px 4px 6px',
-            backgroundColor: 'var(--bg-surface-subtle)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-full)',
+            backgroundColor: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: '20px',
           }}>
             <div style={{
               width: '32px',
               height: '32px',
               borderRadius: '50%',
-              backgroundColor: 'var(--primary)',
+              backgroundColor: '#2563eb',
               color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
@@ -209,46 +170,38 @@ export default function Header({
               fontWeight: 700,
               fontSize: '0.85rem',
             }}>
-              {currentUser.first_name ? currentUser.first_name[0] : 'U'}
+              {currentUser.first_name ? currentUser.first_name[0] : (currentUser.username ? currentUser.username[0].toUpperCase() : 'U')}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)' }}>
-                {currentUser.first_name} {currentUser.last_name || ''}
+              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0f172a' }}>
+                {currentUser.first_name || currentUser.username} {currentUser.last_name || ''}
               </span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 600 }}>
-                {currentUser.role || 'Superadmin'} • {currentUser.scope_type || 'GLOBAL'}
+              <span style={{ fontSize: '0.7rem', color: '#2563eb', fontWeight: 600 }}>
+                {currentUser.email || 'Super Administrator'}
               </span>
             </div>
             <button
-              onClick={onOpenAuth}
-              title="Switch user or view permissions"
+              onClick={onLogout}
+              title="Logout session"
               style={{
-                padding: '4px 6px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 8px',
+                color: '#ef4444',
+                backgroundColor: '#fee2e2',
+                border: '1px solid #fecaca',
+                borderRadius: '6px',
+                cursor: 'pointer',
                 fontSize: '0.75rem',
-                color: 'var(--text-muted)',
-                borderRadius: '4px',
+                fontWeight: '600',
                 marginLeft: '4px',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary)'}
-              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
             >
-              Switch
+              <LogOut size={13} />
+              Logout
             </button>
           </div>
-        ) : (
-          <button
-            onClick={onOpenAuth}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: 'var(--primary)',
-              color: '#ffffff',
-              borderRadius: 'var(--radius-md)',
-              fontWeight: 600,
-              fontSize: '0.85rem',
-            }}
-          >
-            Sign In
-          </button>
         )}
       </div>
     </header>
