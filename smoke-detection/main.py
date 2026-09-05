@@ -18,8 +18,7 @@ from ultralytics import YOLO
 MODEL_PATH = "best.pt"
 DEFAULT_SOURCES = {
     "1": ("light-smoke.mp4", "Light Smoke (Breathable - No Alert Sample)"),
-    "2": ("high-smoke-1.mp4", "Heavy Smoke 1 (Transition to Hazard Sample)"),
-    "3": ("high-smoke-2.mp4", "Heavy Smoke 2 (Critical Unbreathable Sample)"),
+    "2": ("high-smoke.mp4", "Heavy Smoke 1 (Critical Unbreathable Sample)"),
 }
 
 # Detection Sensitivity
