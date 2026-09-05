@@ -23,10 +23,19 @@ app.use(helmet({
   contentSecurityPolicy: false, // Allows Swagger UI assets-
 }));
 
-// CORS Configuration
+// CORS Configuration - Permissive for React Native mobile clients and web dev
 app.use(
   cors({
-    origin: env.CLIENT_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, curl) or any origin in development
+      if (!origin || env.NODE_ENV === 'development') {
+        return callback(null, true);
+      }
+      if (origin === env.CLIENT_URL || origin.startsWith('http://localhost') || origin.startsWith('http://10.') || origin.startsWith('http://192.168.')) {
+        return callback(null, true);
+      }
+      callback(null, true);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],

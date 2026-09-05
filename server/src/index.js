@@ -18,6 +18,17 @@ const startServer = async () => {
       logger.info(`🩺 Health Check endpoint at http://localhost:${PORT}/api/v1/health`);
     });
 
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        logger.error(`❌ Port ${PORT} is already in use by another process!`);
+        logger.error(`👉 To free port ${PORT}, run in your terminal: npx kill-port ${PORT}`);
+        logger.error(`👉 Or change PORT in .env (e.g. PORT=5001)`);
+      } else {
+        logger.error('Server encountered an error:', err);
+      }
+      process.exit(1);
+    });
+
     const gracefulShutdown = (signal) => {
       logger.info(`Received ${signal}. Shutting down server gracefully...`);
       server.close(() => {

@@ -9,6 +9,7 @@ import {
   FileText,
   ChevronRight,
   Database,
+  Smartphone,
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onSelectTab }) {
@@ -17,6 +18,12 @@ export default function Sidebar({ activeTab, onSelectTab }) {
       title: 'Platform Overview',
       items: [
         { id: 'dashboard', label: 'System Overview & Health', icon: Activity },
+      ],
+    },
+    {
+      title: 'Mobile & Field Unit',
+      items: [
+        { id: 'mobile-app', label: 'Mobile App & Delegation', icon: Smartphone },
       ],
     },
     {
