@@ -1,3 +1,4 @@
+import { ZodError } from 'zod';
 import { ApiError } from '../utils/ApiError.js';
 import logger from '../utils/logger.js';
 
@@ -11,13 +12,14 @@ export const errorHandler = (err, req, res, next) => {
     statusCode = err.statusCode;
     message = err.message;
     code = err.code;
-    details = err.details;
-  } else if (err.name === 'ZodError') {
+    details = err.details || [];
+  } else if (err instanceof ZodError || err.name === 'ZodError' || Array.isArray(err.issues)) {
     statusCode = 400;
     message = 'Validation Error';
     code = 'VALIDATION_ERROR';
-    details = err.errors.map((e) => ({
-      field: e.path.join('.'),
+    const issues = err.issues || err.errors || [];
+    details = issues.map((e) => ({
+      field: Array.isArray(e.path) ? e.path.join('.') : '',
       message: e.message,
     }));
   } else if (err.name === 'JsonWebTokenError') {
@@ -55,12 +57,12 @@ export const errorHandler = (err, req, res, next) => {
   }
 
   if (statusCode >= 500) {
-    logger.error(`[${req.method}] ${req.originalUrl} - ${message}`, {
+    logger.error(`[${req.method}] ${req.originalUrl || req.url} - ${message}`, {
       stack: err.stack,
       error: err,
     });
   } else {
-    logger.warn(`[${req.method}] ${req.originalUrl} - ${message}`, {
+    logger.warn(`[${req.method}] ${req.originalUrl || req.url} - ${message}`, {
       code,
       details,
     });

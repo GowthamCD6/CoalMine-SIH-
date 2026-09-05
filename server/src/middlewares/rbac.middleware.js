@@ -76,8 +76,12 @@ export const requirePermission = (permissionCode, options = {}) => {
     // Check scope if required
     const scopeType = options.scope; // 'organization' | 'mine' | undefined
     if (scopeType) {
-      let targetOrgId = options.getOrganizationId ? options.getOrganizationId(req) : (req.params.organization_id || req.params.organizationId || req.body.organization_id || req.query.organization_id);
-      let targetMineId = options.getMineId ? options.getMineId(req) : (req.params.mine_id || req.params.mineId || req.body.mine_id || req.query.mine_id);
+      let targetOrgId = options.getOrganizationId 
+        ? options.getOrganizationId(req) 
+        : (req.params?.organization_id || req.params?.organizationId || req.params?.id || req.body?.organization_id || req.query?.organization_id);
+      let targetMineId = options.getMineId 
+        ? options.getMineId(req) 
+        : (req.params?.mine_id || req.params?.mineId || (scopeType === 'mine' ? req.params?.id : null) || req.body?.mine_id || req.query?.mine_id);
 
       if (scopeType === 'organization' && targetOrgId) {
         targetOrgId = Number(targetOrgId);
