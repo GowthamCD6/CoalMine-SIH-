@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import apiRoutes from './routes/api.js';
+import { testConnection } from './config/db.js';
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.get('/', (req, res) => {
     version: '1.0.0',
     endpoints: {
       health: '/api/health',
+      dbStatus: '/api/db-status',
       stats: '/api/stats'
     }
   });
@@ -38,6 +40,9 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal Server Error', message: err.message });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 CoalMin server running on http://localhost:${PORT}`);
+  // Test TiDB connection
+  await testConnection();
 });
+
