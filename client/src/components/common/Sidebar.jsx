@@ -10,6 +10,12 @@ import {
   ChevronRight,
   Database,
   Smartphone,
+  ClipboardCheck,
+  Ambulance,
+  Map,
+  BrainCircuit,
+  FileCheck,
+  Tractor,
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onSelectTab }) {
@@ -18,6 +24,23 @@ export default function Sidebar({ activeTab, onSelectTab }) {
       title: 'Platform Overview',
       items: [
         { id: 'dashboard', label: 'System Overview & Health', icon: Activity },
+        { id: 'command-map', label: 'National GIS Command Map', icon: Map },
+        { id: 'analytics', label: 'AI Risk Analytics', icon: BrainCircuit },
+      ],
+    },
+    {
+      title: 'Core Operations',
+      items: [
+        { id: 'inspections', label: 'Inspections & Violations', icon: ClipboardCheck },
+        { id: 'emergency', label: 'Emergency & SOS Console', icon: Ambulance },
+        { id: 'resources', label: 'Resource Allocation', icon: Tractor },
+      ]
+    },
+    {
+      title: 'Compliance & Audit',
+      items: [
+        { id: 'compliance', label: 'Compliance & Statutory Hub', icon: FileCheck },
+        { id: 'audit-logs', label: 'Blockchain Audit Log', icon: FileText },
       ],
     },
     {
@@ -27,32 +50,19 @@ export default function Sidebar({ activeTab, onSelectTab }) {
       ],
     },
     {
-      title: 'Core Enterprise Entities',
+      title: 'System Administration',
       items: [
         { id: 'organizations', label: 'Organizations & Mines', icon: Building2 },
         { id: 'users', label: 'User Directory & Provisioning', icon: Users },
-      ],
-    },
-    {
-      title: 'Access Control & Navigation',
-      items: [
         { id: 'rbac', label: 'Roles & Subroles (RBAC)', icon: ShieldCheck },
         { id: 'pages', label: 'Pages & Hierarchy Tree', icon: FolderTree },
       ],
-    },
-    {
-      title: 'Compliance & Audit',
-      items: [
-        { id: 'audit-logs', label: 'Audit Logs & Payloads', icon: FileText },
-      ],
-    },
+    }
   ];
 
   return (
-    <aside style={{
+    <aside className="glass-panel" style={{
       width: '280px',
-      backgroundColor: '#ffffff',
-      borderRight: '1px solid var(--border-subtle, #e2e8f0)',
       display: 'flex',
       flexDirection: 'column',
       height: '100vh',
@@ -60,7 +70,10 @@ export default function Sidebar({ activeTab, onSelectTab }) {
       top: 0,
       zIndex: 50,
       flexShrink: 0,
-      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+      borderTop: 'none',
+      borderLeft: 'none',
+      borderBottom: 'none',
+      borderRadius: '0',
     }}>
       {/* Brand Header */}
       <div style={{
@@ -69,18 +82,18 @@ export default function Sidebar({ activeTab, onSelectTab }) {
         alignItems: 'center',
         padding: '0 1.5rem',
         gap: '12px',
-        borderBottom: '1px solid var(--border-subtle, #e2e8f0)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
       }}>
         <div style={{
           width: '38px',
           height: '38px',
-          borderRadius: '10px',
-          background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          color: '#ffffff',
-          boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
+          color: '#60a5fa',
+          backgroundColor: 'rgba(37, 99, 235, 0.2)',
+          borderRadius: '12px',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
+          boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)'
         }}>
           <Pickaxe size={20} />
         </div>
@@ -142,6 +155,7 @@ export default function Sidebar({ activeTab, onSelectTab }) {
                   <button
                     key={item.id}
                     onClick={() => onSelectTab(item.id)}
+                    className={isActive ? 'clay-nav-active' : ''}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -149,9 +163,9 @@ export default function Sidebar({ activeTab, onSelectTab }) {
                       padding: '8px 12px',
                       borderRadius: '8px',
                       border: 'none',
-                      backgroundColor: isActive ? '#eff6ff' : 'transparent',
-                      color: isActive ? '#2563eb' : '#475569',
-                      fontWeight: isActive ? 700 : 500,
+                      backgroundColor: 'transparent',
+                      color: '#475569',
+                      fontWeight: 500,
                       fontSize: '0.85rem',
                       cursor: 'pointer',
                       textAlign: 'left',
@@ -165,9 +179,9 @@ export default function Sidebar({ activeTab, onSelectTab }) {
                       if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
                     }}
                   >
-                    <Icon size={18} color={isActive ? '#2563eb' : '#64748b'} />
+                    <Icon size={18} color={isActive ? 'var(--primary)' : '#64748b'} />
                     <span style={{ flex: 1 }}>{item.label}</span>
-                    {isActive && <ChevronRight size={14} color="#2563eb" />}
+                    {isActive && <ChevronRight size={14} color="var(--primary)" />}
                   </button>
                 );
               })}
@@ -177,10 +191,13 @@ export default function Sidebar({ activeTab, onSelectTab }) {
       </div>
 
       {/* DB Connection Status Widget Footer */}
-      <div style={{
+      <div className="glass-panel" style={{
         padding: '1rem',
-        borderTop: '1px solid var(--border-subtle, #e2e8f0)',
-        backgroundColor: '#f8fafc',
+        borderTop: '1px solid rgba(255,255,255,0.4)',
+        borderBottom: 'none',
+        borderLeft: 'none',
+        borderRight: 'none',
+        borderRadius: '0',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Database size={16} color="#059669" />
