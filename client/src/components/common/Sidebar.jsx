@@ -7,9 +7,10 @@ import {
   ShieldCheck,
   FolderTree,
   FileText,
-  ChevronRight,
   Database,
   Smartphone,
+  ShieldAlert,
+  ChevronRight,
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onSelectTab }) {
@@ -23,6 +24,7 @@ export default function Sidebar({ activeTab, onSelectTab }) {
     {
       title: 'Mobile & Field Unit',
       items: [
+        { id: 'alerts', label: 'Emergency Alerts & Dispatch', icon: ShieldAlert },
         { id: 'mobile-app', label: 'Mobile App & Delegation', icon: Smartphone },
       ],
     },

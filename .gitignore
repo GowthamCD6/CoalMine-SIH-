@@ -30,3 +30,13 @@ pnpm-debug.log*
 *.ntvs*
 *.njsproj
 *.sln
+
+# Python
+__pycache__/
+*/__pycache__/
+*.py[cod]
+.venv/
+*/.venv/
+venv/
+*/venv/
+

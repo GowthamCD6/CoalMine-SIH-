@@ -183,6 +183,41 @@ async function request(endpoint, options = {}, retryOnNetworkError = true) {
   }
 }
 
+/**
+ * Classify a user into a mobile-app role based on their subroles/permissions.
+ * Returns: 'SUPERADMIN' | 'WORKER' | 'RESTRICTED'
+ */
+export function getUserMobileRole(userProfile) {
+  if (!userProfile) return 'WORKER';
+
+  const permissions = userProfile.permissions || [];
+  const subroles = userProfile.subroles || [];
+
+  // Check for global super admin (wildcard permission or SUPER_ADMIN role code)
+  const isSuperAdmin =
+    permissions.some((p) => p.permission_code === '*' || p.permission_code === 'ALL_PERMISSIONS') ||
+    subroles.some((sr) => sr.role_code === 'SUPER_ADMIN');
+
+  if (isSuperAdmin) return 'SUPERADMIN';
+
+  // Check for intermediate admins (org admins, mine admins, site advisors, etc.)
+  const isIntermediateAdmin = subroles.some((sr) => {
+    const code = (sr.role_code || '').toUpperCase();
+    return (
+      code.includes('ORG_ADMIN') ||
+      code.includes('MINE_ADMIN') ||
+      code.includes('SITE_ADVISOR') ||
+      code.includes('EXECUTIVE') ||
+      code.includes('DIRECTOR')
+    );
+  });
+
+  if (isIntermediateAdmin) return 'RESTRICTED';
+
+  // Everyone else is a worker / field user
+  return 'WORKER';
+}
+
 export const mobileApi = {
   // Diagnostic
   testHealth: (url) => testEndpointHealth(url || currentBaseUrl),
@@ -200,13 +235,42 @@ export const mobileApi = {
     if (res?.user) {
       setCurrentCachedUser(res.user);
     }
+
+    // Fetch full profile with subroles/permissions to classify role
+    try {
+      const profile = await request('/auth/me');
+      const mobileRole = getUserMobileRole(profile);
+
+      if (mobileRole === 'RESTRICTED') {
+        // Clear auth since this user isn't allowed on mobile
+        clearAuth();
+        throw new Error(
+          'Access Denied: Organization Admins, Mine Admins, and Site Advisors must use the NexusMine Web Portal. Only Super Admins and Field Workers can use this mobile app.'
+        );
+      }
+
+      // Attach the mobile role and enriched profile to the response
+      res.user = { ...res.user, ...profile, mobileRole };
+      setCurrentCachedUser(res.user);
+    } catch (err) {
+      if (err.message?.includes('Access Denied')) {
+        throw err;
+      }
+      // If /auth/me fails, allow login with basic info (offline/fallback)
+      if (res?.user) {
+        res.user.mobileRole = 'WORKER';
+      }
+    }
+
     return res;
   },
 
   async getMe() {
     const res = await request('/auth/me');
-    setCurrentCachedUser(res);
-    return res;
+    const mobileRole = getUserMobileRole(res);
+    const enriched = { ...res, mobileRole };
+    setCurrentCachedUser(enriched);
+    return enriched;
   },
 
   logout() {
@@ -263,21 +327,66 @@ export const mobileApi = {
   },
 
   // Emergency & SOS
-  async getEmergencyAlerts() {
-    return request('/emergencies/alerts');
+  async getEmergencyAlerts(zone = null) {
+    const query = zone ? `?zone=${encodeURIComponent(zone)}` : '';
+    return request(`/emergencies/alerts${query}`);
   },
 
-  async triggerSos(zone = 'Zone B (Deep)', depth = -150) {
-    return request('/emergencies/sos', {
+  async getEmergencySignals() {
+    return request('/emergencies/signals');
+  },
+
+  async createEmergencyAlert(data) {
+    return request('/emergencies/alerts', {
       method: 'POST',
-      body: JSON.stringify({ zone, depth }),
+      body: JSON.stringify(data),
     });
   },
 
-  async triggerBroadcast(type = 'EVACUATION', message) {
+  async resolveEmergencyAlert(id) {
+    return request(`/emergencies/alerts/${id}/resolve`, {
+      method: 'POST',
+    });
+  },
+
+  async triggerSos(zone = 'Zone B (Level 4 Deep)', depth = -150, notes = '') {
+    return request('/emergencies/sos', {
+      method: 'POST',
+      body: JSON.stringify({ zone, depth, notes }),
+    });
+  },
+
+  async resolveSos(id = 'ACTIVE') {
+    return request(`/emergencies/sos/${id}/resolve`, {
+      method: 'POST',
+    });
+  },
+
+  async triggerBroadcast(type = 'EVACUATION', message, target_zone = 'ALL') {
     return request('/emergencies/broadcast', {
       method: 'POST',
-      body: JSON.stringify({ type, message }),
+      body: JSON.stringify({ type, message, target_zone }),
+    });
+  },
+
+  async reportEvacuationSafe(data) {
+    return request('/emergencies/evacuation/report-safe', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async dispatchRescueTeam(data) {
+    return request('/emergencies/rescue/dispatch', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async respondToDistress(id, data) {
+    return request(`/emergencies/sos/${id}/respond`, {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
   },
 

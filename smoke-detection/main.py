@@ -18,8 +18,7 @@ from ultralytics import YOLO
 MODEL_PATH = "best.pt"
 DEFAULT_SOURCES = {
     "1": ("light-smoke.mp4", "Light Smoke (Breathable - No Alert Sample)"),
-    "2": ("high-smoke-1.mp4", "Heavy Smoke 1 (Transition to Hazard Sample)"),
-    "3": ("high-smoke-2.mp4", "Heavy Smoke 2 (Critical Unbreathable Sample)"),
+    "2": ("high-smoke.mp4", "Heavy Smoke (Critical Unbreathable Sample)"),
 }
 
 # Detection Sensitivity
@@ -299,12 +298,13 @@ def main():
         elif key == ord("r"):
             cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
             print("Restarting current stream...")
-        elif key in [ord("1"), ord("2"), ord("3")]:
+        elif key in [ord("1"), ord("2")]:
             src_key = chr(key)
-            new_path, desc = DEFAULT_SOURCES[src_key]
-            print(f"Switching video source to: {new_path} ({desc})")
-            cap.release()
-            cap = cv2.VideoCapture(new_path)
+            if src_key in DEFAULT_SOURCES:
+                new_path, desc = DEFAULT_SOURCES[src_key]
+                print(f"Switching video source to: {new_path} ({desc})")
+                cap.release()
+                cap = cv2.VideoCapture(new_path)
 
     cap.release()
     cv2.destroyAllWindows()

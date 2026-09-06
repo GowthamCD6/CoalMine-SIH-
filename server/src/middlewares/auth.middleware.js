@@ -37,12 +37,31 @@ export const authenticate = asyncHandler(async (req, res, next) => {
   }
 
   const user = users[0];
-  if (user.status !== 'ACTIVE') {
-    throw ApiError.forbidden('User account is inactive or disabled');
-  }
-
   req.user = user;
   next();
 });
 
+export const optionalAuthenticate = asyncHandler(async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return next();
+  }
+  const token = authHeader.split(' ')[1];
+  if (!token) return next();
+  try {
+    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET);
+    const [users] = await db.query(
+      'SELECT id, username, email, first_name, last_name, employee_code, status FROM users WHERE id = ?',
+      [decoded.userId]
+    );
+    if (users && users.length > 0 && users[0].status === 'ACTIVE') {
+      req.user = users[0];
+    }
+  } catch {
+    // Ignore error for optional auth
+  }
+  next();
+});
+
 export default authenticate;
+

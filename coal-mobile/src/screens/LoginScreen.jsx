@@ -19,11 +19,8 @@ import {
 } from '../services/api';
 
 const PRESET_USERS = [
-  { tier: 'SUPERADMIN', name: 'Global Superadmin', email: 'admin@coalmin.org', pass: 'Admin@12345', desc: 'Full Wildcard Scope (*)', icon: 'shield', color: '#f59e0b' },
-  { tier: 'ORG_ADMIN', name: 'ECL Org Admin', email: 'admin@ecl.coalmin.org', pass: 'Admin@12345', desc: 'Scope: Organization #1 (ECL)', icon: 'users', color: '#38bdf8' },
-  { tier: 'MINE_ADMIN', name: 'Rajmahal Mine Admin', email: 'admin@rajmahal.coalmin.org', pass: 'Admin@12345', desc: 'Scope: Rajmahal Mine #1', icon: 'mining', color: '#60a5fa' },
-  { tier: 'STAFF', name: 'Safety Officer', email: 'safety@rajmahal.coalmin.org', pass: 'Admin@12345', desc: 'Read-only field officer (No Delegation)', icon: 'clipboard', color: '#34d399' },
-  { tier: 'WORKER', name: 'Unassigned Worker', email: 'sollamaten@gmail.com', pass: 'Admin@12345', desc: 'Standard field worker (Zero Roles)', icon: 'user', color: '#94a3b8' },
+  { tier: 'SUPERADMIN', name: 'Global Superadmin', email: 'admin@coalmin.org', pass: 'Admin@12345', desc: 'Full system authority — manage workers & operations', icon: 'shield', color: '#d97706' },
+  { tier: 'WORKER', name: 'Field Worker', email: 'sollamaten@gmail.com', pass: 'Admin@12345', desc: 'Turnstile access, SOS beacon & hazard reporting', icon: 'user', color: '#64748b' },
 ];
 
 export const LoginScreen = ({ onLoginSuccess }) => {
@@ -40,19 +37,19 @@ export const LoginScreen = ({ onLoginSuccess }) => {
   }, []);
 
   const checkHealth = async (url) => {
-    setHealthStatus({ checking: true, ok: false, message: 'Probing backend connection...' });
+    setHealthStatus({ checking: true, ok: false, message: 'Testing server connection...' });
     const result = await testEndpointHealth(url, 2000);
     if (result.ok) {
       setHealthStatus({
         checking: false,
         ok: true,
-        message: `Connected (Ping ${result.latency}ms • DB: ${result.data?.data?.database || 'OK'})`,
+        message: `Connected (${result.latency}ms ping • DB: ${result.data?.data?.database || 'OK'})`,
       });
     } else {
       setHealthStatus({
         checking: false,
         ok: false,
-        message: `Unreachable: ${result.error}`,
+        message: `Server unreachable: ${result.error}`,
       });
     }
   };
@@ -65,7 +62,7 @@ export const LoginScreen = ({ onLoginSuccess }) => {
   };
 
   const handleAutoDetect = async () => {
-    setHealthStatus({ checking: true, ok: false, message: 'Scanning all network channels...' });
+    setHealthStatus({ checking: true, ok: false, message: 'Scanning network channels...' });
     const res = await autoDetectWorkingEndpoint();
     if (res.found) {
       setServerHost(res.url);
@@ -79,7 +76,7 @@ export const LoginScreen = ({ onLoginSuccess }) => {
       setHealthStatus({
         checking: false,
         ok: false,
-        message: 'No responsive backend found. Make sure backend is running on port 5000.',
+        message: 'No responsive backend found on port 5000.',
       });
     }
   };
@@ -92,7 +89,7 @@ export const LoginScreen = ({ onLoginSuccess }) => {
       const res = await mobileApi.login(login.trim(), password);
       onLoginSuccess(res.user);
     } catch (err) {
-      setError(err.message || 'Authentication failed. Verify credentials or server endpoint.');
+      setError(err.message || 'Authentication failed. Please verify credentials or connection.');
     } finally {
       setLoading(false);
     }
@@ -109,15 +106,15 @@ export const LoginScreen = ({ onLoginSuccess }) => {
       <View style={styles.card}>
         <View style={styles.header}>
           <View style={styles.badgeRow}>
-            <Text style={styles.badgeText}>MINISTRY OF COAL / SIH26024</Text>
+            <Text style={styles.badgeText}>MINISTRY OF COAL • SIH26024</Text>
           </View>
           <View style={styles.titleRow}>
             <View style={styles.logoBadge}>
-              <Icon name="mining" size={20} color="#38bdf8" />
+              <Icon name="mining" size={20} color="#0284c7" />
             </View>
-            <Text style={styles.title}>NEXUSMINE MOBILE</Text>
+            <Text style={styles.title}>NexusMine Mobile</Text>
           </View>
-          <Text style={styles.subtitle}>TACTICAL SUBTERRANEAN TERMINAL & GOVERNANCE</Text>
+          <Text style={styles.subtitle}>Super Admin & Field Worker Operations</Text>
         </View>
 
         {/* Real-time Server Link Status Badge */}
@@ -130,18 +127,18 @@ export const LoginScreen = ({ onLoginSuccess }) => {
           <View style={styles.connStatusLeft}>
             <Icon
               name={healthStatus.ok ? 'check-circle' : 'alert'}
-              size={13}
-              color={healthStatus.ok ? '#4ade80' : '#ef4444'}
-              style={{ marginRight: 6 }}
+              size={14}
+              color={healthStatus.ok ? '#059669' : '#dc2626'}
+              style={{ marginRight: 8 }}
             />
             <View style={{ flex: 1 }}>
               <Text
                 style={[
                   styles.connStatusTitle,
-                  { color: healthStatus.ok ? '#4ade80' : '#f87171' },
+                  { color: healthStatus.ok ? '#047857' : '#b91c1c' },
                 ]}
               >
-                BACKEND LINK: {healthStatus.ok ? 'ONLINE' : 'UNREACHABLE'}
+                {healthStatus.ok ? 'Server Online' : 'Server Unreachable'}
               </Text>
               <Text style={styles.connStatusSub}>{healthStatus.message}</Text>
             </View>
@@ -153,16 +150,16 @@ export const LoginScreen = ({ onLoginSuccess }) => {
             disabled={healthStatus.checking}
           >
             {healthStatus.checking ? (
-              <ActivityIndicator size="small" color="#38bdf8" />
+              <ActivityIndicator size="small" color="#0284c7" />
             ) : (
-              <Text style={styles.retryPingText}>TEST</Text>
+              <Text style={styles.retryPingText}>Test</Text>
             )}
           </TouchableOpacity>
         </View>
 
         {error ? (
           <View style={styles.errorBox}>
-            <Icon name="alert" size={14} color="#ef4444" style={{ marginRight: 6 }} />
+            <Icon name="alert" size={14} color="#dc2626" style={{ marginRight: 8, marginTop: 1 }} />
             <View style={{ flex: 1 }}>
               <Text style={styles.errorText}>{error}</Text>
               {error.includes('Network') && (
@@ -170,7 +167,7 @@ export const LoginScreen = ({ onLoginSuccess }) => {
                   style={styles.autoFixBtn}
                   onPress={handleAutoDetect}
                 >
-                  <Text style={styles.autoFixBtnText}>AUTO-SCAN & FIX CONNECTION</Text>
+                  <Text style={styles.autoFixBtnText}>Auto-Scan & Fix Connection</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -178,7 +175,7 @@ export const LoginScreen = ({ onLoginSuccess }) => {
         ) : null}
 
         {/* Quick Endpoint Switcher */}
-        <Text style={styles.connPickerLabel}>ACTIVE CONNECTION HOST:</Text>
+        <Text style={styles.connPickerLabel}>Connection Channel:</Text>
         <View style={styles.endpointPickerRow}>
           {CANDIDATE_ENDPOINTS.slice(0, 3).map((candidate) => {
             const isActive = serverHost === candidate.url;
@@ -205,25 +202,25 @@ export const LoginScreen = ({ onLoginSuccess }) => {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>OPERATOR CREDENTIAL / EMAIL</Text>
+          <Text style={styles.label}>Email or Username</Text>
           <TextInput
             style={styles.input}
             value={login}
             onChangeText={setLogin}
             placeholder="operator@coalmin.org"
-            placeholderTextColor="#475569"
+            placeholderTextColor="#94a3b8"
             autoCapitalize="none"
           />
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>SECURITY ACCESS TOKEN / PASSWORD</Text>
+          <Text style={styles.label}>Password</Text>
           <TextInput
             style={styles.input}
             value={password}
             onChangeText={setPassword}
-            placeholder="••••••••••••"
-            placeholderTextColor="#475569"
+            placeholder="Enter password"
+            placeholderTextColor="#94a3b8"
             secureTextEntry
           />
         </View>
@@ -236,13 +233,13 @@ export const LoginScreen = ({ onLoginSuccess }) => {
           {loading ? (
             <ActivityIndicator color="#ffffff" size="small" />
           ) : (
-            <Text style={styles.loginBtnText}>VERIFY CREDENTIALS & INITIALIZE SESSION</Text>
+            <Text style={styles.loginBtnText}>Log In to Operations</Text>
           )}
         </TouchableOpacity>
 
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>QUICK SWITCH TEST PERSONA</Text>
+          <Text style={styles.dividerText}>SELECT YOUR ROLE</Text>
           <View style={styles.dividerLine} />
         </View>
 
@@ -255,7 +252,7 @@ export const LoginScreen = ({ onLoginSuccess }) => {
                 style={[styles.presetBtn, isSelected && styles.presetBtnActive]}
                 onPress={() => handlePresetSelect(preset.email, preset.pass)}
               >
-                <View style={[styles.presetIconBox, { backgroundColor: isSelected ? 'rgba(56, 189, 248, 0.15)' : '#090d16' }]}>
+                <View style={[styles.presetIconBox, { backgroundColor: isSelected ? '#e0f2fe' : '#f1f5f9' }]}>
                   <Icon name={preset.icon} size={15} color={preset.color} />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -274,15 +271,15 @@ export const LoginScreen = ({ onLoginSuccess }) => {
           style={styles.configToggle}
           onPress={() => setShowConfig(!showConfig)}
         >
-          <Icon name="wifi" size={12} color="#64748b" style={{ marginRight: 6 }} />
+          <Icon name="wifi" size={13} color="#64748b" style={{ marginRight: 6 }} />
           <Text style={styles.configToggleText}>
-            {showConfig ? 'HIDE HOST NETWORK ENDPOINT' : 'CONFIGURE CUSTOM HOST URL'}
+            {showConfig ? 'Hide Custom Server Host' : 'Configure Custom Server Host'}
           </Text>
         </TouchableOpacity>
 
         {showConfig && (
           <View style={styles.configBox}>
-            <Text style={styles.configLabel}>BACKEND REST ENDPOINT URI:</Text>
+            <Text style={styles.configLabel}>REST API Endpoint URL:</Text>
             <TextInput
               style={styles.configInput}
               value={serverHost}
@@ -291,18 +288,18 @@ export const LoginScreen = ({ onLoginSuccess }) => {
                 setApiBaseUrl(text);
               }}
               placeholder="http://localhost:5000/api/v1"
-              placeholderTextColor="#475569"
+              placeholderTextColor="#94a3b8"
               autoCapitalize="none"
             />
             <TouchableOpacity
               style={styles.scanAllBtn}
               onPress={handleAutoDetect}
             >
-              <Icon name="refresh" size={11} color="#ffffff" style={{ marginRight: 4 }} />
-              <Text style={styles.scanAllBtnText}>AUTO-SCAN AVAILABLE NETWORK CHANNELS</Text>
+              <Icon name="refresh" size={12} color="#ffffff" style={{ marginRight: 6 }} />
+              <Text style={styles.scanAllBtnText}>Auto-Detect Working Server</Text>
             </TouchableOpacity>
             <Text style={styles.configNote}>
-              USB Cable: localhost:5000 (via adb reverse) • Wi-Fi: 10.150.255.156:5000 • Emulator: 10.0.2.2:5000
+              USB: localhost:5000 • Wi-Fi: 10.150.255.156:5000 • Emulator: 10.0.2.2:5000
             </Text>
           </View>
         )}
@@ -314,80 +311,86 @@ export const LoginScreen = ({ onLoginSuccess }) => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#090d16',
+    backgroundColor: '#f8fafc',
     justifyContent: 'center',
-    padding: 14,
+    padding: 16,
+    paddingVertical: 24,
   },
   card: {
-    backgroundColor: '#0f172a',
-    borderRadius: 12,
-    padding: 18,
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    padding: 20,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#e2e8f0',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 16,
   },
   badgeRow: {
-    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+    backgroundColor: '#f1f5f9',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.25)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 4,
-    marginBottom: 8,
+    borderColor: '#e2e8f0',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginBottom: 10,
   },
   badgeText: {
-    color: '#38bdf8',
-    fontSize: 9.5,
-    fontWeight: '800',
-    letterSpacing: 0.8,
+    color: '#475569',
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   logoBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-    backgroundColor: '#1e293b',
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#f0f9ff',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#bae6fd',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
+    marginRight: 10,
   },
   title: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: 1,
+    color: '#0f172a',
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.1,
   },
   subtitle: {
     color: '#64748b',
-    fontSize: 9.5,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    marginTop: 4,
+    fontSize: 12,
+    fontWeight: '400',
+    marginTop: 3,
   },
   connectionStatusCard: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    borderRadius: 6,
-    padding: 9,
-    marginBottom: 12,
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 8,
     borderWidth: 1,
+    marginBottom: 14,
   },
   connOnline: {
-    backgroundColor: 'rgba(34, 197, 94, 0.08)',
-    borderColor: 'rgba(34, 197, 94, 0.25)',
+    backgroundColor: '#ecfdf5',
+    borderColor: '#a7f3d0',
   },
   connOffline: {
-    backgroundColor: 'rgba(239, 68, 68, 0.08)',
-    borderColor: 'rgba(239, 68, 68, 0.25)',
+    backgroundColor: '#fef2f2',
+    borderColor: '#fecaca',
   },
   connStatusLeft: {
     flexDirection: 'row',
@@ -395,118 +398,112 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   connStatusTitle: {
-    fontSize: 9.5,
-    fontWeight: '900',
-    letterSpacing: 0.6,
+    fontSize: 11.5,
+    fontWeight: '600',
   },
   connStatusSub: {
-    color: '#94a3b8',
-    fontSize: 9,
+    color: '#475569',
+    fontSize: 10,
     marginTop: 1,
   },
   retryPingBtn: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#334155',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginLeft: 6,
+    borderColor: '#cbd5e1',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    marginLeft: 8,
   },
   retryPingText: {
-    color: '#38bdf8',
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+    color: '#0284c7',
+    fontSize: 10.5,
+    fontWeight: '600',
   },
   endpointPickerRow: {
     flexDirection: 'row',
-    gap: 6,
-    marginBottom: 12,
+    gap: 8,
+    marginBottom: 14,
   },
   connPickerLabel: {
     color: '#475569',
-    fontSize: 8.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    marginBottom: 4,
+    fontSize: 11,
+    fontWeight: '500',
+    marginBottom: 6,
   },
   endpointChip: {
     flex: 1,
-    backgroundColor: '#090d16',
+    backgroundColor: '#f8fafc',
     borderWidth: 1,
-    borderColor: '#1e293b',
-    borderRadius: 4,
-    paddingVertical: 6,
+    borderColor: '#e2e8f0',
+    borderRadius: 6,
+    paddingVertical: 7,
     alignItems: 'center',
   },
   endpointChipActive: {
-    backgroundColor: 'rgba(2, 132, 199, 0.15)',
+    backgroundColor: '#e0f2fe',
     borderColor: '#0284c7',
   },
   endpointChipText: {
-    color: '#64748b',
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    color: '#475569',
+    fontSize: 10.5,
+    fontWeight: '500',
   },
   endpointChipTextActive: {
-    color: '#38bdf8',
+    color: '#0369a1',
+    fontWeight: '600',
   },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderColor: 'rgba(239, 68, 68, 0.3)',
+    backgroundColor: '#fef2f2',
+    borderColor: '#fecaca',
     borderWidth: 1,
-    borderRadius: 6,
+    borderRadius: 8,
     padding: 10,
-    marginBottom: 12,
+    marginBottom: 14,
   },
   errorText: {
-    color: '#f87171',
-    fontSize: 11,
-    fontWeight: '700',
-    lineHeight: 15,
+    color: '#b91c1c',
+    fontSize: 11.5,
+    fontWeight: '500',
+    lineHeight: 16,
   },
   autoFixBtn: {
     marginTop: 6,
     backgroundColor: '#0284c7',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 4,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
     alignSelf: 'flex-start',
   },
   autoFixBtnText: {
     color: '#ffffff',
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+    fontSize: 10,
+    fontWeight: '600',
   },
   inputGroup: {
-    marginBottom: 12,
+    marginBottom: 14,
   },
   label: {
-    color: '#94a3b8',
-    fontSize: 9.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    color: '#334155',
+    fontSize: 12,
+    fontWeight: '500',
     marginBottom: 5,
   },
   input: {
-    backgroundColor: '#090d16',
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 6,
+    borderColor: '#cbd5e1',
+    borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 9,
-    color: '#ffffff',
-    fontSize: 13,
-    fontFamily: 'monospace',
+    color: '#0f172a',
+    fontSize: 13.5,
   },
   loginBtn: {
     backgroundColor: '#0284c7',
-    borderRadius: 6,
+    borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
     marginTop: 4,
@@ -516,50 +513,49 @@ const styles = StyleSheet.create({
   },
   loginBtnText: {
     color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 0.8,
+    fontSize: 13,
+    fontWeight: '600',
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 14,
+    marginVertical: 16,
     gap: 8,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#e2e8f0',
   },
   dividerText: {
-    color: '#475569',
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.8,
+    color: '#94a3b8',
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
   presetContainer: {
-    gap: 6,
+    gap: 8,
   },
   presetBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#090d16',
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#1e293b',
-    borderRadius: 6,
-    padding: 8,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    padding: 10,
   },
   presetBtnActive: {
     borderColor: '#0284c7',
-    backgroundColor: 'rgba(2, 132, 199, 0.08)',
+    backgroundColor: '#f0f9ff',
   },
   presetIconBox: {
-    width: 28,
-    height: 28,
-    borderRadius: 4,
+    width: 32,
+    height: 32,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 9,
+    marginRight: 10,
   },
   presetTitleRow: {
     flexDirection: 'row',
@@ -567,81 +563,78 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   presetName: {
-    color: '#cbd5e1',
-    fontSize: 11.5,
-    fontWeight: '700',
+    color: '#0f172a',
+    fontSize: 12.5,
+    fontWeight: '600',
   },
   presetNameActive: {
-    color: '#38bdf8',
+    color: '#0284c7',
   },
   presetTierBadge: {
-    fontSize: 8.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    fontSize: 9.5,
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
   presetDesc: {
     color: '#64748b',
-    fontSize: 9.5,
+    fontSize: 10.5,
     marginTop: 1,
   },
   configToggle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 14,
-    paddingVertical: 4,
+    marginTop: 16,
+    paddingVertical: 6,
   },
   configToggleText: {
     color: '#64748b',
-    fontSize: 9.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    fontSize: 11,
+    fontWeight: '500',
   },
   configBox: {
-    marginTop: 8,
-    padding: 10,
-    backgroundColor: '#090d16',
-    borderRadius: 6,
+    marginTop: 10,
+    padding: 12,
+    backgroundColor: '#f8fafc',
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#e2e8f0',
   },
   configLabel: {
-    color: '#94a3b8',
-    fontSize: 9.5,
-    fontWeight: '700',
-    marginBottom: 4,
+    color: '#475569',
+    fontSize: 11,
+    fontWeight: '500',
+    marginBottom: 5,
   },
   configInput: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    color: '#38bdf8',
-    fontSize: 11,
-    fontFamily: 'monospace',
+    borderColor: '#cbd5e1',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    color: '#0f172a',
+    fontSize: 12,
   },
   scanAllBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#0284c7',
-    paddingVertical: 6,
-    borderRadius: 4,
-    marginTop: 6,
+    paddingVertical: 8,
+    borderRadius: 6,
+    marginTop: 8,
   },
   scanAllBtnText: {
     color: '#ffffff',
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+    fontSize: 10.5,
+    fontWeight: '600',
   },
   configNote: {
-    color: '#475569',
-    fontSize: 8.5,
+    color: '#64748b',
+    fontSize: 9.5,
     marginTop: 6,
-    lineHeight: 12,
+    lineHeight: 14,
   },
 });
 

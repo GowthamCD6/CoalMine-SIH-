@@ -16,18 +16,24 @@ import { Icon } from '../components/Icon';
 import { mobileApi } from '../services/api';
 import {
   capturePhotoFromCamera,
-  pickPhotoFromGallery,
   requestCameraPermission,
 } from '../services/cameraService';
 
+const HAZARD_CATEGORIES = [
+  'Roof Support / Cracking',
+  'Water Accumulation',
+  'Gas Seepage / Ventilation',
+  'Machinery Defect',
+  'Electrical Hazard',
+];
+
 export const HazardCamScreen = ({ currentUser }) => {
-  const [captured, setCaptured] = useState(false);
   const [photoUri, setPhotoUri] = useState(null);
   const [photoBase64, setPhotoBase64] = useState(null);
   const [cameraPermitted, setCameraPermitted] = useState(null);
   const [capturing, setCapturing] = useState(false);
 
-  const [hazardType, setHazardType] = useState('Roof Support Cracking');
+  const [hazardType, setHazardType] = useState('Roof Support / Cracking');
   const [zoneTag, setZoneTag] = useState('Level 3 - Sector B');
   const [depth, setDepth] = useState('-120');
   const [notes, setNotes] = useState('');
@@ -57,12 +63,9 @@ export const HazardCamScreen = ({ currentUser }) => {
     const granted = await requestCameraPermission();
     setCameraPermitted(granted);
     if (granted) {
-      Alert.alert('Camera Access Granted', 'Hardware link active. You can now capture hazard evidence directly.');
+      Alert.alert('Permission Granted', 'Camera access enabled. Tap "Take Live Photo" to capture.');
     } else {
-      Alert.alert(
-        'Access Denied',
-        'Camera permission was not granted. Check device Settings -> Apps -> CoalMobile -> Permissions.'
-      );
+      Alert.alert('Permission Denied', 'Camera permission is required to capture live photos.');
     }
   };
 
@@ -73,12 +76,7 @@ export const HazardCamScreen = ({ currentUser }) => {
       if (res.success && res.uri) {
         setPhotoUri(res.uri);
         setPhotoBase64(res.base64 || null);
-        setCaptured(true);
         setCameraPermitted(true);
-        Alert.alert(
-          'Optical Evidence Captured',
-          `Frame acquired with embedded GPS: 23.7957° N, 86.4304° E at Depth ${depth}m in ${zoneTag}.`
-        );
       } else if (res.error === 'PERMISSION_DENIED') {
         setCameraPermitted(false);
       }
@@ -87,76 +85,66 @@ export const HazardCamScreen = ({ currentUser }) => {
     }
   };
 
-  const handlePickGallery = async () => {
-    setCapturing(true);
-    try {
-      const res = await pickPhotoFromGallery();
-      if (res.success && res.uri) {
-        setPhotoUri(res.uri);
-        setPhotoBase64(res.base64 || null);
-        setCaptured(true);
-        Alert.alert(
-          'Image Selected from Storage',
-          `Embedded telemetry into image record: Depth ${depth}m in ${zoneTag}.`
-        );
-      }
-    } finally {
-      setCapturing(false);
-    }
-  };
-
-  const handleRetake = () => {
+  const handleRemovePhoto = () => {
     setPhotoUri(null);
     setPhotoBase64(null);
-    setCaptured(false);
   };
 
   const handleSubmit = async () => {
+    if (!photoUri && !notes.trim()) {
+      Alert.alert('Photo Required', 'Please tap "Take Live Photo" to capture the hazard before submitting.');
+      return;
+    }
+
     setSaving(true);
     try {
-      const report = await mobileApi.createHazard({
+      await mobileApi.createHazard({
         hazard_type: hazardType,
         location_name: `Shaft 4 (${zoneTag})`,
         latitude: 23.7957,
         longitude: 86.4304,
         depth_meters: Number(depth),
         zone_tag: zoneTag,
-        notes: notes || 'Optical inspection record logged.',
+        notes: notes || 'Live hazard photo recorded by worker camera.',
         photo_url: photoUri,
       });
-      Alert.alert('Hazard Logged', `Report #${report.id || Date.now().toString().slice(-4)} registered and synchronized.`);
+
+      Alert.alert('Report Dispatched', 'Live hazard photo and telemetry transmitted to safety control.');
       setRecentReports([
         {
+          id: Date.now(),
           hazard_type: hazardType,
           zone_tag: zoneTag,
           depth_meters: depth,
-          notes: notes || 'Optical observation recorded.',
+          notes: notes || 'Live photo captured.',
           photoUri,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
         ...recentReports,
       ]);
-      setCaptured(false);
       setPhotoUri(null);
       setPhotoBase64(null);
       setNotes('');
     } catch {
       Alert.alert(
-        'Saved to Local Cache',
-        'Surface relay unreachable. Observation saved with optical frame in Offline Sync queue.'
+        'Saved to Local Queue',
+        'No subterranean signal. Photo and coordinates queued for auto-sync when approaching shaft.'
       );
       setRecentReports([
         {
+          id: Date.now(),
           hazard_type: hazardType,
           zone_tag: zoneTag,
           depth_meters: depth,
-          notes: notes || 'Optical observation cached offline.',
+          notes: notes || 'Live photo captured (offline queue).',
           photoUri,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
         ...recentReports,
       ]);
-      setCaptured(false);
       setPhotoUri(null);
       setPhotoBase64(null);
+      setNotes('');
     } finally {
       setSaving(false);
     }
@@ -164,199 +152,205 @@ export const HazardCamScreen = ({ currentUser }) => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Icon name="camera" size={16} color="#fbbf24" style={{ marginRight: 6 }} />
-          <Text style={styles.title}>GEOTAGGED HAZARD VIEWPORT</Text>
+      {/* Live Camera Viewport Header */}
+      <View style={styles.cameraHeader}>
+        <View style={styles.statusPill}>
+          <View style={styles.liveDot} />
+          <Text style={styles.statusPillText}>LIVE CAMERA SENSOR</Text>
         </View>
-        <Text style={styles.subtitle}>
-          OPTICAL SUBTERRANEAN SENSOR & DEPTH TELEMETRY HUD
-        </Text>
+        <Text style={styles.telemetryTag}>Shaft 4 • Level 3 (-120m)</Text>
       </View>
 
-      {/* Camera Permission Diagnostic Banner */}
-      <View style={[styles.permissionBanner, cameraPermitted ? styles.permBannerActive : styles.permBannerInactive]}>
-        <View style={styles.permBannerLeft}>
-          <Icon
-            name={cameraPermitted ? 'check-circle' : 'shield'}
-            size={14}
-            color={cameraPermitted ? '#4ade80' : '#f59e0b'}
-            style={{ marginRight: 6 }}
-          />
-          <Text style={styles.permBannerText}>
-            {cameraPermitted
-              ? 'HARDWARE LINK: CAMERA ACCESS ACTIVE'
-              : 'HARDWARE LINK: CAMERA ACCESS REQUIRED'}
+      {/* Permission alert if camera denied */}
+      {cameraPermitted === false && (
+        <View style={styles.permWarning}>
+          <Text style={styles.permWarningText}>
+            Camera hardware access is required to capture live photos.
           </Text>
-        </View>
-        {!cameraPermitted && (
-          <TouchableOpacity style={styles.authBtn} onPress={handleAuthorizeCamera}>
-            <Text style={styles.authBtnText}>AUTHORIZE</Text>
+          <TouchableOpacity style={styles.permWarningBtn} onPress={handleAuthorizeCamera}>
+            <Text style={styles.permWarningBtnText}>Enable Camera</Text>
           </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Camera Viewfinder */}
-      <View style={styles.viewfinder}>
-        {/* Real photo display if captured */}
-        {photoUri ? (
-          <Image source={{ uri: photoUri }} style={styles.capturedImage} resizeMode="cover" />
-        ) : null}
-
-        {/* Reticle corners */}
-        <View style={[styles.corner, styles.tl]} />
-        <View style={[styles.corner, styles.tr]} />
-        <View style={[styles.corner, styles.bl]} />
-        <View style={[styles.corner, styles.br]} />
-
-        {/* GPS Geotag HUD */}
-        <View style={styles.geotagHud}>
-          <Text style={styles.hudText}>LAT: 23.7957° N</Text>
-          <Text style={styles.hudText}>LON: 86.4304° E</Text>
-          <Text style={styles.hudText}>DEPTH: {depth}M</Text>
-          <Text style={styles.hudText}>ZONE: {zoneTag.toUpperCase()}</Text>
-          <Text style={styles.hudText}>TIMESTAMP: {new Date().toLocaleTimeString()}</Text>
         </View>
+      )}
 
-        {!photoUri && (
-          <View style={styles.viewfinderCenter}>
-            <Icon
-              name="crosshair"
-              size={36}
-              color="#38bdf8"
-              style={{ marginBottom: 6 }}
-            />
-            <Text style={styles.cameraIconText}>
-              OPTICAL RETICLE ACTIVE
-            </Text>
-            <Text style={styles.cameraSub}>
-              Center reticle over structural fracture, gas seepage, or physical hazard
-            </Text>
+      {/* Native Camera Viewfinder (Authentic camera viewfinder, not an upload box) */}
+      <View style={styles.cameraContainer}>
+        {photoUri ? (
+          /* Captured Photo Viewport */
+          <View style={styles.capturedViewport}>
+            <Image source={{ uri: photoUri }} style={styles.capturedImage} resizeMode="cover" />
+
+            {/* Corner guide overlay on captured image */}
+            <View style={[styles.cornerGuide, styles.cornerTopLeft]} />
+            <View style={[styles.cornerGuide, styles.cornerTopRight]} />
+            <View style={[styles.cornerGuide, styles.cornerBottomLeft]} />
+            <View style={[styles.cornerGuide, styles.cornerBottomRight]} />
+
+            {/* Telemetry watermark overlay */}
+            <View style={styles.watermarkBar}>
+              <View style={styles.watermarkBadge}>
+                <View style={styles.watermarkDot} />
+                <Text style={styles.watermarkText}>PHOTO RECORDED</Text>
+              </View>
+              <Text style={styles.watermarkCoords}>23.7957° N, 86.4304° E • -120m</Text>
+            </View>
+
+            {/* Retake / Remove bar */}
+            <View style={styles.capturedActionsBar}>
+              <TouchableOpacity style={styles.retakeBtn} onPress={handleCapture} disabled={capturing}>
+                <Icon name="camera" size={14} color="#ffffff" style={{ marginRight: 6 }} />
+                <Text style={styles.retakeBtnText}>Retake Live Photo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.discardBtn} onPress={handleRemovePhoto}>
+                <Icon name="close" size={14} color="#fca5a5" style={{ marginRight: 4 }} />
+                <Text style={styles.discardBtnText}>Discard</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          /* Active Camera Viewfinder Preview Screen */
+          <View style={styles.viewfinderScreen}>
+            {/* 4 Optical Corner Viewfinder Brackets */}
+            <View style={[styles.cornerGuide, styles.cornerTopLeft]} />
+            <View style={[styles.cornerGuide, styles.cornerTopRight]} />
+            <View style={[styles.cornerGuide, styles.cornerBottomLeft]} />
+            <View style={[styles.cornerGuide, styles.cornerBottomRight]} />
+
+            {/* Center Focus Reticle */}
+            <View style={styles.focusCenter}>
+              <View style={styles.focusCrosshairHoriz} />
+              <View style={styles.focusCrosshairVert} />
+              <View style={styles.focusCircle} />
+            </View>
+
+            {/* Viewfinder Telemetry Subtitle */}
+            <View style={styles.viewfinderInfo}>
+              <Text style={styles.viewfinderHint}>POINT LENS AT HAZARD AREA</Text>
+              <Text style={styles.viewfinderGps}>23.7957° N, 86.4304° E • Optical 1.0x</Text>
+            </View>
           </View>
         )}
+      </View>
 
-        {/* Shutter Button */}
+      {/* Camera Shutter Action Bar */}
+      {!photoUri && (
+        <View style={styles.shutterDeck}>
+          <TouchableOpacity
+            style={[styles.shutterBtn, capturing && styles.btnDisabled]}
+            onPress={handleCapture}
+            disabled={capturing}
+            activeOpacity={0.8}
+          >
+            {capturing ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <>
+                <View style={styles.shutterOuterRing}>
+                  <View style={styles.shutterInnerCircle}>
+                    <Icon name="camera" size={20} color="#0f172a" />
+                  </View>
+                </View>
+                <Text style={styles.shutterText}>Take Live Photo</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Hazard Report Details Form (Visible once photo is taken or to attach context) */}
+      <View style={styles.card}>
+        <Text style={styles.sectionLabel}>Hazard Category</Text>
+        <View style={styles.chipGrid}>
+          {HAZARD_CATEGORIES.map((cat) => (
+            <TouchableOpacity
+              key={cat}
+              style={[styles.chip, hazardType === cat && styles.chipActive]}
+              onPress={() => setHazardType(cat)}
+            >
+              <Text style={[styles.chipText, hazardType === cat && styles.chipTextActive]}>
+                {cat}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Location & Depth Inputs */}
+        <View style={styles.twoColRow}>
+          <View style={{ flex: 2 }}>
+            <Text style={styles.inputLabel}>Zone / Location</Text>
+            <TextInput
+              style={styles.textInput}
+              value={zoneTag}
+              onChangeText={setZoneTag}
+              placeholder="e.g. Level 3 - Sector B"
+              placeholderTextColor="#94a3b8"
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.inputLabel}>Depth (m)</Text>
+            <TextInput
+              style={styles.textInput}
+              value={depth}
+              onChangeText={setDepth}
+              keyboardType="numeric"
+              placeholder="-120"
+              placeholderTextColor="#94a3b8"
+            />
+          </View>
+        </View>
+
+        {/* Description / Field Notes */}
+        <Text style={styles.inputLabel}>Field Notes (Optional)</Text>
+        <TextInput
+          style={[styles.textInput, styles.textArea]}
+          value={notes}
+          onChangeText={setNotes}
+          placeholder="Describe structural cracks, gas seepage, or water pooling..."
+          placeholderTextColor="#94a3b8"
+          multiline
+        />
+
+        {/* Submit Button */}
         <TouchableOpacity
-          style={styles.shutterBtn}
-          onPress={handleCapture}
-          disabled={capturing}
+          style={[styles.submitBtn, saving && styles.btnDisabled]}
+          onPress={handleSubmit}
+          disabled={saving}
         >
-          {capturing ? (
-            <ActivityIndicator size="small" color="#0284c7" />
+          {saving ? (
+            <ActivityIndicator size="small" color="#ffffff" />
           ) : (
-            <View style={styles.shutterInner} />
+            <>
+              <Icon name="check" size={16} color="#ffffff" style={{ marginRight: 8 }} />
+              <Text style={styles.submitBtnText}>Submit Hazard Report</Text>
+            </>
           )}
         </TouchableOpacity>
       </View>
 
-      {/* Camera Action Buttons */}
-      <View style={styles.actionRow}>
-        <TouchableOpacity
-          style={[styles.primaryCamBtn, capturing && styles.btnDisabled]}
-          onPress={handleCapture}
-          disabled={capturing}
-        >
-          <Icon name="camera" size={15} color="#ffffff" style={{ marginRight: 6 }} />
-          <Text style={styles.primaryCamBtnText}>
-            {capturing ? 'INITIALIZING HARDWARE...' : 'LAUNCH CAMERA & CAPTURE'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.secondaryCamBtn, capturing && styles.btnDisabled]}
-          onPress={handlePickGallery}
-          disabled={capturing}
-        >
-          <Icon name="file" size={14} color="#94a3b8" style={{ marginRight: 6 }} />
-          <Text style={styles.secondaryCamBtnText}>GALLERY</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Retake / Discard when photo is captured */}
-      {photoUri && (
-        <View style={styles.retakeRow}>
-          <TouchableOpacity style={styles.retakeBtn} onPress={handleRetake}>
-            <Icon name="trash" size={13} color="#ef4444" style={{ marginRight: 5 }} />
-            <Text style={styles.retakeBtnText}>DISCARD & RETAKE PHOTO</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Report Details Form */}
-      {captured && (
-        <View style={styles.formCard}>
-          <Text style={styles.formTitle}>OBSERVATION METADATA PAYLOAD</Text>
-
-          <Text style={styles.inputLabel}>HAZARD CLASSIFICATION</Text>
-          <TextInput
-            style={styles.input}
-            value={hazardType}
-            onChangeText={setHazardType}
-            placeholder="e.g. Methane Leak, Timber Fracture"
-            placeholderTextColor="#475569"
-          />
-
-          <Text style={styles.inputLabel}>ZONE TAG & SECTOR</Text>
-          <TextInput
-            style={styles.input}
-            value={zoneTag}
-            onChangeText={setZoneTag}
-            placeholder="Level 3 - Sector B"
-            placeholderTextColor="#475569"
-          />
-
-          <Text style={styles.inputLabel}>DEPTH BELOW SURFACE (METERS)</Text>
-          <TextInput
-            style={styles.input}
-            value={depth}
-            onChangeText={setDepth}
-            keyboardType="numeric"
-            placeholder="-120"
-            placeholderTextColor="#475569"
-          />
-
-          <Text style={styles.inputLabel}>TECHNICAL REMARKS / NOTES</Text>
-          <TextInput
-            style={[styles.input, { height: 60 }]}
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="Describe fracture width or gas sensor ppm reading..."
-            placeholderTextColor="#475569"
-            multiline
-          />
-
-          <TouchableOpacity
-            style={[styles.submitBtn, saving && styles.btnDisabled]}
-            onPress={handleSubmit}
-            disabled={saving}
-          >
-            <Icon name="check" size={12} color="#ffffff" style={{ marginRight: 6 }} />
-            <Text style={styles.submitBtnText}>
-              {saving ? 'COMMITTING PAYLOAD...' : 'COMMIT OBSERVATION RECORD'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Recent Field Reports */}
+      {/* Recent Submissions */}
       {recentReports.length > 0 && (
-        <View style={styles.recentCard}>
-          <Text style={styles.recentTitle}>LOGGED IN CURRENT SESSION</Text>
-          {recentReports.map((r, i) => (
-            <View key={i} style={styles.reportItem}>
-              <View style={styles.reportHeader}>
-                <Text style={styles.reportType}>{r.hazard_type}</Text>
-                <Text style={styles.reportZone}>{r.zone_tag} ({r.depth_meters}m)</Text>
-              </View>
-              <Text style={styles.reportNotes}>{r.notes || 'No remarks added'}</Text>
-              {r.photoUri && (
-                <View style={styles.attachedBadge}>
-                  <Icon name="camera" size={10} color="#4ade80" style={{ marginRight: 4 }} />
-                  <Text style={styles.attachedText}>Optical frame attached</Text>
+        <View style={styles.card}>
+          <Text style={styles.sectionLabel}>Submitted Reports Today</Text>
+          <View style={styles.recentList}>
+            {recentReports.map((item) => (
+              <View key={item.id} style={styles.recentItem}>
+                <View style={styles.recentTop}>
+                  <Text style={styles.recentType}>{item.hazard_type}</Text>
+                  <Text style={styles.recentTime}>{item.time}</Text>
                 </View>
-              )}
-            </View>
-          ))}
+                <Text style={styles.recentLocation}>{item.zone_tag} ({item.depth_meters}m)</Text>
+                {item.notes ? (
+                  <Text style={styles.recentNotes}>{item.notes}</Text>
+                ) : null}
+                {item.photoUri ? (
+                  <View style={styles.photoAttachedTag}>
+                    <Icon name="camera" size={11} color="#059669" style={{ marginRight: 4 }} />
+                    <Text style={styles.photoAttachedText}>Live photo attached</Text>
+                  </View>
+                ) : null}
+              </View>
+            ))}
+          </View>
         </View>
       )}
     </ScrollView>
@@ -366,311 +360,411 @@ export const HazardCamScreen = ({ currentUser }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090d16',
+    backgroundColor: '#0f172a',
   },
   content: {
-    padding: 12,
-    paddingBottom: 28,
+    padding: 14,
+    paddingBottom: 40,
   },
-  header: {
-    marginBottom: 10,
-  },
-  titleRow: {
+  cameraHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-  },
-  title: {
-    color: '#ffffff',
-    fontSize: 12.5,
-    fontWeight: '900',
-    letterSpacing: 0.8,
-  },
-  subtitle: {
-    color: '#64748b',
-    fontSize: 8.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    marginTop: 2,
-  },
-  permissionBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 6,
-    borderWidth: 1,
+    alignItems: 'center',
     marginBottom: 10,
+    paddingHorizontal: 2,
   },
-  permBannerActive: {
-    backgroundColor: 'rgba(74, 222, 128, 0.08)',
-    borderColor: 'rgba(74, 222, 128, 0.3)',
-  },
-  permBannerInactive: {
-    backgroundColor: 'rgba(245, 158, 11, 0.08)',
-    borderColor: 'rgba(245, 158, 11, 0.3)',
-  },
-  permBannerLeft: {
+  statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-  },
-  permBannerText: {
-    color: '#e2e8f0',
-    fontSize: 9.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  authBtn: {
-    backgroundColor: '#f59e0b',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  authBtnText: {
-    color: '#090d16',
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 0.6,
-  },
-  viewfinder: {
-    height: 250,
-    backgroundColor: '#020617',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  capturedImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
-  },
-  corner: {
-    position: 'absolute',
-    width: 16,
-    height: 16,
-    borderColor: '#38bdf8',
-    zIndex: 10,
-  },
-  tl: { top: 12, left: 12, borderTopWidth: 2, borderLeftWidth: 2 },
-  tr: { top: 12, right: 12, borderTopWidth: 2, borderRightWidth: 2 },
-  bl: { bottom: 12, left: 12, borderBottomWidth: 2, borderLeftWidth: 2 },
-  br: { bottom: 12, right: 12, borderBottomWidth: 2, borderRightWidth: 2 },
-  geotagHud: {
-    position: 'absolute',
-    top: 12,
-    left: 20,
-    backgroundColor: 'rgba(9, 13, 22, 0.85)',
-    borderRadius: 4,
-    padding: 6,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    zIndex: 10,
-  },
-  hudText: {
-    color: '#38bdf8',
-    fontFamily: 'monospace',
-    fontSize: 8.5,
-    marginVertical: 1,
-  },
-  viewfinderCenter: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    zIndex: 5,
-  },
-  cameraIconText: {
-    color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 0.8,
-  },
-  cameraSub: {
-    color: '#64748b',
-    fontSize: 9.5,
-    textAlign: 'center',
-    marginTop: 3,
-  },
-  shutterBtn: {
-    position: 'absolute',
-    bottom: 12,
-    alignSelf: 'center',
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderWidth: 2,
-    borderColor: '#ffffff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  shutterInner: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#ffffff',
-  },
-  actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    gap: 8,
-  },
-  primaryCamBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#0284c7',
-    paddingVertical: 11,
-    borderRadius: 6,
-  },
-  primaryCamBtnText: {
-    color: '#ffffff',
-    fontSize: 10.5,
-    fontWeight: '900',
-    letterSpacing: 0.6,
-  },
-  secondaryCamBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: '#1e293b',
-    paddingVertical: 11,
-    paddingHorizontal: 14,
-    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#334155',
   },
-  secondaryCamBtnText: {
-    color: '#cbd5e1',
-    fontSize: 10.5,
+  liveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#ef4444',
+    marginRight: 6,
+  },
+  statusPillText: {
+    color: '#e2e8f0',
+    fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.6,
   },
-  retakeRow: {
-    marginTop: 8,
+  telemetryTag: {
+    color: '#38bdf8',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  permWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#451a03',
+    borderColor: '#b45309',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+  },
+  permWarningText: {
+    color: '#fef3c7',
+    fontSize: 11,
+    flex: 1,
+    marginRight: 8,
+  },
+  permWarningBtn: {
+    backgroundColor: '#d97706',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 5,
+  },
+  permWarningBtnText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  cameraContainer: {
+    width: '100%',
+    height: 280,
+    backgroundColor: '#020617',
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    marginBottom: 14,
+    position: 'relative',
+  },
+  viewfinderScreen: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    backgroundColor: '#020617',
+  },
+  cornerGuide: {
+    position: 'absolute',
+    width: 22,
+    height: 22,
+    borderColor: '#38bdf8',
+  },
+  cornerTopLeft: {
+    top: 14,
+    left: 14,
+    borderTopWidth: 2.5,
+    borderLeftWidth: 2.5,
+  },
+  cornerTopRight: {
+    top: 14,
+    right: 14,
+    borderTopWidth: 2.5,
+    borderRightWidth: 2.5,
+  },
+  cornerBottomLeft: {
+    bottom: 14,
+    left: 14,
+    borderBottomWidth: 2.5,
+    borderLeftWidth: 2.5,
+  },
+  cornerBottomRight: {
+    bottom: 14,
+    right: 14,
+    borderBottomWidth: 2.5,
+    borderRightWidth: 2.5,
+  },
+  focusCenter: {
+    width: 64,
+    height: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  focusCrosshairHoriz: {
+    position: 'absolute',
+    width: 32,
+    height: 1,
+    backgroundColor: 'rgba(56, 189, 248, 0.6)',
+  },
+  focusCrosshairVert: {
+    position: 'absolute',
+    height: 32,
+    width: 1,
+    backgroundColor: 'rgba(56, 189, 248, 0.6)',
+  },
+  focusCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.4)',
+  },
+  viewfinderInfo: {
+    position: 'absolute',
+    bottom: 20,
+    alignItems: 'center',
+  },
+  viewfinderHint: {
+    color: '#94a3b8',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  viewfinderGps: {
+    color: '#38bdf8',
+    fontSize: 10,
+    marginTop: 2,
+  },
+  capturedViewport: {
+    flex: 1,
+    position: 'relative',
+  },
+  capturedImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#000000',
+  },
+  watermarkBar: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    right: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 6,
+  },
+  watermarkBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  watermarkDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10b981',
+    marginRight: 5,
+  },
+  watermarkText: {
+    color: '#34d399',
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  watermarkCoords: {
+    color: '#e2e8f0',
+    fontSize: 9.5,
+    fontWeight: '500',
+  },
+  capturedActionsBar: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    right: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   retakeBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
+    backgroundColor: '#0284c7',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     borderRadius: 6,
-    paddingVertical: 8,
   },
   retakeBtnText: {
-    color: '#f87171',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  formCard: {
-    backgroundColor: '#0f172a',
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-  },
-  formTitle: {
-    color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 0.8,
-    marginBottom: 8,
-  },
-  inputLabel: {
-    color: '#475569',
-    fontSize: 8.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    marginTop: 6,
-    marginBottom: 3,
-  },
-  input: {
-    backgroundColor: '#090d16',
-    borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
     color: '#ffffff',
     fontSize: 11.5,
+    fontWeight: '700',
+  },
+  discardBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(127, 29, 29, 0.9)',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 6,
+  },
+  discardBtnText: {
+    color: '#fecaca',
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  shutterDeck: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  shutterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0284c7',
+    paddingHorizontal: 26,
+    paddingVertical: 12,
+    borderRadius: 30,
+    shadowColor: '#0284c7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  shutterOuterRing: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  shutterInnerCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shutterText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    marginBottom: 14,
+  },
+  sectionLabel: {
+    color: '#0f172a',
+    fontSize: 13.5,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  chipGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 12,
+  },
+  chip: {
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  chipActive: {
+    backgroundColor: '#e0f2fe',
+    borderColor: '#0284c7',
+  },
+  chipText: {
+    color: '#475569',
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  chipTextActive: {
+    color: '#0284c7',
+    fontWeight: '700',
+  },
+  twoColRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  inputLabel: {
+    color: '#334155',
+    fontSize: 11.5,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  textInput: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    color: '#0f172a',
+    fontSize: 12.5,
+  },
+  textArea: {
+    height: 54,
+    textAlignVertical: 'top',
+    marginBottom: 12,
   },
   submitBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0284c7',
-    borderRadius: 4,
-    paddingVertical: 10,
-    marginTop: 12,
+    backgroundColor: '#059669',
+    paddingVertical: 11,
+    borderRadius: 8,
   },
-  btnDisabled: { opacity: 0.6 },
   submitBtnText: {
     color: '#ffffff',
-    fontSize: 10.5,
-    fontWeight: '900',
-    letterSpacing: 0.6,
+    fontSize: 13,
+    fontWeight: '700',
   },
-  recentCard: {
-    backgroundColor: '#0f172a',
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 10,
+  btnDisabled: {
+    opacity: 0.6,
+  },
+  recentList: {
+    gap: 8,
+  },
+  recentItem: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#e2e8f0',
+    padding: 9,
   },
-  recentTitle: {
-    color: '#475569',
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    marginBottom: 6,
-  },
-  reportItem: {
-    backgroundColor: '#090d16',
-    borderRadius: 4,
-    padding: 8,
-    marginBottom: 6,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-  },
-  reportHeader: {
+  recentTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 2,
   },
-  reportType: {
-    color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '800',
+  recentType: {
+    color: '#0f172a',
+    fontSize: 12,
+    fontWeight: '700',
   },
-  reportZone: {
-    color: '#38bdf8',
-    fontSize: 9.5,
-    fontFamily: 'monospace',
-  },
-  reportNotes: {
+  recentTime: {
     color: '#64748b',
     fontSize: 10,
   },
-  attachedBadge: {
+  recentLocation: {
+    color: '#0284c7',
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  recentNotes: {
+    color: '#475569',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  photoAttachedTag: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 4,
   },
-  attachedText: {
-    color: '#4ade80',
-    fontSize: 8.5,
-    fontWeight: '800',
+  photoAttachedText: {
+    color: '#059669',
+    fontSize: 10,
+    fontWeight: '600',
   },
 });
 
