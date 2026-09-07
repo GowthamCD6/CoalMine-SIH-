@@ -185,7 +185,7 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
   const pastAlerts = (alertsData.broadcasts || []).filter((b) => b.status !== 'ACTIVE');
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="manage-orders-container" style={{ padding: '0 0 20px', gap: '12px', width: '100%' }}>
       {/* Top Emergency Status Header */}
       <div style={{
         display: 'flex',

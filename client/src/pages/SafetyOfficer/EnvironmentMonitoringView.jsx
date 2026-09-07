@@ -11,21 +11,21 @@ export default function EnvironmentMonitoringView({ onShowToast }) {
   ]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="manage-orders-container" style={{ padding: '0 0 20px', gap: '12px' }}>
       {/* Header */}
-      <div className="sleek-card" style={{ padding: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="filter-prototype-card" style={{ padding: '1.25rem 1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.5rem', color: 'var(--text-main)' }}>
               <Cloud size={28} color="var(--primary)" />
               Environmental & Pollution Control
             </h2>
-            <p style={{ margin: '8px 0 0 0', color: 'var(--text-muted)' }}>
+            <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
               Real-time monitoring of air, water, and noise pollution for statutory compliance (MoEFCC).
             </p>
           </div>
-          <button className="sleek-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--primary)', color: '#fff' }} onClick={() => onShowToast('Generating Environmental Report...')}>
-            <BarChart2 size={18} /> Generate Report
+          <button className="btn btn-apply" onClick={() => onShowToast('Generating Environmental Report...')}>
+            <BarChart2 size={16} /> Generate Report
           </button>
         </div>
       </div>

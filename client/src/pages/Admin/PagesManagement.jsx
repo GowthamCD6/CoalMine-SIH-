@@ -162,7 +162,7 @@ export default function PagesManagement({ onShowToast }) {
   };
 
   return (
-    <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="manage-orders-container" style={{ padding: '0 0 20px', gap: '12px', width: '100%' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>

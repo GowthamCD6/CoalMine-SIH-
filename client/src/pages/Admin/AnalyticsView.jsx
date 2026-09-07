@@ -9,32 +9,32 @@ export default function AnalyticsView({ onShowToast }) {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="manage-orders-container" style={{ padding: '0 0 20px', gap: '12px' }}>
       {/* Header */}
-      <div className="glass-panel" style={{ padding: '2rem' }}>
+      <div className="filter-prototype-card" style={{ padding: '1.25rem 1.5rem' }}>
         <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.5rem', color: 'var(--text-main)' }}>
           <BrainCircuit size={28} color="var(--primary)" />
           AI Risk Analytics
         </h2>
-        <p style={{ margin: '8px 0 0 0', color: 'var(--text-muted)' }}>
+        <p style={{ margin: '6px 0 0 0', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
           Predictive analytics engine analyzing sensor telemetry to forecast potential hazards.
         </p>
       </div>
 
       {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px' }}>
+      <div className="mo-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
         {metrics.map((m, i) => {
           const Icon = m.icon;
           return (
-            <div key={i} className="sleek-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{m.label}</span>
+            <div key={i} className="mo-stat-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.85rem' }}>{m.label}</span>
                 <Icon size={20} color="var(--primary)" />
               </div>
-              <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)' }}>{m.value}</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                <span style={{ color: m.trend.includes('-') || m.trend === 'Stable' ? 'var(--success)' : 'var(--warning)' }}>Trend: {m.trend}</span>
-                <span style={{ fontWeight: 600, color: m.status === 'Optimal' || m.status === 'Nominal' ? 'var(--success)' : 'var(--danger)' }}>{m.status}</span>
+              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)' }}>{m.value}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', width: '100%' }}>
+                <span style={{ color: m.trend.includes('-') || m.trend === 'Stable' ? 'var(--success)' : 'var(--warning)', fontWeight: 600 }}>Trend: {m.trend}</span>
+                <span style={{ fontWeight: 700, color: m.status === 'Optimal' || m.status === 'Nominal' ? 'var(--success)' : 'var(--danger)' }}>{m.status}</span>
               </div>
             </div>
           )
@@ -42,8 +42,8 @@ export default function AnalyticsView({ onShowToast }) {
       </div>
 
       {/* Simulated Charts Area */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
-        <div className="glass-panel" style={{ padding: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
+        <div className="filter-prototype-card" style={{ padding: '1.25rem' }}>
           <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>7-Day Hazard Prediction Curve</h3>
           <div style={{ height: '300px', display: 'flex', alignItems: 'flex-end', gap: '12px', padding: '20px 0', borderBottom: '1px solid #e2e8f0', borderLeft: '1px solid #e2e8f0' }}>
             {/* CSS Bar Chart Simulation */}
@@ -63,7 +63,7 @@ export default function AnalyticsView({ onShowToast }) {
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '1.5rem' }}>
+        <div className="filter-prototype-card" style={{ padding: '1.25rem' }}>
           <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>Top Risk Factors</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>

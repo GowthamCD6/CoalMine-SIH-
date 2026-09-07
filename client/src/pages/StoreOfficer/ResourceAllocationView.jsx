@@ -11,27 +11,27 @@ export default function ResourceAllocationView({ onShowToast }) {
   ]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="manage-orders-container" style={{ padding: '0 0 20px', gap: '12px' }}>
       {/* Header */}
-      <div className="glass-panel" style={{ padding: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="filter-prototype-card" style={{ padding: '1.25rem 1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.5rem', color: 'var(--text-main)' }}>
               <Tractor size={28} color="var(--primary)" />
               Resource Allocation
             </h2>
-            <p style={{ margin: '8px 0 0 0', color: 'var(--text-muted)' }}>
+            <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
               Manage Heavy Earth Moving Machinery (HEMM) and shift personnel assignments.
             </p>
           </div>
-          <button className="sleek-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--primary)', color: '#fff' }}>
-            <Settings size={18} /> Manage Shifts
+          <button className="btn btn-apply">
+            <Settings size={16} /> Manage Shifts
           </button>
         </div>
       </div>
 
       {/* Kanban-style Lists */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
         {/* Column 1: Active */}
         <div className="glass-panel" style={{ padding: '1.5rem', backgroundColor: '#ffffff', border: '1px solid var(--border-subtle)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>

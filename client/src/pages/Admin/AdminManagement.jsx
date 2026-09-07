@@ -649,7 +649,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
       : mines.filter(m => m.id === userMineId);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="manage-orders-container" style={{ padding: '0 0 20px', gap: '12px', width: '100%' }}>
       {/* Header & Role Scope Banner */}
       <div style={{
         display: 'flex',

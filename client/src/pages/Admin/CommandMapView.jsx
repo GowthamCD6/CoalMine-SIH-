@@ -10,32 +10,32 @@ export default function CommandMapView({ onShowToast }) {
   ]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="manage-orders-container" style={{ padding: '0 0 20px', gap: '12px' }}>
       {/* Header */}
-      <div className="glass-panel" style={{ padding: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="filter-prototype-card" style={{ padding: '1.25rem 1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.5rem', color: 'var(--text-main)' }}>
               <Map size={28} color="var(--primary)" />
               National GIS Command Map
             </h2>
-            <p style={{ margin: '8px 0 0 0', color: 'var(--text-muted)' }}>
+            <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
               Live geo-spatial monitoring of all active mining zones, asset tracking, and geological stability metrics.
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button className="sleek-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px' }}>
-              <Search size={16} /> Search Map
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button className="btn btn-clear" style={{ minHeight: '38px', padding: '8px 14px' }}>
+              <Search size={15} /> Search Map
             </button>
-            <button className="sleek-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px' }}>
-              <Filter size={16} /> Filters
+            <button className="btn btn-clear" style={{ minHeight: '38px', padding: '8px 14px' }}>
+              <Filter size={15} /> Filters
             </button>
           </div>
         </div>
       </div>
 
       {/* Simulated Map View - Using Grid for layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px', height: '600px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '12px', height: '600px' }}>
         {/* Map Placeholder */}
         <div className="glass-panel" style={{ 
           position: 'relative', 

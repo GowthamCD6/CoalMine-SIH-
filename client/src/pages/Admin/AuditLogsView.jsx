@@ -187,7 +187,7 @@ export default function AuditLogsView({ onShowToast }) {
   });
 
   return (
-    <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="manage-orders-container" style={{ padding: '0 0 20px', gap: '12px', width: '100%' }}>
       {/* Top Header */}
       <div style={{
         display: 'flex',
