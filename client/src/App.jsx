@@ -16,6 +16,7 @@ import CommandMapView from './components/views/CommandMapView.jsx';
 import AnalyticsView from './components/views/AnalyticsView.jsx';
 import ComplianceView from './components/views/ComplianceView.jsx';
 import ResourceAllocationView from './components/views/ResourceAllocationView.jsx';
+import MaterialInwardView from './components/views/MaterialInwardView.jsx';
 import { api, subscribeToApiLogs, getAccessToken } from './services/api.js';
 import './App.css';
 
@@ -170,6 +171,13 @@ function App() {
 
           {(activeTab === 'audit' || activeTab === 'audit-logs') && (
             <AuditLogsView onShowToast={showToast} />
+          )}
+
+          {(activeTab === 'materials' || activeTab === 'material-logs') && (
+            <MaterialInwardView
+              currentUser={currentUser}
+              onShowToast={showToast}
+            />
           )}
 
           {activeTab === 'inspections' && (

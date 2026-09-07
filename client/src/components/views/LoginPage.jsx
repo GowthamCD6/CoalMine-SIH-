@@ -295,6 +295,22 @@ export default function LoginPage({ onLoginSuccess }) {
                 <div>⛏️ Rajmahal Mine Admin</div>
                 <div style={{ fontSize: '0.7rem', color: '#059669' }}>rj_mine_admin (Mine Scope)</div>
               </button>
+
+              <button
+                type="button"
+                className="clay-btn"
+                onClick={() => handleFillCredentials('rj_safety_officer', 'Admin@12345')}
+                style={{
+                  padding: '7px 10px',
+                  backgroundColor: 'rgba(254, 242, 242, 0.5)',
+                  fontSize: '0.78rem',
+                  color: '#991b1b',
+                  textAlign: 'left',
+                }}
+              >
+                <div>👷 Safety Officer (Staff)</div>
+                <div style={{ fontSize: '0.7rem', color: '#dc2626' }}>rj_safety_officer (Site Staff)</div>
+              </button>
             </div>
           </div>
         </div>

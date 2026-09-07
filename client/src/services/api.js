@@ -269,6 +269,14 @@ export const api = {
 
   // Audit Logs
   getAuditLogs: (params) => request(`/audit-logs${toQueryString(params)}`),
+
+  // Materials & Inbound Logistics
+  getMaterials: (params) => request(`/materials${toQueryString(params)}`),
+  getMaterialSummary: (params) => request(`/materials/summary${toQueryString(params)}`),
+  getMaterial: (id) => request(`/materials/${id}`),
+  createMaterial: (data) => request('/materials', { method: 'POST', body: JSON.stringify(data) }),
+  updateMaterialStatus: (id, data) => request(`/materials/${id}/status`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteMaterial: (id) => request(`/materials/${id}`, { method: 'DELETE' }),
 };
 
 export default api;

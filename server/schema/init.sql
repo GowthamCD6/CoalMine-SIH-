@@ -288,4 +288,47 @@ CREATE TABLE `audit_logs` (
   CONSTRAINT `fk_audit_logs_mine` FOREIGN KEY (`mine_id`) REFERENCES `mines` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
+-- ------------------------------------------------------------
+-- MATERIAL INWARD LOGS
+-- ------------------------------------------------------------
+DROP TABLE IF EXISTS `material_inward_logs`;
+CREATE TABLE `material_inward_logs` (
+  `id`                    BIGINT       NOT NULL AUTO_INCREMENT,
+  `consignment_number`    VARCHAR(50)  NOT NULL,
+  `organization_id`       BIGINT       NOT NULL,
+  `mine_id`               BIGINT       NOT NULL,
+  `material_name`         VARCHAR(150) NOT NULL,
+  `category`              VARCHAR(50)  NOT NULL,
+  `quantity`              DECIMAL(12,2) NOT NULL,
+  `unit`                  VARCHAR(20)  NOT NULL,
+  `challan_number`        VARCHAR(100) NOT NULL,
+  `purchase_order_number` VARCHAR(100) DEFAULT NULL,
+  `supplier_name`         VARCHAR(150) NOT NULL,
+  `transporter_name`      VARCHAR(150) DEFAULT NULL,
+  `vehicle_number`        VARCHAR(50)  NOT NULL,
+  `driver_name`           VARCHAR(100) DEFAULT NULL,
+  `driver_phone`          VARCHAR(20)  DEFAULT NULL,
+  `entry_gate`            VARCHAR(100) NOT NULL,
+  `gross_weight_tons`     DECIMAL(10,2) DEFAULT NULL,
+  `tare_weight_tons`      DECIMAL(10,2) DEFAULT NULL,
+  `net_weight_tons`       DECIMAL(10,2) DEFAULT NULL,
+  `inspection_status`     VARCHAR(30)  NOT NULL DEFAULT 'PASSED',
+  `inspected_by`          VARCHAR(100) DEFAULT NULL,
+  `remarks`               TEXT         DEFAULT NULL,
+  `logged_by_user_id`     BIGINT       NOT NULL,
+  `created_at`            DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`            DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_consignment_number` (`consignment_number`),
+  KEY `idx_mat_org_mine` (`organization_id`, `mine_id`),
+  KEY `idx_mat_category` (`category`),
+  KEY `idx_mat_status` (`inspection_status`),
+  KEY `idx_mat_created_at` (`created_at`),
+  KEY `idx_mat_logged_by` (`logged_by_user_id`),
+  CONSTRAINT `fk_mat_org` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`),
+  CONSTRAINT `fk_mat_mine` FOREIGN KEY (`mine_id`) REFERENCES `mines` (`id`),
+  CONSTRAINT `fk_mat_user` FOREIGN KEY (`logged_by_user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 SET FOREIGN_KEY_CHECKS = 1;

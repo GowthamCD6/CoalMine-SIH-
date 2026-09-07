@@ -16,6 +16,7 @@ import {
   BrainCircuit,
   FileCheck,
   Tractor,
+  Truck,
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onSelectTab }) {
@@ -31,6 +32,7 @@ export default function Sidebar({ activeTab, onSelectTab }) {
     {
       title: 'Core Operations',
       items: [
+        { id: 'materials', label: 'Material Inward Logs', icon: Truck },
         { id: 'inspections', label: 'Inspections & Violations', icon: ClipboardCheck },
         { id: 'emergency', label: 'Emergency & SOS Console', icon: Ambulance },
         { id: 'resources', label: 'Resource Allocation', icon: Tractor },

@@ -15,6 +15,7 @@ import pagesRoutes from '../modules/pages/pages.routes.js';
 import pagePermissionsRoutes from '../modules/page-permissions/page-permissions.routes.js';
 import userSessionsRoutes from '../modules/user-sessions/user-sessions.routes.js';
 import auditLogsRoutes from '../modules/audit-logs/audit-logs.routes.js';
+import materialsRoutes from '../modules/materials/materials.routes.js';
 import db from '../config/db.js';
 
 const router = express.Router();
@@ -61,6 +62,7 @@ router.use('/pages', pagesRoutes);
 router.use('/pages/:pageId/permissions', pagePermissionsRoutes);
 router.use('/sessions', userSessionsRoutes);
 router.use('/audit-logs', auditLogsRoutes);
+router.use('/materials', materialsRoutes);
 router.use('/mobile-ops', mobileOpsRouter);
 router.use('/', mobileOpsRouter);
 

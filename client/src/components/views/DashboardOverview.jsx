@@ -10,7 +10,8 @@ import {
   CheckCircle2,
   Clock,
   ArrowUpRight,
-  Server
+  Server,
+  Truck,
 } from 'lucide-react';
 import { api } from '../../services/api.js';
 
@@ -22,6 +23,7 @@ export default function DashboardOverview({ serverStatus, onNavigateTo }) {
     roles: 0,
     permissions: 0,
     auditLogs: 0,
+    materials: 0,
   });
   const [recentLogs, setRecentLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,13 +32,14 @@ export default function DashboardOverview({ serverStatus, onNavigateTo }) {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        const [orgsRes, minesRes, usersRes, rolesRes, permsRes, auditRes] = await Promise.allSettled([
+        const [orgsRes, minesRes, usersRes, rolesRes, permsRes, auditRes, matRes] = await Promise.allSettled([
           api.getOrganizations({ limit: 1 }),
           api.getMines({ limit: 1 }),
           api.getUsers({ limit: 1 }),
           api.getRoles({ limit: 1 }),
           api.getPermissions({ limit: 1 }),
           api.getAuditLogs({ limit: 5 }),
+          api.getMaterialSummary(),
         ]);
 
         setCounts({
@@ -46,6 +49,7 @@ export default function DashboardOverview({ serverStatus, onNavigateTo }) {
           roles: rolesRes.status === 'fulfilled' ? (rolesRes.value?.meta?.total ?? (Array.isArray(rolesRes.value) ? rolesRes.value.length : 0)) : 0,
           permissions: permsRes.status === 'fulfilled' ? (permsRes.value?.meta?.total ?? (Array.isArray(permsRes.value) ? permsRes.value.length : 0)) : 0,
           auditLogs: auditRes.status === 'fulfilled' ? (auditRes.value?.meta?.total ?? (Array.isArray(auditRes.value) ? auditRes.value.length : 0)) : 0,
+          materials: matRes.status === 'fulfilled' ? (matRes.value?.total_consignments ?? 0) : 0,
         });
 
         if (auditRes.status === 'fulfilled') {
@@ -63,6 +67,7 @@ export default function DashboardOverview({ serverStatus, onNavigateTo }) {
   }, []);
 
   const cards = [
+    { title: 'Inward Material Consignments', count: counts.materials, icon: Truck, color: '#0284c7', tab: 'materials' },
     { title: 'Organizations', count: counts.orgs, icon: Building2, color: '#2563eb', tab: 'organizations' },
     { title: 'Mines / Sites', count: counts.mines, icon: Layers, color: '#059669', tab: 'mines' },
     { title: 'Registered Users', count: counts.users, icon: Users, color: '#7c3aed', tab: 'users' },
