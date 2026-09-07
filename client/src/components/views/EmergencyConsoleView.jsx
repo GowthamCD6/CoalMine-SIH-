@@ -162,30 +162,27 @@ export default function EmergencyConsoleView({ onShowToast }) {
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
             <button
-              className="clay-btn"
+              className="sleek-btn"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
                 backgroundColor: '#ffffff',
-                border: '1px solid #cbd5e1',
-                padding: '10px 14px',
+                color: 'var(--text-main)',
+                border: '1px solid var(--border-subtle)',
               }}
               onClick={fetchEmergencyData}
             >
               <RefreshCw size={16} /> Refresh
             </button>
             <button
-              className="clay-btn"
+              className="sleek-btn"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                backgroundColor: '#dc2626',
+                backgroundColor: 'var(--danger)',
                 color: '#ffffff',
-                fontWeight: 700,
-                padding: '10px 18px',
-                boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)',
               }}
               onClick={() => setShowEvacModal(true)}
             >
@@ -195,20 +192,19 @@ export default function EmergencyConsoleView({ onShowToast }) {
         </div>
       </div>
 
-      {/* Active Broadcasts Banner (If Any) */}
       {activeBroadcasts.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#b91c1c', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Volume2 size={18} color="#dc2626" /> Active Mine Evacuation Orders ({activeBroadcasts.length})
+          <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Volume2 size={18} color="var(--danger)" /> Active Mine Evacuation Orders ({activeBroadcasts.length})
           </h3>
           {activeBroadcasts.map((b) => (
             <div
               key={b.id}
-              className="clay-card"
+              className="sleek-card"
               style={{
                 padding: '18px',
                 backgroundColor: '#fef2f2',
-                borderLeft: '5px solid #dc2626',
+                borderLeft: '5px solid var(--danger)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -225,21 +221,21 @@ export default function EmergencyConsoleView({ onShowToast }) {
                       padding: '2px 8px',
                       borderRadius: '4px',
                       backgroundColor: '#fee2e2',
-                      color: '#b91c1c',
+                      color: 'var(--danger)',
                       fontWeight: 700,
                     }}
                   >
                     TARGET: {b.target_zone_name || b.target_zone}
                   </span>
                 </div>
-                <div style={{ color: '#475569', fontSize: '0.9rem', marginTop: '6px' }}>{b.message}</div>
-                <div style={{ color: '#0284c7', fontSize: '0.85rem', fontWeight: 600, marginTop: '4px' }}>
+                <div style={{ color: 'var(--text-body)', fontSize: '0.9rem', marginTop: '6px' }}>{b.message}</div>
+                <div style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 600, marginTop: '4px' }}>
                   Exit Route: {b.exit_route} • Dispatched by {b.sender_name}
                 </div>
               </div>
               <button
-                className="clay-btn"
-                style={{ backgroundColor: '#059669', color: '#ffffff', fontWeight: 700, padding: '8px 14px' }}
+                className="sleek-btn"
+                style={{ backgroundColor: 'var(--success)', color: '#ffffff', fontWeight: 700, padding: '8px 14px' }}
                 onClick={() => handleResolveAlert(b.id)}
               >
                 Stand Down Evacuation
@@ -262,24 +258,24 @@ export default function EmergencyConsoleView({ onShowToast }) {
                 style={{
                   padding: '2rem',
                   textAlign: 'center',
-                  color: '#64748b',
-                  backgroundColor: '#f8fafc',
+                  color: 'var(--text-muted)',
+                  backgroundColor: 'var(--bg-surface-subtle)',
                   borderRadius: '8px',
-                  border: '1px dashed #cbd5e1',
+                  border: '1px dashed var(--border-subtle)',
                 }}
               >
-                <CheckCircle2 size={28} color="#059669" style={{ margin: '0 auto 8px' }} />
-                <div style={{ fontWeight: 600, color: '#0f172a' }}>Zero Active SOS Distress Beacons</div>
+                <CheckCircle2 size={28} color="var(--success)" style={{ margin: '0 auto 8px' }} />
+                <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>Zero Active SOS Distress Beacons</div>
                 <div style={{ fontSize: '0.85rem' }}>All worker turnstiles and underground shafts report green.</div>
               </div>
             ) : (
               activeSOS.map((sos) => (
                 <div
                   key={sos.id}
-                  className="clay-card"
+                  className="sleek-card"
                   style={{
                     padding: '16px',
-                    borderLeft: `4px solid ${sos.status === 'ACTIVE_DISTRESS' ? 'var(--danger)' : '#0284c7'}`,
+                    borderLeft: `4px solid ${sos.status === 'ACTIVE_DISTRESS' ? 'var(--danger)' : 'var(--primary)'}`,
                     backgroundColor: sos.status === 'ACTIVE_DISTRESS' ? '#fff5f5' : '#ffffff',
                   }}
                 >
@@ -287,22 +283,13 @@ export default function EmergencyConsoleView({ onShowToast }) {
                     <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
                       {sos.id} - {sos.worker_name || 'Worker'}
                     </span>
-                    <span
-                      style={{
-                        padding: '3px 8px',
-                        borderRadius: '4px',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        backgroundColor: sos.status === 'ACTIVE_DISTRESS' ? '#fee2e2' : '#e0f2fe',
-                        color: sos.status === 'ACTIVE_DISTRESS' ? '#b91c1c' : '#0369a1',
-                      }}
-                    >
+                    <span className={`badge-pill ${sos.status === 'ACTIVE_DISTRESS' ? 'badge-danger' : 'badge-warning'}`}>
                       {sos.status}
                     </span>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <MapPin size={14} color="#dc2626" /> {sos.zone} ({sos.depth}m)
+                      <MapPin size={14} color="var(--danger)" /> {sos.zone} ({sos.depth}m)
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Clock size={14} /> {new Date(sos.timestamp).toLocaleTimeString()}
@@ -313,15 +300,15 @@ export default function EmergencyConsoleView({ onShowToast }) {
                   </div>
                   <div style={{ marginTop: '16px', display: 'flex', gap: '12px' }}>
                     <button
-                      className="clay-btn"
+                      className="sleek-btn"
                       style={{ padding: '6px 12px', fontSize: '0.85rem', backgroundColor: '#f1f5f9' }}
                       onClick={() => handleAcknowledgeSos(sos.id)}
                     >
                       Acknowledge
                     </button>
                     <button
-                      className="clay-btn"
-                      style={{ padding: '6px 14px', fontSize: '0.85rem', backgroundColor: '#0284c7', color: '#fff', fontWeight: 600 }}
+                      className="sleek-btn"
+                      style={{ padding: '6px 14px', fontSize: '0.85rem', backgroundColor: 'var(--primary)', color: '#fff', fontWeight: 600 }}
                       onClick={() => handleDispatchTeam(sos.id)}
                     >
                       Dispatch Rescue Brigade
@@ -340,25 +327,25 @@ export default function EmergencyConsoleView({ onShowToast }) {
               <Navigation size={18} color="var(--primary)" /> Active Rescue Squads
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div className="clay-card" style={{ padding: '12px 16px' }}>
+              <div className="sleek-card" style={{ padding: '12px 16px' }}>
                 <div style={{ fontWeight: '600', marginBottom: '4px' }}>Alpha Subterranean Brigade</div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
                   <span>Shaft 4 Incline</span>
-                  <span style={{ fontWeight: '600', color: '#059669' }}>READY (Underground)</span>
+                  <span style={{ fontWeight: '600', color: 'var(--success)' }}>READY (Underground)</span>
                 </div>
               </div>
-              <div className="clay-card" style={{ padding: '12px 16px' }}>
+              <div className="sleek-card" style={{ padding: '12px 16px' }}>
                 <div style={{ fontWeight: '600', marginBottom: '4px' }}>Rapid Ventilation Crew</div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
                   <span>Zone B Airway</span>
                   <span style={{ fontWeight: '600', color: 'var(--primary)' }}>STANDBY</span>
                 </div>
               </div>
-              <div className="clay-card" style={{ padding: '12px 16px' }}>
+              <div className="sleek-card" style={{ padding: '12px 16px' }}>
                 <div style={{ fontWeight: '600', marginBottom: '4px' }}>Surface Medevac Mobile</div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
                   <span>Portal Gate Sump</span>
-                  <span style={{ fontWeight: '600', color: '#059669' }}>ON-SITE</span>
+                  <span style={{ fontWeight: '600', color: 'var(--success)' }}>ON-SITE</span>
                 </div>
               </div>
             </div>
@@ -508,19 +495,19 @@ export default function EmergencyConsoleView({ onShowToast }) {
                 <button
                   type="button"
                   onClick={() => setShowEvacModal(false)}
-                  className="clay-btn"
-                  style={{ flex: 1, padding: '12px', backgroundColor: '#f1f5f9' }}
+                  className="sleek-btn"
+                  style={{ flex: 1, padding: '12px', backgroundColor: '#f1f5f9', color: 'var(--text-main)' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="clay-btn"
+                  className="sleek-btn"
                   style={{
                     flex: 2,
                     padding: '12px',
-                    backgroundColor: '#dc2626',
+                    backgroundColor: 'var(--danger)',
                     color: '#ffffff',
                     fontWeight: 700,
                     display: 'flex',
