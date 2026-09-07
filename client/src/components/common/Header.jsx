@@ -88,11 +88,6 @@ export default function Header({
         )}
 
         <div className="topbar-title-group">
-          <div className="topbar-breadcrumb">
-            <span>CoalMin Platform</span>
-            <span className="topbar-breadcrumb-dot" />
-            <span>{currentMeta.category}</span>
-          </div>
           <div className="topbar-heading">
             <TabIcon size={18} color="#2563eb" />
             <span>{currentMeta.title}</span>
@@ -131,7 +126,7 @@ export default function Header({
           className="topbar-btn"
           title="Open Swagger REST API Documentation"
         >
-          <BookOpen size={14} color="#2563eb" />
+          <BookOpen size={14} className="topbar-icon" />
           <span>Swagger Docs</span>
         </a>
 
@@ -142,7 +137,7 @@ export default function Header({
           title="Open API & Diagnostics Inspector"
           className="topbar-btn"
         >
-          <Terminal size={14} color="#2563eb" />
+          <Terminal size={14} className="topbar-icon" />
           <span>API Inspector</span>
           {diagnosticsCount > 0 && (
             <span className="btn-badge">{diagnosticsCount}</span>

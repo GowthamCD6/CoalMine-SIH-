@@ -4,7 +4,7 @@ import {
   UserCheck, Cloud, HardHat, FileText, ClipboardCheck,
   ClipboardList, Ambulance, Tractor, ShieldAlert, Smartphone,
   Building2, Users, Shield, FolderTree, UserCog, LogOut,
-  ChevronDown, X, Pickaxe, Database, BarChart3, Landmark,
+  ChevronDown, X, Pickaxe, BarChart3, Landmark,
   AlertTriangle, Activity, Briefcase, Factory, Home, Flame, MessageSquare,
 } from 'lucide-react';
 import { api } from '../../services/api.js';
@@ -306,11 +306,7 @@ export default function Sidebar({
                 <Pickaxe size={22} />
               </div>
               <div className="company-name">
-                <div className="company-title">
-                  SmartMine
-                  <span className="title-badge">SIH26024</span>
-                </div>
-                <div className="company-subtitle">AI Governance Platform</div>
+                <div className="company-title">SmartMine</div>
               </div>
             </div>
           </div>
@@ -327,16 +323,6 @@ export default function Sidebar({
           )}
         </nav>
 
-        {/* Database Status Strip */}
-        <div className="sidebar-db-strip">
-          <div className="db-dot" />
-          <div className="db-info">
-            <div className="db-title">TiDB MySQL 8.0+</div>
-            <div className="db-sub">SSL Pool Connected</div>
-          </div>
-          <Database size={15} color="#16a34a" />
-        </div>
-
         {/* User Profile & Logout in Footer */}
         <div className="sidebar-footer">
           <div
@@ -344,7 +330,10 @@ export default function Sidebar({
             onClick={() => setUserMenuOpen(!userMenuOpen)}
             title="User settings"
           >
-            <div className="user-avatar">{userInitial}</div>
+            <div className="user-avatar-wrapper">
+              <div className="user-avatar">{userInitial}</div>
+              <span className="user-status-dot" title="Active session" />
+            </div>
             <div className="user-info">
               <div className="user-name">{displayName}</div>
               <div className="user-role">{roleLabel}</div>
