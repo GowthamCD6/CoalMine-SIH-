@@ -186,10 +186,14 @@ export const api = {
   logout: async () => {
     try {
       const refresh = getRefreshToken();
-      await request('/auth/logout', {
-        method: 'POST',
-        body: JSON.stringify({ refresh_token: refresh }),
-      });
+      if (refresh) {
+        await request('/auth/logout', {
+          method: 'POST',
+          body: JSON.stringify({ refresh_token: refresh }),
+        });
+      }
+    } catch (err) {
+      console.warn('Backend logout failed, forcing local logout:', err.message);
     } finally {
       clearAuthTokens();
     }
