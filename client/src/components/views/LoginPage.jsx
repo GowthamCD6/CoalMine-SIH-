@@ -53,7 +53,7 @@ export default function LoginPage({ onLoginSuccess }) {
           textAlign: 'center',
           borderBottom: '1px solid rgba(255, 255, 255, 0.6)',
         }}>
-          <div className="clay-card" style={{
+          <div className="sleek-card" style={{
             width: '52px',
             height: '52px',
             display: 'inline-flex',
@@ -128,7 +128,7 @@ export default function LoginPage({ onLoginSuccess }) {
                   type="text"
                   required
                   autoFocus
-                  className="clay-input"
+                  className="sleek-input"
                   placeholder="admin@coalmin.org or superadmin"
                   value={loginInput}
                   onChange={(e) => setLoginInput(e.target.value)}
@@ -162,7 +162,7 @@ export default function LoginPage({ onLoginSuccess }) {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
-                  className="clay-input"
+                  className="sleek-input"
                   placeholder="••••••••••••"
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
@@ -198,7 +198,7 @@ export default function LoginPage({ onLoginSuccess }) {
             <button
               type="submit"
               disabled={loading}
-              className="clay-btn"
+              className="sleek-btn"
               style={{
                 marginTop: '0.5rem',
                 backgroundColor: 'var(--primary)',
@@ -234,7 +234,7 @@ export default function LoginPage({ onLoginSuccess }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <button
                 type="button"
-                className="clay-btn"
+                className="sleek-btn"
                 onClick={() => handleFillCredentials('superadmin', 'Admin@12345')}
                 style={{
                   padding: '7px 10px',
@@ -250,7 +250,7 @@ export default function LoginPage({ onLoginSuccess }) {
 
               <button
                 type="button"
-                className="clay-btn"
+                className="sleek-btn"
                 onClick={() => handleFillCredentials('ecl_admin', 'Admin@12345')}
                 style={{
                   padding: '7px 10px',
@@ -266,7 +266,7 @@ export default function LoginPage({ onLoginSuccess }) {
 
               <button
                 type="button"
-                className="clay-btn"
+                className="sleek-btn"
                 onClick={() => handleFillCredentials('ecl_advisor', 'Admin@12345')}
                 style={{
                   padding: '7px 10px',
@@ -282,7 +282,7 @@ export default function LoginPage({ onLoginSuccess }) {
 
               <button
                 type="button"
-                className="clay-btn"
+                className="sleek-btn"
                 onClick={() => handleFillCredentials('rj_mine_admin', 'Admin@12345')}
                 style={{
                   padding: '7px 10px',

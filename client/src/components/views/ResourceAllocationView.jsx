@@ -24,7 +24,7 @@ export default function ResourceAllocationView({ onShowToast }) {
               Manage Heavy Earth Moving Machinery (HEMM) and shift personnel assignments.
             </p>
           </div>
-          <button className="clay-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--primary)', color: '#fff' }}>
+          <button className="sleek-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--primary)', color: '#fff' }}>
             <Settings size={18} /> Manage Shifts
           </button>
         </div>
@@ -40,7 +40,7 @@ export default function ResourceAllocationView({ onShowToast }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {resources.filter(r => r.status === 'Active').map(res => (
-              <div key={res.id} className="clay-card" style={{ padding: '12px' }}>
+              <div key={res.id} className="sleek-card" style={{ padding: '12px' }}>
                 <div style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>{res.id} - {res.type}</div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
                   <span><Users size={12} style={{ display: 'inline', marginRight: '4px' }}/> {res.assignee}</span>
@@ -59,14 +59,14 @@ export default function ResourceAllocationView({ onShowToast }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {resources.filter(r => r.status === 'Idle').map(res => (
-              <div key={res.id} className="clay-card" style={{ padding: '12px' }}>
+              <div key={res.id} className="sleek-card" style={{ padding: '12px' }}>
                 <div style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>{res.id} - {res.type}</div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
                   <span><Users size={12} style={{ display: 'inline', marginRight: '4px' }}/> Unassigned</span>
                   <span>{res.location}</span>
                 </div>
                 <button 
-                  className="clay-btn" 
+                  className="sleek-btn" 
                   style={{ width: '100%', marginTop: '12px', padding: '6px', fontSize: '0.8rem', display: 'flex', justifyContent: 'center', gap: '6px' }}
                   onClick={() => onShowToast && onShowToast(`Assigning ${res.id}...`)}
                 >
@@ -85,7 +85,7 @@ export default function ResourceAllocationView({ onShowToast }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {resources.filter(r => r.status === 'Maintenance').map(res => (
-              <div key={res.id} className="clay-card" style={{ padding: '12px', borderLeft: '4px solid var(--danger)' }}>
+              <div key={res.id} className="sleek-card" style={{ padding: '12px', borderLeft: '4px solid var(--danger)' }}>
                 <div style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>{res.id} - {res.type}</div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                   Location: {res.location}

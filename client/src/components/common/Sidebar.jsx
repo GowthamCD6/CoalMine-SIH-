@@ -16,6 +16,8 @@ import {
   BrainCircuit,
   FileCheck,
   Tractor,
+  Cloud,
+  HardHat,
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onSelectTab }) {
@@ -29,19 +31,21 @@ export default function Sidebar({ activeTab, onSelectTab }) {
       ],
     },
     {
+      title: 'Smart Governance & Compliance',
+      items: [
+        { id: 'compliance', label: 'AI Statutory Hub', icon: FileCheck },
+        { id: 'environment', label: 'Environmental Control', icon: Cloud },
+        { id: 'labor', label: 'Labor & Safety Tracking', icon: HardHat },
+        { id: 'audit-logs', label: 'Blockchain Audit Log', icon: FileText },
+      ],
+    },
+    {
       title: 'Core Operations',
       items: [
         { id: 'inspections', label: 'Inspections & Violations', icon: ClipboardCheck },
         { id: 'emergency', label: 'Emergency & SOS Console', icon: Ambulance },
         { id: 'resources', label: 'Resource Allocation', icon: Tractor },
       ]
-    },
-    {
-      title: 'Compliance & Audit',
-      items: [
-        { id: 'compliance', label: 'Compliance & Statutory Hub', icon: FileCheck },
-        { id: 'audit-logs', label: 'Blockchain Audit Log', icon: FileText },
-      ],
     },
     {
       title: 'Mobile & Field Unit',

@@ -16,6 +16,8 @@ import CommandMapView from './components/views/CommandMapView.jsx';
 import AnalyticsView from './components/views/AnalyticsView.jsx';
 import ComplianceView from './components/views/ComplianceView.jsx';
 import ResourceAllocationView from './components/views/ResourceAllocationView.jsx';
+import EnvironmentMonitoringView from './components/views/EnvironmentMonitoringView.jsx';
+import LaborDeploymentView from './components/views/LaborDeploymentView.jsx';
 import { api, subscribeToApiLogs, getAccessToken } from './services/api.js';
 import './App.css';
 
@@ -199,6 +201,18 @@ function App() {
           {activeTab === 'compliance' && (
             <div style={{ padding: '2rem' }}>
               <ComplianceView onShowToast={showToast} />
+            </div>
+          )}
+
+          {activeTab === 'environment' && (
+            <div style={{ padding: '2rem' }}>
+              <EnvironmentMonitoringView onShowToast={showToast} />
+            </div>
+          )}
+
+          {activeTab === 'labor' && (
+            <div style={{ padding: '2rem' }}>
+              <LaborDeploymentView onShowToast={showToast} />
             </div>
           )}
 

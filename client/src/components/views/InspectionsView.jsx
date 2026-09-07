@@ -39,7 +39,7 @@ export default function InspectionsView({ onShowToast }) {
           <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input 
             type="text" 
-            className="clay-input" 
+            className="sleek-input" 
             placeholder="Search violation ID, type, or location..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
@@ -47,7 +47,7 @@ export default function InspectionsView({ onShowToast }) {
           />
         </div>
         <button 
-          className="clay-btn" 
+          className="sleek-btn" 
           style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--primary)', color: '#fff' }}
           onClick={() => onShowToast && onShowToast('New Inspection Report Opened')}
         >

@@ -26,7 +26,7 @@ export default function AnalyticsView({ onShowToast }) {
         {metrics.map((m, i) => {
           const Icon = m.icon;
           return (
-            <div key={i} className="clay-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div key={i} className="sleek-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{m.label}</span>
                 <Icon size={20} color="var(--primary)" />

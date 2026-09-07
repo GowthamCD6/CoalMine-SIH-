@@ -28,7 +28,7 @@ export default function EmergencyConsoleView({ onShowToast }) {
             </p>
           </div>
           <button 
-            className="clay-btn" 
+            className="sleek-btn" 
             style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--danger)', color: '#fff' }}
             onClick={() => onShowToast && onShowToast('Mass Evacuation Broadcast Initiated', true)}
           >
@@ -45,7 +45,7 @@ export default function EmergencyConsoleView({ onShowToast }) {
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {activeSOS.map(sos => (
-              <div key={sos.id} className="clay-card" style={{ padding: '16px', borderLeft: '4px solid var(--danger)' }}>
+              <div key={sos.id} className="sleek-card" style={{ padding: '16px', borderLeft: '4px solid var(--danger)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{sos.id} - {sos.type}</span>
                   <span className={`badge-pill ${sos.status === 'Unacknowledged' ? 'badge-danger' : 'badge-warning'}`}>
@@ -58,10 +58,10 @@ export default function EmergencyConsoleView({ onShowToast }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><strong>User:</strong> {sos.user}</div>
                 </div>
                 <div style={{ marginTop: '16px', display: 'flex', gap: '12px' }}>
-                  <button className="clay-btn" style={{ padding: '6px 12px', fontSize: '0.8rem', backgroundColor: '#f1f5f9' }} onClick={() => onShowToast && onShowToast('Acknowledge sent')}>
+                  <button className="sleek-btn" style={{ padding: '6px 12px', fontSize: '0.8rem', backgroundColor: '#f1f5f9' }} onClick={() => onShowToast && onShowToast('Acknowledge sent')}>
                     Acknowledge
                   </button>
-                  <button className="clay-btn" style={{ padding: '6px 12px', fontSize: '0.8rem', backgroundColor: 'var(--primary)', color: '#fff' }} onClick={() => onShowToast && onShowToast('Dispatching responders')}>
+                  <button className="sleek-btn" style={{ padding: '6px 12px', fontSize: '0.8rem', backgroundColor: 'var(--primary)', color: '#fff' }} onClick={() => onShowToast && onShowToast('Dispatching responders')}>
                     Dispatch Team
                   </button>
                 </div>
@@ -77,7 +77,7 @@ export default function EmergencyConsoleView({ onShowToast }) {
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {responders.map((resp, i) => (
-              <div key={i} className="clay-card" style={{ padding: '12px 16px' }}>
+              <div key={i} className="sleek-card" style={{ padding: '12px 16px' }}>
                 <div style={{ fontWeight: '600', marginBottom: '4px' }}>{resp.team}</div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
                   <span>{resp.status}</span>
