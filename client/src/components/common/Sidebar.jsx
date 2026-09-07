@@ -61,7 +61,7 @@ export default function Sidebar({ activeTab, onSelectTab }) {
   ];
 
   return (
-    <aside className="glass-panel" style={{
+    <aside className="sidebar-container" style={{
       width: '280px',
       display: 'flex',
       flexDirection: 'column',
@@ -70,10 +70,9 @@ export default function Sidebar({ activeTab, onSelectTab }) {
       top: 0,
       zIndex: 50,
       flexShrink: 0,
-      borderTop: 'none',
-      borderLeft: 'none',
-      borderBottom: 'none',
-      borderRadius: '0',
+      backgroundColor: 'var(--bg-surface)',
+      borderRight: '1px solid var(--border-subtle)',
+      boxShadow: 'var(--shadow-sm)',
     }}>
       {/* Brand Header */}
       <div style={{
@@ -155,33 +154,13 @@ export default function Sidebar({ activeTab, onSelectTab }) {
                   <button
                     key={item.id}
                     onClick={() => onSelectTab(item.id)}
-                    className={isActive ? 'clay-nav-active' : ''}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      backgroundColor: 'transparent',
-                      color: '#475569',
-                      fontWeight: 500,
-                      fontSize: '0.85rem',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.15s ease',
-                      width: '100%',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) e.currentTarget.style.backgroundColor = '#f8fafc';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
+                    className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
                   >
-                    <Icon size={18} color={isActive ? 'var(--primary)' : '#64748b'} />
-                    <span style={{ flex: 1 }}>{item.label}</span>
-                    {isActive && <ChevronRight size={14} color="var(--primary)" />}
+                    <div className="nav-icon-wrapper">
+                      <Icon size={18} />
+                    </div>
+                    <span className="nav-label">{item.label}</span>
+                    {isActive && <ChevronRight size={14} className="nav-chevron" />}
                   </button>
                 );
               })}
@@ -191,14 +170,7 @@ export default function Sidebar({ activeTab, onSelectTab }) {
       </div>
 
       {/* DB Connection Status Widget Footer */}
-      <div className="glass-panel" style={{
-        padding: '1rem',
-        borderTop: '1px solid rgba(255,255,255,0.4)',
-        borderBottom: 'none',
-        borderLeft: 'none',
-        borderRight: 'none',
-        borderRadius: '0',
-      }}>
+      <div className="sidebar-footer">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Database size={16} color="#059669" />
           <div style={{ flex: 1 }}>
