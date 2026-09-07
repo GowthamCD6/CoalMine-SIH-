@@ -85,14 +85,26 @@ async function request(endpoint, options = {}, isLegacy = false) {
     broadcastLog(logEntry);
 
     if (!response.ok) {
-      if (response.status === 401 && !options._isRefreshRequest) {
-        try {
-          await api.refreshToken();
-          return await request(endpoint, { ...options, _isRefreshRequest: true }, isLegacy);
-        } catch (refreshErr) {
+      if (response.status === 401) {
+        // For auth verification or login endpoints, clear tokens and fail without reload
+        if (endpoint.startsWith('/auth/me') || endpoint.startsWith('/auth/refresh') || endpoint.startsWith('/auth/login')) {
           clearAuthTokens();
-          window.location.reload();
-          throw new Error('Session expired. Please log in again.');
+          const authErr = new Error(responseData?.message || 'Unauthorized session');
+          authErr.status = 401;
+          throw authErr;
+        }
+
+        // For other endpoints, attempt token refresh once
+        if (!options._isRefreshRequest) {
+          try {
+            await api.refreshToken();
+            return await request(endpoint, { ...options, _isRefreshRequest: true }, isLegacy);
+          } catch (refreshErr) {
+            clearAuthTokens();
+            const err = new Error('Session expired. Please log in again.');
+            err.status = 401;
+            throw err;
+          }
         }
       }
 
@@ -308,6 +320,87 @@ export const api = {
   registerAttendanceWorker: (data) => request('/attendance/workers', { method: 'POST', body: JSON.stringify(data) }),
   scanAttendanceFace: (data) => request('/attendance/scan', { method: 'POST', body: JSON.stringify(data) }),
   getAttendanceStats: () => request('/attendance/stats'),
+
+  // Scoped Dashboards
+  getMineDashboard: (mineId = null) => request(`/dashboard/mine${mineId ? `?mine_id=${mineId}` : ''}`),
+  getCorporateDashboard: () => request('/dashboard/corporate'),
+  getRegulatoryDashboard: () => request('/dashboard/regulatory'),
+
+  // Compliance Management
+  getComplianceRequirements: (params) => request(`/compliance/requirements${toQueryString(params)}`),
+  getComplianceRequirement: (id) => request(`/compliance/requirements/${id}`),
+  createComplianceRequirement: (data) => request('/compliance/requirements', { method: 'POST', body: JSON.stringify(data) }),
+  updateComplianceRequirement: (id, data) => request(`/compliance/requirements/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  getComplianceAssignments: (params) => request(`/compliance/assignments${toQueryString(params)}`),
+  createComplianceAssignment: (data) => request('/compliance/assignments', { method: 'POST', body: JSON.stringify(data) }),
+  updateAssignmentStatus: (id, data) => request(`/compliance/assignments/${id}/status`, { method: 'PUT', body: JSON.stringify(data) }),
+  getAssignmentEvidence: (assignmentId) => request(`/compliance/assignments/${assignmentId}/evidence`),
+  submitEvidence: (assignmentId, data) => request(`/compliance/assignments/${assignmentId}/evidence`, { method: 'POST', body: JSON.stringify(data) }),
+  reviewEvidence: (evidenceId, data) => request(`/compliance/evidence/${evidenceId}/review`, { method: 'PUT', body: JSON.stringify(data) }),
+  getCorrectiveActions: (params) => request(`/compliance/corrective-actions${toQueryString(params)}`),
+  createCorrectiveAction: (data) => request('/compliance/corrective-actions', { method: 'POST', body: JSON.stringify(data) }),
+  getComplianceStatus: () => request('/compliance/status'),
+
+  // Phase 3 — Inspection & Safety
+  getInspections: (params) => request(`/inspections${toQueryString(params)}`),
+  getInspection: (id) => request(`/inspections/${id}`),
+  createInspection: (data) => request('/inspections', { method: 'POST', body: JSON.stringify(data) }),
+  updateInspectionStatus: (id, status) => request(`/inspections/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  getInspectionChecklist: (id) => request(`/inspections/${id}/checklist`),
+  addInspectionChecklistItem: (id, data) => request(`/inspections/${id}/checklist`, { method: 'POST', body: JSON.stringify(data) }),
+  getSafetyObservations: (params) => request(`/inspections/observations${toQueryString(params)}`),
+  createSafetyObservation: (data) => request('/inspections/observations', { method: 'POST', body: JSON.stringify(data) }),
+  resolveSafetyObservation: (id) => request(`/inspections/observations/${id}/resolve`, { method: 'PUT' }),
+  getViolations: (params) => request(`/inspections/violations${toQueryString(params)}`),
+  createViolation: (data) => request('/inspections/violations', { method: 'POST', body: JSON.stringify(data) }),
+  updateViolationStatus: (id, status) => request(`/inspections/violations/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  getInspectionsSummary: () => request('/inspections/summary'),
+
+  // Phase 4 — Incident Management
+  getIncidents: (params) => request(`/incidents${toQueryString(params)}`),
+  getIncident: (id) => request(`/incidents/${id}`),
+  createIncident: (data) => request('/incidents', { method: 'POST', body: JSON.stringify(data) }),
+  updateIncidentStatus: (id, status) => request(`/incidents/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  getIncidentInvestigations: (id) => request(`/incidents/${id}/investigations`),
+  addIncidentInvestigation: (id, data) => request(`/incidents/${id}/investigations`, { method: 'POST', body: JSON.stringify(data) }),
+  getIncidentActions: (id) => request(`/incidents/${id}/actions`),
+  addIncidentAction: (id, data) => request(`/incidents/${id}/actions`, { method: 'POST', body: JSON.stringify(data) }),
+  updateIncidentActionStatus: (incidentId, actionId, status) => request(`/incidents/${incidentId}/actions/${actionId}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  getIncidentsSummary: () => request('/incidents/summary'),
+
+  // Phase 5 — Environmental Monitoring
+  getEnvObservations: (params) => request(`/environment/observations${toQueryString(params)}`),
+  createEnvObservation: (data) => request('/environment/observations', { method: 'POST', body: JSON.stringify(data) }),
+  getEnvThresholds: () => request('/environment/thresholds'),
+  upsertEnvThreshold: (data) => request('/environment/thresholds', { method: 'POST', body: JSON.stringify(data) }),
+  getEnvSummary: () => request('/environment/summary'),
+
+  // Phase 6 — Production & Operations
+  getProductionReports: (params) => request(`/production/reports${toQueryString(params)}`),
+  createProductionReport: (data) => request('/production/reports', { method: 'POST', body: JSON.stringify(data) }),
+  getProductionTargets: () => request('/production/targets'),
+  createProductionTarget: (data) => request('/production/targets', { method: 'POST', body: JSON.stringify(data) }),
+  getOperationalIssues: (params) => request(`/production/issues${toQueryString(params)}`),
+  createOperationalIssue: (data) => request('/production/issues', { method: 'POST', body: JSON.stringify(data) }),
+  updateOperationalIssueStatus: (id, status) => request(`/production/issues/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  getProductionSummary: () => request('/production/summary'),
+
+  // Phase 7 — Contractor & Workforce Management
+  getContractors: (params) => request(`/contractors${toQueryString(params)}`),
+  createContractor: (data) => request('/contractors', { method: 'POST', body: JSON.stringify(data) }),
+  getContracts: (params) => request(`/contractors/contracts${toQueryString(params)}`),
+  createContract: (data) => request('/contractors/contracts', { method: 'POST', body: JSON.stringify(data) }),
+  getContractorWorkers: (params) => request(`/contractors/workers${toQueryString(params)}`),
+  createContractorWorker: (data) => request('/contractors/workers', { method: 'POST', body: JSON.stringify(data) }),
+  getContractorsSummary: () => request('/contractors/summary'),
+
+  // Phase 8 — Grievance Management
+  getGrievances: (params) => request(`/grievances${toQueryString(params)}`),
+  getGrievance: (id) => request(`/grievances/${id}`),
+  createGrievance: (data) => request('/grievances', { method: 'POST', body: JSON.stringify(data) }),
+  updateGrievanceStatus: (id, status, assigned_to) => request(`/grievances/${id}/status`, { method: 'PUT', body: JSON.stringify({ status, assigned_to }) }),
+  addGrievanceResponse: (id, data) => request(`/grievances/${id}/responses`, { method: 'POST', body: JSON.stringify(data) }),
+  getGrievancesSummary: () => request('/grievances/summary'),
 };
 
 export default api;

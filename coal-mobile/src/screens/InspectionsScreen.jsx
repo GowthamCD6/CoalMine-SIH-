@@ -31,8 +31,25 @@ export const InspectionsScreen = ({ currentUser }) => {
   const loadInspections = async () => {
     setLoading(true);
     try {
-      const data = await mobileApi.getInspections();
-      setInspections(data);
+      const res = await mobileApi.getInspections();
+      const list = Array.isArray(res) ? res : (res?.rows || []);
+      if (list.length > 0) {
+        setInspections(
+          list.map((i) => ({
+            ...i,
+            id: i.inspection_number || (typeof i.id === 'number' ? `INS-${i.id}` : i.id),
+            rawId: i.id,
+            observation_type: i.title || i.observation_type || 'Safety & Ventilation Audit',
+            location: i.mine_name || i.location || 'Mine Zone A',
+            inspector: i.inspector_name || i.inspector || 'DGMS Inspector',
+            severity: i.severity || (i.overall_rating === 'POOR' ? 'HIGH' : 'MEDIUM'),
+            deadline: i.scheduled_date || i.deadline || '2026-09-15',
+            status: i.status || 'IN_PROGRESS',
+          }))
+        );
+      } else {
+        throw new Error('No inspections returned');
+      }
     } catch {
       setInspections([
         {
@@ -79,14 +96,28 @@ export const InspectionsScreen = ({ currentUser }) => {
     setCreating(true);
     try {
       const item = await mobileApi.createInspection({
+        mine_id: 1,
+        title: newType,
+        inspection_type: 'SAFETY',
+        scheduled_date: new Date().toISOString().split('T')[0],
         observation_type: newType,
         location: newLocation,
         severity: newSeverity,
       });
-      setInspections([item, ...inspections]);
+      const formatted = {
+        ...item,
+        id: item?.inspection_number || item?.id || `V-${Date.now().toString().slice(-3)}`,
+        observation_type: item?.title || item?.observation_type || newType,
+        location: item?.mine_name || item?.location || newLocation,
+        severity: item?.severity || newSeverity,
+        status: item?.status || 'IN_PROGRESS',
+        deadline: item?.scheduled_date || '2026-09-15',
+        inspector: currentUser?.username || 'Field Inspector',
+      };
+      setInspections([formatted, ...inspections]);
       setModalVisible(false);
       setNewType('');
-      Alert.alert('Report Committed', `Observation #${item.id} logged.`);
+      Alert.alert('Report Committed', `Observation #${formatted.id} logged.`);
     } catch (err) {
       Alert.alert('Error', err.message || 'Failed to save observation');
     } finally {
@@ -96,7 +127,7 @@ export const InspectionsScreen = ({ currentUser }) => {
 
   const handleUpdateStatus = async (item, newStatus) => {
     try {
-      await mobileApi.updateInspectionStatus(item.id, newStatus);
+      await mobileApi.updateInspectionStatus(item.rawId || item.id, newStatus);
       setInspections((prev) =>
         prev.map((i) => (i.id === item.id ? { ...i, status: newStatus } : i))
       );

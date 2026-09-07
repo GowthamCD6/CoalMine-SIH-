@@ -61,7 +61,7 @@ export default function MobileSimulatorView({ onShowToast }) {
   const fetchDelegationData = useCallback(async (tokenToUse) => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/v1/delegation/scope', {
+      const res = await fetch('/api/v1/delegation/scope', {
         headers: {
           Authorization: `Bearer ${tokenToUse || activeToken}`,
           'Content-Type': 'application/json',
@@ -101,13 +101,13 @@ export default function MobileSimulatorView({ onShowToast }) {
   const loadOtherData = async () => {
     try {
       const [inspRes, hazRes, rfidRes] = await Promise.all([
-        fetch('http://localhost:5000/api/v1/inspections', {
+        fetch('/api/v1/inspections', {
           headers: { Authorization: `Bearer ${activeToken}` },
         }).then((r) => r.json()),
-        fetch('http://localhost:5000/api/v1/hazards', {
+        fetch('/api/v1/hazards', {
           headers: { Authorization: `Bearer ${activeToken}` },
         }).then((r) => r.json()),
-        fetch('http://localhost:5000/api/v1/rfid-pass', {
+        fetch('/api/v1/rfid-pass', {
           headers: { Authorization: `Bearer ${activeToken}` },
         }).then((r) => r.json()),
       ]);
@@ -122,7 +122,7 @@ export default function MobileSimulatorView({ onShowToast }) {
   const handleGrantSubrole = async (subroleId) => {
     if (!selectedTargetUser) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/v1/users/${selectedTargetUser.id}/subroles`, {
+      const res = await fetch(`/api/v1/users/${selectedTargetUser.id}/subroles`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${activeToken}`,
@@ -142,7 +142,7 @@ export default function MobileSimulatorView({ onShowToast }) {
 
   const handleRevokeSubrole = async (userId, subroleId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/v1/users/${userId}/subroles/${subroleId}`, {
+      const res = await fetch(`/api/v1/users/${userId}/subroles/${subroleId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${activeToken}` },
       });
@@ -157,7 +157,7 @@ export default function MobileSimulatorView({ onShowToast }) {
 
   const handleTriggerSos = async () => {
     try {
-      await fetch('http://localhost:5000/api/v1/emergencies/sos', {
+      await fetch('/api/v1/emergencies/sos', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${activeToken}`,
@@ -183,7 +183,7 @@ export default function MobileSimulatorView({ onShowToast }) {
 
   const handleRunOcr = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/v1/ocr/extract', {
+      const res = await fetch('/api/v1/ocr/extract', {
         method: 'POST',
         headers: { Authorization: `Bearer ${activeToken}` },
       }).then((r) => r.json());

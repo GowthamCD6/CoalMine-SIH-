@@ -1,121 +1,607 @@
-import React, { useState } from 'react';
-import { Cloud, Droplets, Wind, AlertTriangle, Activity, CheckCircle, BarChart2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Cloud, Droplets, Wind, AlertTriangle, Activity, CheckCircle2,
+  BarChart2, RefreshCw, Plus, Sliders, MapPin, Search,
+  Flame, Volume2, Thermometer, ShieldAlert, X, Eye
+} from 'lucide-react';
+import { api } from '../../services/api.js';
+
+const PARAMETER_CONFIG = {
+  AIR_DUST: {
+    label: 'Air Dust (PM2.5 / PM10)',
+    icon: Wind,
+    color: '#0284c7',
+    bg: '#e0f2fe',
+    defaultUnit: 'µg/m³',
+    normalRange: '< 100 µg/m³',
+    standard: 'NAAQS 2009',
+  },
+  WATER_QUALITY: {
+    label: 'Water Discharge (pH / TDS)',
+    icon: Droplets,
+    color: '#059669',
+    bg: '#d1fae5',
+    defaultUnit: 'pH',
+    normalRange: '6.5 - 8.5 pH',
+    standard: 'MoEFCC Schedule VI',
+  },
+  NOISE: {
+    label: 'Ambient & Machinery Noise',
+    icon: Volume2,
+    color: '#d97706',
+    bg: '#fef3c7',
+    defaultUnit: 'dB',
+    normalRange: '< 85 dB',
+    standard: 'DGMS Tech Circular',
+  },
+  METHANE: {
+    label: 'Methane Gas (CH4)',
+    icon: Flame,
+    color: '#dc2626',
+    bg: '#fee2e2',
+    defaultUnit: '%',
+    normalRange: '< 0.5 %',
+    standard: 'CMR 1957 Reg 136',
+  },
+  CO2: {
+    label: 'Carbon Dioxide (CO2)',
+    icon: Cloud,
+    color: '#7c3aed',
+    bg: '#ede9fe',
+    defaultUnit: 'ppm',
+    normalRange: '< 5000 ppm',
+    standard: 'DGMS Air Quality Norms',
+  },
+  TEMPERATURE: {
+    label: 'Working Face Temperature',
+    icon: Thermometer,
+    color: '#ea580c',
+    bg: '#ffedd5',
+    defaultUnit: '°C',
+    normalRange: '< 33.5 °C',
+    standard: 'CMR Regulation 142',
+  },
+};
+
+const StatusBadge = ({ status }) => {
+  const map = {
+    NORMAL:             { bg: '#dcfce7', text: '#166534', label: '✅ Normal' },
+    THRESHOLD_EXCEEDED: { bg: '#fef3c7', text: '#92400e', label: '⚠️ Threshold Exceeded' },
+    CRITICAL:           { bg: '#fee2e2', text: '#991b1b', label: '🚨 Critical Breach' },
+  };
+  const c = map[status] || { bg: '#f1f5f9', text: '#475569', label: status };
+  return (
+    <span style={{
+      padding: '3px 10px', borderRadius: '99px',
+      backgroundColor: c.bg, color: c.text,
+      fontSize: '0.75rem', fontWeight: '700', display: 'inline-flex', alignItems: 'center'
+    }}>{c.label}</span>
+  );
+};
 
 export default function EnvironmentMonitoringView({ onShowToast }) {
-  const [sensors] = useState([
-    { id: 'ENV-AQI-01', location: 'Open Cast Pit Alpha', type: 'Air Quality (PM2.5)', value: '145 µg/m³', status: 'Warning', trend: '+12%' },
-    { id: 'ENV-AQI-02', location: 'Main Processing Plant', type: 'Air Quality (PM10)', value: '85 µg/m³', status: 'Normal', trend: '-5%' },
-    { id: 'ENV-H2O-01', location: 'Discharge Point A', type: 'Water pH Level', value: '6.8 pH', status: 'Normal', trend: 'Stable' },
-    { id: 'ENV-NOS-04', location: 'Heavy Machinery Zone', type: 'Noise Level', value: '95 dB', status: 'Critical', trend: '+15%' },
-    { id: 'ENV-GAS-01', location: 'Underground Shaft B', type: 'Methane (CH4)', value: '0.1%', status: 'Normal', trend: 'Stable' },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [observations, setObservations] = useState([]);
+  const [thresholds, setThresholds] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [mines, setMines] = useState([]);
+
+  // Filters
+  const [paramFilter, setParamFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Modals
+  const [showLogModal, setShowLogModal] = useState(false);
+  const [showThresholdModal, setShowThresholdModal] = useState(false);
+
+  // Load mines
+  useEffect(() => {
+    api.getMines({ limit: 100 })
+      .then(res => setMines(Array.isArray(res) ? res : res?.data || res?.rows || []))
+      .catch(() => {});
+  }, []);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [sumRes, obsRes, threshRes] = await Promise.all([
+        api.getEnvSummary().catch(() => null),
+        api.getEnvObservations({ parameter_type: paramFilter || undefined, status: statusFilter || undefined, limit: 100 }).catch(() => ({ data: [] })),
+        api.getEnvThresholds().catch(() => []),
+      ]);
+
+      setSummary(sumRes?.data || sumRes || null);
+      setObservations(obsRes?.data?.rows || obsRes?.data || obsRes?.rows || (Array.isArray(obsRes) ? obsRes : []));
+      setThresholds(threshRes?.data || threshRes || (Array.isArray(threshRes) ? threshRes : []));
+    } catch (err) {
+      if (onShowToast) onShowToast(err.message || 'Failed to load environmental data', true);
+    } finally {
+      setLoading(false);
+    }
+  }, [paramFilter, statusFilter, onShowToast]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const filtered = observations.filter(o =>
+    (o.parameter_type || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (o.mine_name || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="manage-orders-container" style={{ padding: '0 0 20px', gap: '12px' }}>
-      {/* Header */}
-      <div className="filter-prototype-card" style={{ padding: '1.25rem 1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+      {/* Header Banner */}
+      <div className="glass-panel" style={{
+        padding: '1.5rem 2rem',
+        borderRadius: '16px',
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(248,250,252,0.8))',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+        border: '1px solid rgba(226, 232, 240, 0.8)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{
+            width: '42px', height: '42px', borderRadius: '12px',
+            backgroundColor: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>
+            <Cloud size={24} color="#0284c7" />
+          </div>
           <div>
-            <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.5rem', color: 'var(--text-main)' }}>
-              <Cloud size={28} color="var(--primary)" />
-              Environmental & Pollution Control
-            </h2>
-            <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-              Real-time monitoring of air, water, and noise pollution for statutory compliance (MoEFCC).
+            <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)' }}>
+              Environmental & Pollution Monitoring (MoEFCC / DGMS)
+            </h1>
+            <p style={{ margin: '2px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              Continuous emission readings, ambient air quality, mine water discharge, and toxic gas sensor feeds.
             </p>
           </div>
-          <button className="btn btn-apply" onClick={() => onShowToast('Generating Environmental Report...')}>
-            <BarChart2 size={16} /> Generate Report
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={loadData}
+            className="sleek-btn"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#fff', border: '1px solid #cbd5e1' }}
+          >
+            <RefreshCw size={16} className={loading ? 'spin' : ''} /> Refresh
+          </button>
+          <button
+            onClick={() => setShowThresholdModal(true)}
+            className="sleek-btn"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#f1f5f9', color: '#334155' }}
+          >
+            <Sliders size={16} /> Statutory Limits
+          </button>
+          <button
+            onClick={() => setShowLogModal(true)}
+            className="sleek-btn"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#0284c7', color: '#fff' }}
+          >
+            <Plus size={16} /> Log Reading
           </button>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
-        <div className="sleek-card" style={{ padding: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>Average AQI</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)' }}>124</div>
-            </div>
-            <div style={{ padding: '8px', backgroundColor: 'var(--warning-light)', color: 'var(--warning)', borderRadius: '10px' }}>
-              <Wind size={20} />
-            </div>
+      {/* KPI Cards Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+        <div style={{
+          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+          border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+          display: 'flex', alignItems: 'center', gap: '14px'
+        }}>
+          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <CheckCircle2 size={22} color="#16a34a" />
           </div>
-          <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
-            <AlertTriangle size={14} /> Moderate Pollution
-          </div>
-        </div>
-
-        <div className="sleek-card" style={{ padding: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>Water Discharge pH</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)' }}>6.8</div>
+          <div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#16a34a' }}>
+              {summary?.normal_count ?? observations.filter(o => o.status === 'NORMAL').length}
             </div>
-            <div style={{ padding: '8px', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', borderRadius: '10px' }}>
-              <Droplets size={20} />
-            </div>
-          </div>
-          <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
-            <CheckCircle size={14} /> Within limits
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Normal Parameters</div>
           </div>
         </div>
 
-        <div className="sleek-card" style={{ padding: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>Active Violations</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)' }}>2</div>
-            </div>
-            <div style={{ padding: '8px', backgroundColor: 'var(--danger-light)', color: 'var(--danger)', borderRadius: '10px' }}>
-              <AlertTriangle size={20} />
-            </div>
+        <div style={{
+          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+          border: '1px solid #fef3c7', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+          display: 'flex', alignItems: 'center', gap: '14px'
+        }}>
+          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <AlertTriangle size={22} color="#d97706" />
           </div>
-          <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
-            <Activity size={14} /> Requires immediate action
+          <div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#d97706' }}>
+              {summary?.exceeded_count ?? observations.filter(o => o.status === 'THRESHOLD_EXCEEDED').length}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Threshold Exceeded</div>
+          </div>
+        </div>
+
+        <div style={{
+          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+          border: '1px solid #fee2e2', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+          display: 'flex', alignItems: 'center', gap: '14px'
+        }}>
+          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ShieldAlert size={22} color="#dc2626" />
+          </div>
+          <div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#dc2626' }}>
+              {summary?.critical_count ?? observations.filter(o => o.status === 'CRITICAL').length}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Critical Breaches</div>
+          </div>
+        </div>
+
+        <div style={{
+          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+          border: '1px solid #e0f2fe', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+          display: 'flex', alignItems: 'center', gap: '14px'
+        }}>
+          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Activity size={22} color="#0284c7" />
+          </div>
+          <div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0284c7' }}>
+              {summary?.last_24h_count || observations.length || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Readings in Last 24h</div>
           </div>
         </div>
       </div>
 
-      {/* Sensor List */}
-      <h3 style={{ margin: '10px 0 0 0', fontSize: '1.1rem', color: 'var(--text-main)' }}>Live Sensor Feed</h3>
-      <div className="sleek-card" style={{ overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+      {/* Parameter Cards Overview */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+        {Object.entries(PARAMETER_CONFIG).map(([paramKey, cfg]) => {
+          const Icon = cfg.icon;
+          const paramReadings = observations.filter(o => o.parameter_type === paramKey);
+          const latest = paramReadings[0];
+          return (
+            <div key={paramKey} style={{
+              backgroundColor: '#fff', borderRadius: '14px', padding: '1.2rem',
+              border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              display: 'flex', flexDirection: 'column', gap: '10px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon size={20} color={cfg.color} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)' }}>{cfg.label}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{cfg.standard}</div>
+                  </div>
+                </div>
+                {latest && <StatusBadge status={latest.status} />}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '4px' }}>
+                <div>
+                  <span style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                    {latest ? parseFloat(latest.value).toFixed(1) : '--'}
+                  </span>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginLeft: '4px', fontWeight: 600 }}>
+                    {latest?.unit || cfg.defaultUnit}
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                  Statutory Norm: <strong>{cfg.normalRange}</strong>
+                </div>
+              </div>
+
+              <div style={{ fontSize: '0.75rem', color: '#94a3b8', borderTop: '1px solid #f1f5f9', paddingTop: '8px' }}>
+                {latest ? `Last updated: ${new Date(latest.observed_at).toLocaleTimeString()}` : 'No readings logged today'}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Filter & Search Bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <select
+            className="sleek-input"
+            value={paramFilter}
+            onChange={e => setParamFilter(e.target.value)}
+            style={{ height: '38px', fontSize: '0.85rem', width: '180px' }}
+          >
+            <option value="">All Parameters</option>
+            <option value="AIR_DUST">Air Dust</option>
+            <option value="WATER_QUALITY">Water Quality</option>
+            <option value="NOISE">Noise Level</option>
+            <option value="METHANE">Methane (CH4)</option>
+            <option value="CO2">Carbon Dioxide</option>
+            <option value="TEMPERATURE">Temperature</option>
+          </select>
+
+          <select
+            className="sleek-input"
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            style={{ height: '38px', fontSize: '0.85rem', width: '160px' }}
+          >
+            <option value="">All Statuses</option>
+            <option value="NORMAL">Normal</option>
+            <option value="THRESHOLD_EXCEEDED">Exceeded</option>
+            <option value="CRITICAL">Critical</option>
+          </select>
+        </div>
+
+        <div style={{ position: 'relative', width: '320px' }}>
+          <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <input
+            type="text"
+            className="sleek-input"
+            placeholder="Search observations by mine, parameter..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            style={{ width: '100%', paddingLeft: '36px', height: '38px', fontSize: '0.85rem' }}
+          />
+        </div>
+      </div>
+
+      {/* Observations Feed Table */}
+      <div className="table-container glass-panel" style={{ borderRadius: '12px', overflow: 'hidden' }}>
+        <table className="table-white" style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-surface-subtle)' }}>
-              <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.85rem' }}>Sensor ID</th>
-              <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.85rem' }}>Location</th>
-              <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.85rem' }}>Type</th>
-              <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.85rem' }}>Value</th>
-              <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.85rem' }}>Status</th>
+            <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
+              <th style={{ textAlign: 'left', padding: '12px 16px' }}>Reading ID / Parameter</th>
+              <th style={{ textAlign: 'left', padding: '12px 16px' }}>Mine Facility</th>
+              <th style={{ textAlign: 'left', padding: '12px 16px' }}>Recorded Value</th>
+              <th style={{ textAlign: 'left', padding: '12px 16px' }}>Compliance Status</th>
+              <th style={{ textAlign: 'left', padding: '12px 16px' }}>Logged By</th>
+              <th style={{ textAlign: 'right', padding: '12px 16px' }}>Timestamp</th>
             </tr>
           </thead>
           <tbody>
-            {sensors.map((sensor, idx) => (
-              <tr key={idx} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                <td style={{ padding: '12px 16px', fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-main)' }}>{sensor.id}</td>
-                <td style={{ padding: '12px 16px', fontSize: '0.9rem', color: 'var(--text-body)' }}>{sensor.location}</td>
-                <td style={{ padding: '12px 16px', fontSize: '0.9rem', color: 'var(--text-body)' }}>{sensor.type}</td>
-                <td style={{ padding: '12px 16px', fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>
-                  {sensor.value} 
-                  <span style={{ fontSize: '0.75rem', marginLeft: '6px', color: sensor.trend.includes('+') ? 'var(--danger)' : 'var(--success)' }}>
-                    {sensor.trend}
-                  </span>
-                </td>
-                <td style={{ padding: '12px 16px' }}>
-                  <span className={`badge-pill ${
-                    sensor.status === 'Normal' ? 'badge-success' : 
-                    sensor.status === 'Warning' ? 'badge-warning' : 'badge-danger'
-                  }`}>
-                    {sensor.status}
-                  </span>
+            {filtered.map((obs) => {
+              const cfg = PARAMETER_CONFIG[obs.parameter_type] || {};
+              return (
+                <tr key={obs.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '12px 16px' }}>
+                    <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>
+                      #{obs.id} • {cfg.label || obs.parameter_type}
+                    </div>
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <div style={{ fontWeight: 600 }}>{obs.mine_name || `Mine #${obs.mine_id}`}</div>
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <span style={{ fontSize: '1rem', fontWeight: 800, color: obs.status === 'CRITICAL' ? '#dc2626' : obs.status === 'THRESHOLD_EXCEEDED' ? '#d97706' : '#16a34a' }}>
+                      {obs.value} {obs.unit}
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <StatusBadge status={obs.status} />
+                  </td>
+                  <td style={{ padding: '12px 16px', fontSize: '0.85rem' }}>
+                    {obs.first_name ? `${obs.first_name} ${obs.last_name || ''}` : `User #${obs.observer_id}`}
+                  </td>
+                  <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                    {new Date(obs.observed_at).toLocaleString()}
+                  </td>
+                </tr>
+              );
+            })}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                  No environmental readings logged matching the filters.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
+
+      {/* ─── MODAL: LOG READING ─── */}
+      {showLogModal && (
+        <LogReadingModal
+          mines={mines}
+          onClose={() => setShowLogModal(false)}
+          onSuccess={() => {
+            setShowLogModal(false);
+            if (onShowToast) onShowToast('Environmental reading recorded');
+            loadData();
+          }}
+        />
+      )}
+
+      {/* ─── MODAL: SET THRESHOLDS ─── */}
+      {showThresholdModal && (
+        <SetThresholdsModal
+          mines={mines}
+          thresholds={thresholds}
+          onClose={() => setShowThresholdModal(false)}
+          onSuccess={() => {
+            setShowThresholdModal(false);
+            if (onShowToast) onShowToast('Statutory thresholds updated');
+            loadData();
+          }}
+        />
+      )}
+
+    </div>
+  );
+}
+
+// ─── Sub-Modal: Log Reading ──────────────────────────────────────────────────
+function LogReadingModal({ mines, onClose, onSuccess }) {
+  const [mineId, setMineId] = useState(mines[0]?.id || '');
+  const [parameterType, setParameterType] = useState('AIR_DUST');
+  const [value, setValue] = useState('');
+  const [unit, setUnit] = useState(PARAMETER_CONFIG['AIR_DUST'].defaultUnit);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleParamChange = (param) => {
+    setParameterType(param);
+    setUnit(PARAMETER_CONFIG[param]?.defaultUnit || '');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!mineId || !value) return;
+    setSubmitting(true);
+    try {
+      await api.createEnvObservation({
+        mine_id: mineId,
+        parameter_type: parameterType,
+        value: parseFloat(value),
+        unit,
+      });
+      onSuccess();
+    } catch (err) {
+      alert(err.message || 'Failed to log reading');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 1000, padding: '20px'
+    }}>
+      <form onSubmit={handleSubmit} style={{
+        backgroundColor: '#fff', borderRadius: '16px', width: '100%', maxWidth: '480px',
+        padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>Log Environmental Reading</h2>
+          <button type="button" onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div>
+            <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569' }}>Mine Facility</label>
+            <select className="sleek-input" style={{ width: '100%', marginTop: '4px' }} value={mineId} onChange={e => setMineId(e.target.value)}>
+              {mines.map(m => <option key={m.id} value={m.id}>{m.name} ({m.code})</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569' }}>Parameter Type</label>
+            <select className="sleek-input" style={{ width: '100%', marginTop: '4px' }} value={parameterType} onChange={e => handleParamChange(e.target.value)}>
+              {Object.entries(PARAMETER_CONFIG).map(([k, v]) => (
+                <option key={k} value={k}>{v.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px', gap: '10px' }}>
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569' }}>Measured Value *</label>
+              <input type="number" step="any" className="sleek-input" placeholder="e.g. 84.5" style={{ width: '100%', marginTop: '4px' }} value={value} onChange={e => setValue(e.target.value)} required />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569' }}>Unit</label>
+              <input type="text" className="sleek-input" style={{ width: '100%', marginTop: '4px' }} value={unit} onChange={e => setUnit(e.target.value)} required />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+            <button type="button" onClick={onClose} className="sleek-btn" style={{ backgroundColor: '#f1f5f9', color: '#475569' }}>Cancel</button>
+            <button type="submit" disabled={submitting} className="sleek-btn" style={{ backgroundColor: '#0284c7', color: '#fff' }}>
+              {submitting ? 'Logging...' : 'Save Reading'}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// ─── Sub-Modal: Statutory Thresholds ─────────────────────────────────────────
+function SetThresholdsModal({ mines, thresholds, onClose, onSuccess }) {
+  const [mineId, setMineId] = useState(mines[0]?.id || '');
+  const [parameterType, setParameterType] = useState('AIR_DUST');
+  const [minValue, setMinValue] = useState('');
+  const [maxValue, setMaxValue] = useState('');
+  const [unit, setUnit] = useState(PARAMETER_CONFIG['AIR_DUST'].defaultUnit);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!mineId) return;
+    setSubmitting(true);
+    try {
+      await api.upsertEnvThreshold({
+        mine_id: mineId,
+        parameter_type: parameterType,
+        min_value: minValue ? parseFloat(minValue) : null,
+        max_value: maxValue ? parseFloat(maxValue) : null,
+        unit,
+        alert_on_breach: true,
+      });
+      onSuccess();
+    } catch (err) {
+      alert(err.message || 'Failed to update threshold');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 1000, padding: '20px'
+    }}>
+      <form onSubmit={handleSubmit} style={{
+        backgroundColor: '#fff', borderRadius: '16px', width: '100%', maxWidth: '520px',
+        padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>Configure Statutory Thresholds</h2>
+          <button type="button" onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div>
+            <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569' }}>Mine Facility</label>
+            <select className="sleek-input" style={{ width: '100%', marginTop: '4px' }} value={mineId} onChange={e => setMineId(e.target.value)}>
+              {mines.map(m => <option key={m.id} value={m.id}>{m.name} ({m.code})</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569' }}>Parameter</label>
+            <select className="sleek-input" style={{ width: '100%', marginTop: '4px' }} value={parameterType} onChange={e => {
+              setParameterType(e.target.value);
+              setUnit(PARAMETER_CONFIG[e.target.value]?.defaultUnit || '');
+            }}>
+              {Object.entries(PARAMETER_CONFIG).map(([k, v]) => (
+                <option key={k} value={k}>{v.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 100px', gap: '10px' }}>
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569' }}>Min Value</label>
+              <input type="number" step="any" className="sleek-input" placeholder="e.g. 6.5" style={{ width: '100%', marginTop: '4px' }} value={minValue} onChange={e => setMinValue(e.target.value)} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569' }}>Max Value</label>
+              <input type="number" step="any" className="sleek-input" placeholder="e.g. 100" style={{ width: '100%', marginTop: '4px' }} value={maxValue} onChange={e => setMaxValue(e.target.value)} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569' }}>Unit</label>
+              <input type="text" className="sleek-input" style={{ width: '100%', marginTop: '4px' }} value={unit} onChange={e => setUnit(e.target.value)} />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+            <button type="button" onClick={onClose} className="sleek-btn" style={{ backgroundColor: '#f1f5f9', color: '#475569' }}>Cancel</button>
+            <button type="submit" disabled={submitting} className="sleek-btn" style={{ backgroundColor: 'var(--primary)', color: '#fff' }}>
+              {submitting ? 'Saving...' : 'Save Threshold'}
+            </button>
+          </div>
+        </div>
+      </form>
     </div>
   );
 }

@@ -1,8 +1,47 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Icon } from '../components/Icon';
+import { mobileApi } from '../services/api';
 
 export const DashboardScreen = ({ currentUser, onNavigate }) => {
+  const [gasStatus, setGasStatus] = useState({ aqi: 'Optimal', ch4: '0.12%', co: '6 ppm', color: '#059669' });
+  const [distressCount, setDistressCount] = useState(0);
+
+  useEffect(() => {
+    const fetchLiveStats = async () => {
+      try {
+        const [envRes, alertsRes] = await Promise.allSettled([
+          mobileApi.getEnvObservations({ limit: 3 }),
+          mobileApi.getEmergencyAlerts(),
+        ]);
+
+        if (envRes.status === 'fulfilled' && envRes.value) {
+          const obs = Array.isArray(envRes.value) ? envRes.value : (envRes.value?.rows || []);
+          if (obs.length > 0) {
+            const latest = obs[0];
+            const isWarn = latest.status === 'WARNING' || latest.status === 'EXCEEDANCE';
+            setGasStatus({
+              aqi: isWarn ? 'Elevated Warning' : 'Optimal',
+              ch4: `${latest.measured_value || 0.25}%`,
+              co: '12 ppm',
+              color: isWarn ? '#dc2626' : '#059669',
+            });
+          }
+        }
+
+        if (alertsRes.status === 'fulfilled' && alertsRes.value?.data) {
+          const sos = alertsRes.value.data.sos_alerts || [];
+          setDistressCount(sos.length);
+        }
+      } catch (err) {
+        console.warn('Dashboard telemetry polling deferred:', err.message);
+      }
+    };
+
+    fetchLiveStats();
+    const interval = setInterval(fetchLiveStats, 8000);
+    return () => clearInterval(interval);
+  }, []);
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Worker Telemetry Banner */}
@@ -41,11 +80,11 @@ export const DashboardScreen = ({ currentUser, onNavigate }) => {
           <View style={styles.kpiHeader}>
             <Text style={styles.kpiTitle}>Atmospheric AQI</Text>
             <View style={styles.kpiIconBox}>
-              <Icon name="wind" size={14} color="#059669" />
+              <Icon name="wind" size={14} color={gasStatus.color} />
             </View>
           </View>
-          <Text style={[styles.kpiVal, { color: '#059669' }]}>Optimal</Text>
-          <Text style={styles.trendSub}>CH₄: 0.12% • O₂: 20.9%</Text>
+          <Text style={[styles.kpiVal, { color: gasStatus.color }]}>{gasStatus.aqi}</Text>
+          <Text style={styles.trendSub}>CH₄: {gasStatus.ch4} • CO: {gasStatus.co}</Text>
         </View>
 
         {/* 3. Cap-Lamp & Telemetry */}
@@ -65,11 +104,15 @@ export const DashboardScreen = ({ currentUser, onNavigate }) => {
           <View style={styles.kpiHeader}>
             <Text style={styles.kpiTitle}>Sector Safety</Text>
             <View style={styles.kpiIconBox}>
-              <Icon name="alert" size={14} color="#059669" />
+              <Icon name="alert" size={14} color={distressCount > 0 ? '#dc2626' : '#059669'} />
             </View>
           </View>
-          <Text style={[styles.kpiVal, { color: '#059669' }]}>All Clear</Text>
-          <Text style={styles.trendSub}>0 Distress • Perimeter safe</Text>
+          <Text style={[styles.kpiVal, { color: distressCount > 0 ? '#dc2626' : '#059669' }]}>
+            {distressCount > 0 ? `${distressCount} Alert(s)` : 'All Clear'}
+          </Text>
+          <Text style={styles.trendSub}>
+            {distressCount > 0 ? 'Active Distress in Mine' : '0 Distress • Perimeter safe'}
+          </Text>
         </View>
       </View>
 

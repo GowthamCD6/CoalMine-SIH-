@@ -5,26 +5,42 @@ import DiagnosticsDrawer from './components/common/DiagnosticsDrawer.jsx';
 import Toast from './components/common/Toast.jsx';
 
 import LoginPage from './pages/Auth/LoginPage.jsx';
+
+// Dashboards
 import DashboardOverview from './pages/Admin/DashboardOverview.jsx';
+import MineDashboard from './pages/Dashboard/MineDashboard.jsx';
+import CorporateDashboard from './pages/Dashboard/CorporateDashboard.jsx';
+import RegulatoryDashboard from './pages/Dashboard/RegulatoryDashboard.jsx';
+import ProductionDashboardView from './pages/Dashboard/ProductionDashboardView.jsx';
+
+// Admin
 import AdminManagement from './pages/Admin/AdminManagement.jsx';
 import PagesManagement from './pages/Admin/PagesManagement.jsx';
 import AuditLogsView from './pages/Admin/AuditLogsView.jsx';
 import CommandMapView from './pages/Admin/CommandMapView.jsx';
 import AnalyticsView from './pages/Admin/AnalyticsView.jsx';
 
+// Safety Officer
 import ComplianceView from './pages/SafetyOfficer/ComplianceView.jsx';
 import SmokeDetectionView from './pages/SafetyOfficer/SmokeDetectionView.jsx';
 import EnvironmentMonitoringView from './pages/SafetyOfficer/EnvironmentMonitoringView.jsx';
 import InspectionsView from './pages/SafetyOfficer/InspectionsView.jsx';
+import IncidentManagementView from './pages/SafetyOfficer/IncidentManagementView.jsx';
 import EmergencyAlertsView from './pages/SafetyOfficer/EmergencyAlertsView.jsx';
-import EmergencyConsoleView from './pages/SafetyOfficer/EmergencyConsoleView.jsx';
 
+// Labor Officer
 import AttendanceSystemView from './pages/LaborOfficer/AttendanceSystemView.jsx';
 import LaborDeploymentView from './pages/LaborOfficer/LaborDeploymentView.jsx';
+import ContractorManagementView from './pages/LaborOfficer/ContractorManagementView.jsx';
+import GrievanceBoardView from './pages/LaborOfficer/GrievanceBoardView.jsx';
 
+// Store Officer
 import ResourceAllocationView from './pages/StoreOfficer/ResourceAllocationView.jsx';
 
+// Field Unit
 import MobileSimulatorView from './pages/FieldUnit/MobileSimulatorView.jsx';
+
+import { usePermissions } from './hooks/usePermissions.js';
 import { api, subscribeToApiLogs, getAccessToken } from './services/api.js';
 import './App.css';
 
@@ -38,6 +54,9 @@ function App() {
   const [diagnosticsLogs, setDiagnosticsLogs] = useState([]);
   const [toast, setToast] = useState(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Derive permission helpers from the logged-in user
+  const { hasPermission, getDashboardType, isSuperAdmin, isRegulatory } = usePermissions(currentUser);
 
   const showToast = (message, isDanger = false) => {
     setToast({ message, isDanger });
@@ -86,6 +105,17 @@ function App() {
     };
   }, []);
 
+  // When user logs in, route to the right dashboard for their role
+  useEffect(() => {
+    if (currentUser) {
+      const dashType = getDashboardType();
+      if (dashType === 'admin') setActiveTab('dashboard');
+      else if (dashType === 'corporate') setActiveTab('corporate-dashboard');
+      else if (dashType === 'regulatory') setActiveTab('regulatory-dashboard');
+      else setActiveTab('mine-dashboard');
+    }
+  }, [currentUser?.id]);
+
   // Auto-dismiss toast
   useEffect(() => {
     if (toast) {
@@ -107,7 +137,7 @@ function App() {
         fontFamily: 'Inter, system-ui, sans-serif',
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '1.2rem', fontWeight: '700' }}>CoalMin API Platform</div>
+          <div style={{ fontSize: '1.2rem', fontWeight: '700' }}>SmartMine Platform</div>
           <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '6px' }}>Verifying secure session...</div>
         </div>
       </div>
@@ -136,17 +166,20 @@ function App() {
     showToast('Logged out of session.');
   };
 
+  const navigateTo = (tab) => {
+    setActiveTab(tab);
+    setIsMobileSidebarOpen(false);
+  };
+
   return (
     <div className="app-layout">
       {/* Enhanced Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
-        onSelectTab={(tabId) => {
-          setActiveTab(tabId);
-          setIsMobileSidebarOpen(false);
-        }}
+        onSelectTab={navigateTo}
         userRole={currentUser?.role_name || currentUser?.role || 'admin'}
         userData={currentUser}
+        currentUser={currentUser}
         onLogout={handleLogout}
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
@@ -169,13 +202,34 @@ function App() {
 
         {/* Viewport Views */}
         <main className="view-viewport" style={{ flex: 1, overflowY: 'auto' }}>
+
+          {/* ── Dashboards (role-routed) ── */}
           {activeTab === 'dashboard' && (
             <DashboardOverview
               serverStatus={serverStatus}
-              onNavigateTo={(tab) => setActiveTab(tab)}
+              onNavigateTo={navigateTo}
             />
           )}
 
+          {activeTab === 'mine-dashboard' && (
+            <MineDashboard currentUser={currentUser} onNavigateTo={navigateTo} />
+          )}
+
+          {activeTab === 'corporate-dashboard' && (
+            <CorporateDashboard currentUser={currentUser} onNavigateTo={navigateTo} />
+          )}
+
+          {activeTab === 'regulatory-dashboard' && (
+            <RegulatoryDashboard currentUser={currentUser} onNavigateTo={navigateTo} />
+          )}
+
+          {activeTab === 'production' && (
+            <div style={{ padding: '2rem' }}>
+              <ProductionDashboardView onShowToast={showToast} />
+            </div>
+          )}
+
+          {/* ── Admin ── */}
           {(activeTab === 'organizations' || activeTab === 'mines' || activeTab === 'users' || activeTab === 'rbac') && (
             <div style={{ padding: '2rem' }}>
               <AdminManagement
@@ -208,9 +262,15 @@ function App() {
             </div>
           )}
 
+          {activeTab === 'incidents' && (
+            <div style={{ padding: '2rem' }}>
+              <IncidentManagementView onShowToast={showToast} />
+            </div>
+          )}
+
           {activeTab === 'emergency' && (
             <div style={{ padding: '2rem' }}>
-              <EmergencyConsoleView onShowToast={showToast} />
+              <EmergencyAlertsView currentUser={currentUser} onShowToast={showToast} />
             </div>
           )}
 
@@ -240,7 +300,19 @@ function App() {
 
           {activeTab === 'labor' && (
             <div style={{ padding: '2rem' }}>
-              <LaborDeploymentView onShowToast={showToast} onNavigateTo={(tab) => setActiveTab(tab)} />
+              <LaborDeploymentView onShowToast={showToast} onNavigateTo={navigateTo} />
+            </div>
+          )}
+
+          {activeTab === 'contractors' && (
+            <div style={{ padding: '2rem' }}>
+              <ContractorManagementView onShowToast={showToast} />
+            </div>
+          )}
+
+          {activeTab === 'grievances' && (
+            <div style={{ padding: '2rem' }}>
+              <GrievanceBoardView onShowToast={showToast} />
             </div>
           )}
 
@@ -260,6 +332,20 @@ function App() {
             <div style={{ padding: '2rem' }}>
               <ResourceAllocationView onShowToast={showToast} />
             </div>
+          )}
+
+          {/* Safe Fallback: if activeTab does not match any known view, show DashboardOverview */}
+          {![
+            'dashboard', 'mine-dashboard', 'corporate-dashboard', 'regulatory-dashboard',
+            'production', 'organizations', 'mines', 'users', 'rbac', 'pages', 'mobile-app',
+            'alerts', 'emergency', 'audit', 'audit-logs', 'inspections', 'incidents',
+            'command-map', 'analytics', 'compliance', 'environment', 'labor',
+            'contractors', 'grievances', 'smoke-detection', 'attendance', 'resources'
+          ].includes(activeTab) && (
+            <DashboardOverview
+              serverStatus={serverStatus}
+              onNavigateTo={navigateTo}
+            />
           )}
         </main>
       </div>

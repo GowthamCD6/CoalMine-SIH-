@@ -389,6 +389,90 @@ export const mobileApi = {
     });
   },
 
+  // Environmental & Atmospheric Telemetry
+  async getEnvObservations(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return request(`/environment/observations${query ? `?${query}` : ''}`);
+  },
+
+  async createEnvObservation(data) {
+    return request('/environment/observations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async getEnvSummary() {
+    return request('/environment/summary');
+  },
+
+  // Incident Reporting & CAPA
+  async getIncidents(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return request(`/incidents${query ? `?${query}` : ''}`);
+  },
+
+  async createIncident(data) {
+    return request('/incidents', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async getIncidentsSummary() {
+    return request('/incidents/summary');
+  },
+
+  // Attendance & Muster Roll
+  async punchAttendance(data) {
+    return request('/attendance/scan', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async getAttendanceStats() {
+    return request('/attendance/stats');
+  },
+
+  async getAttendanceLogs(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return request(`/attendance${query ? `?${query}` : ''}`);
+  },
+
+  // Statutory Compliance & DGMS
+  async getComplianceObligations(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return request(`/compliance/requirements${query ? `?${query}` : ''}`);
+  },
+
+  async getComplianceStatus() {
+    return request('/compliance/status');
+  },
+
+  // Production & Operations
+  async getProductionSummary() {
+    return request('/production/summary');
+  },
+
+  async getProductionReports(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return request(`/production/reports${query ? `?${query}` : ''}`);
+  },
+
+  // Worker Grievances
+  async getGrievances(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return request(`/grievances${query ? `?${query}` : ''}`);
+  },
+
+  async createGrievance(data) {
+    return request('/grievances', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
   // RFID Beacon Pass
   async getRfidPass() {
     return request('/rfid-pass');

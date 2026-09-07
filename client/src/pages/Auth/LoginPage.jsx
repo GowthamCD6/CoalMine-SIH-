@@ -16,7 +16,16 @@ export default function LoginPage({ onLoginSuccess }) {
 
     try {
       const res = await api.login(loginInput, passwordInput);
-      onLoginSuccess(res?.user || res);
+      let userProfile = res?.user || res;
+      try {
+        const me = await api.getMe();
+        if (me && me.id) {
+          userProfile = me;
+        }
+      } catch (meErr) {
+        console.warn('Could not fetch enriched profile, using login payload:', meErr.message);
+      }
+      onLoginSuccess(userProfile);
     } catch (err) {
       setErrorMsg(err.message || 'Invalid login credentials. Please check your username/email and password.');
     } finally {

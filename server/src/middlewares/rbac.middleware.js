@@ -56,6 +56,78 @@ export const getUserEffectivePermissions = async (userId) => {
   }
 };
 
+/**
+ * Derives the data scope for a user based on their active subrole assignments.
+ * Returns: { is_super_admin, org_ids, mine_ids, is_regulatory }
+ *
+ * - is_super_admin: true if user has '*' or 'ALL_PERMISSIONS' permission
+ * - org_ids: list of organization IDs the user has access to (org-level roles)
+ * - mine_ids: list of mine IDs the user has direct access to (mine-level roles)
+ *   For org-level users, mine_ids is expanded to all mines within permitted orgs
+ * - is_regulatory: true if the role has no org_id and no mine_id (platform/regulatory scope)
+ */
+export const getScopeForUser = async (userId) => {
+  const permissions = await getUserEffectivePermissions(userId);
+
+  const isSuperAdmin = permissions.some(
+    (p) => p.permission_code === '*' || p.permission_code === 'ALL_PERMISSIONS'
+  );
+
+  if (isSuperAdmin) {
+    return { is_super_admin: true, org_ids: [], mine_ids: [], is_regulatory: false };
+  }
+
+  const orgIds = new Set();
+  const explicitMineIds = new Set();
+  let isRegulatory = false;
+
+  for (const p of permissions) {
+    if (!p.organization_id && !p.mine_id) {
+      isRegulatory = true;
+    }
+    if (p.organization_id) orgIds.add(Number(p.organization_id));
+    if (p.mine_id) explicitMineIds.add(Number(p.mine_id));
+  }
+
+  // Expand org-level users: fetch all mines belonging to permitted orgs
+  let expandedMineIds = [...explicitMineIds];
+  if (orgIds.size > 0) {
+    try {
+      const orgIdList = [...orgIds];
+      const placeholders = orgIdList.map(() => '?').join(',');
+      const [mineRows] = await db.query(
+        `SELECT id FROM mines WHERE organization_id IN (${placeholders}) AND status = 'ACTIVE'`,
+        orgIdList
+      );
+      mineRows.forEach((m) => expandedMineIds.push(Number(m.id)));
+    } catch (err) {
+      console.error('⚠️ [RBAC] Failed to expand org mine IDs:', err.message);
+    }
+  }
+
+  // Deduplicate
+  expandedMineIds = [...new Set(expandedMineIds)];
+
+  return {
+    is_super_admin: false,
+    org_ids: [...orgIds],
+    mine_ids: expandedMineIds,
+    is_regulatory: isRegulatory,
+  };
+};
+
+/**
+ * Middleware: injects req.scope into every authenticated request.
+ * Must be used AFTER authenticate middleware.
+ * Caches scope on req to avoid repeated DB calls per request.
+ */
+export const injectScope = asyncHandler(async (req, res, next) => {
+  if (req.user && !req.scope) {
+    req.scope = await getScopeForUser(req.user.id);
+  }
+  next();
+});
+
 export const requirePermission = (permissionCode, options = {}) => {
   return asyncHandler(async (req, res, next) => {
     if (!req.user) {
@@ -129,5 +201,7 @@ export const requirePermission = (permissionCode, options = {}) => {
 
 export default {
   getUserEffectivePermissions,
+  getScopeForUser,
+  injectScope,
   requirePermission,
 };
