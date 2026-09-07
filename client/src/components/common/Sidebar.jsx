@@ -21,6 +21,15 @@ const ICON_MAP = {
 
 // Fallback static nav for Super Admin (always visible)
 const ADMIN_STATIC_NAV = [
+  {
+    label: 'Administration', section: true,
+    children: [
+      { id: 'organizations', label: 'Organizations & Mines', icon: Building2 },
+      { id: 'users', label: 'User Directory', icon: Users },
+      { id: 'rbac', label: 'Roles & Subroles (RBAC)', icon: Shield },
+      { id: 'pages', label: 'Pages & Hierarchy', icon: FolderTree },
+    ],
+  },
   { id: 'dashboard', label: 'System Overview & Health', icon: LayoutDashboard },
   { id: 'command-map', label: 'GIS Command Map', icon: Map },
   { id: 'analytics', label: 'AI Risk Analytics', icon: BrainCircuit },
@@ -49,15 +58,6 @@ const ADMIN_STATIC_NAV = [
   },
   { id: 'alerts', label: 'Emergency Alerts', icon: ShieldAlert, badge: 'LIVE' },
   { id: 'mobile-app', label: 'Mobile App Simulator', icon: Smartphone },
-  {
-    label: 'Administration', section: true,
-    children: [
-      { id: 'organizations', label: 'Organizations & Mines', icon: Building2 },
-      { id: 'users', label: 'User Directory', icon: Users },
-      { id: 'rbac', label: 'Roles & Subroles (RBAC)', icon: Shield },
-      { id: 'pages', label: 'Pages & Hierarchy', icon: FolderTree },
-    ],
-  },
 ];
 
 // Maps page.route / page.code values to tab IDs used in App.jsx
@@ -130,7 +130,17 @@ function buildNavFromTree(tree) {
     }
     return { id: tabId, label: node.name, icon: IconComp };
   };
-  return tree.map(mapNode).filter(Boolean);
+
+  const items = tree.map(mapNode).filter(Boolean);
+  // Ensure Administration section appears at the top
+  items.sort((a, b) => {
+    const aIsAdmin = a.label?.toLowerCase().includes('admin');
+    const bIsAdmin = b.label?.toLowerCase().includes('admin');
+    if (aIsAdmin && !bIsAdmin) return -1;
+    if (!aIsAdmin && bIsAdmin) return 1;
+    return 0;
+  });
+  return items;
 }
 
 export default function Sidebar({
@@ -144,15 +154,19 @@ export default function Sidebar({
   onClose,
 }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [openSections, setOpenSections] = useState({});
+  const [openSections, setOpenSections] = useState({ Administration: true });
   const [dynamicNav, setDynamicNav] = useState(null);
   const [navLoading, setNavLoading] = useState(true);
 
   // Determine if user is super admin
   const permissions = currentUser?.permissions || [];
-  const isSuperAdmin = permissions.some(
-    (p) => p.permission_code === '*' || p.permission_code === 'ALL_PERMISSIONS'
-  );
+  const isSuperAdmin =
+    currentUser?.username === 'superadmin' ||
+    currentUser?.email === 'admin@coalmin.org' ||
+    permissions.some(
+      (p) => (typeof p === 'string' ? p === '*' || p === 'ALL_PERMISSIONS' : p.permission_code === '*' || p.permission_code === 'ALL_PERMISSIONS' || p.code === '*')
+    ) ||
+    currentUser?.subroles?.some(s => s.role_code === 'SUPERADMIN' || s.role_code === 'SUPER_ADMIN' || s.subrole_code === 'CHIEF_ADMIN');
 
   useEffect(() => {
     loadNav();

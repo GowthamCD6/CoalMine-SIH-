@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Pickaxe, Lock, Mail, ArrowRight, AlertCircle, ShieldCheck, Database, Eye, EyeOff, Crown, Building2, Briefcase } from 'lucide-react';
+import { Pickaxe, Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { api } from '../../services/api.js';
 
 export default function LoginPage({ onLoginSuccess }) {
-  const [loginInput, setLoginInput] = useState('admin@coalmin.org');
-  const [passwordInput, setPasswordInput] = useState('Admin@12345');
+  const [loginInput, setLoginInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -31,12 +31,6 @@ export default function LoginPage({ onLoginSuccess }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleFillCredentials = (email, pass) => {
-    setLoginInput(email);
-    setPasswordInput(pass);
-    setErrorMsg('');
   };
 
   return (
@@ -138,7 +132,7 @@ export default function LoginPage({ onLoginSuccess }) {
                   required
                   autoFocus
                   className="sleek-input"
-                  placeholder="admin@coalmin.org or superadmin"
+                  placeholder="Enter username or email address"
                   value={loginInput}
                   onChange={(e) => setLoginInput(e.target.value)}
                   style={{
@@ -222,98 +216,6 @@ export default function LoginPage({ onLoginSuccess }) {
               {!loading && <ArrowRight size={18} />}
             </button>
           </form>
-
-          {/* Quick Credential Quickfill Helper */}
-          <div style={{
-            marginTop: '1.5rem',
-            paddingTop: '1.25rem',
-            borderTop: '1px solid #f1f5f9',
-          }}>
-            <div style={{
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              color: '#94a3b8',
-              marginBottom: '8px',
-              textAlign: 'center',
-            }}>
-              Quick Logins (Multi-Tier Hierarchy)
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <button
-                type="button"
-                className="sleek-btn"
-                onClick={() => handleFillCredentials('superadmin', 'Admin@12345')}
-                style={{
-                  padding: '7px 10px',
-                  backgroundColor: 'rgba(254, 252, 232, 0.5)',
-                  fontSize: '0.78rem',
-                  color: '#92400e',
-                  textAlign: 'left',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
-                  <Crown size={14} color="#d97706" /> Super Admin
-                </div>
-                <div style={{ fontSize: '0.7rem', color: '#b45309' }}>superadmin (Global)</div>
-              </button>
-
-              <button
-                type="button"
-                className="sleek-btn"
-                onClick={() => handleFillCredentials('ecl_admin', 'Admin@12345')}
-                style={{
-                  padding: '7px 10px',
-                  backgroundColor: 'rgba(239, 246, 255, 0.5)',
-                  fontSize: '0.78rem',
-                  color: '#1e40af',
-                  textAlign: 'left',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
-                  <Building2 size={14} color="#2563eb" /> ECL Org Admin
-                </div>
-                <div style={{ fontSize: '0.7rem', color: '#3b82f6' }}>ecl_admin (Org Tier)</div>
-              </button>
-
-              <button
-                type="button"
-                className="sleek-btn"
-                onClick={() => handleFillCredentials('ecl_advisor', 'Admin@12345')}
-                style={{
-                  padding: '7px 10px',
-                  backgroundColor: 'rgba(248, 250, 252, 0.5)',
-                  fontSize: '0.78rem',
-                  color: '#334155',
-                  textAlign: 'left',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
-                  <Briefcase size={14} color="#475569" /> ECL Site Advisor
-                </div>
-                <div style={{ fontSize: '0.7rem', color: '#64748b' }}>ecl_advisor (Org Scope)</div>
-              </button>
-
-              <button
-                type="button"
-                className="sleek-btn"
-                onClick={() => handleFillCredentials('rj_mine_admin', 'Admin@12345')}
-                style={{
-                  padding: '7px 10px',
-                  backgroundColor: 'rgba(236, 253, 245, 0.5)',
-                  fontSize: '0.78rem',
-                  color: '#065f46',
-                  textAlign: 'left',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
-                  <Pickaxe size={14} color="#059669" /> Rajmahal Mine Admin
-                </div>
-                <div style={{ fontSize: '0.7rem', color: '#059669' }}>rj_mine_admin (Mine Scope)</div>
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Footer Note */}
