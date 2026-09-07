@@ -132,14 +132,6 @@ export default function ProductionDashboardView({ onShowToast }) {
             <Pickaxe size={26} color="#2563eb" />
             Production & Mining Operations
           </h1>
-          <p style={{
-            marginTop: '0.375rem',
-            fontSize: '0.875rem',
-            color: '#64748b',
-            margin: '4px 0 0 0',
-          }}>
-            Shift-wise coal dispatch logging, target tracking, machinery downtime, and bottleneck remediation
-          </p>
         </div>
 
         {/* Header Action Buttons */}
