@@ -48,7 +48,13 @@ export default function DiagnosticsDrawer({ isOpen, onClose, currentUser }) {
   };
 
   const handleEvaluateScope = () => {
-    const isSuper = currentUser?.permissions?.includes('*');
+    const isSuper =
+      currentUser?.username === 'superadmin' ||
+      currentUser?.email === 'admin@coalmin.org' ||
+      (Array.isArray(currentUser?.permissions) && currentUser.permissions.some(p =>
+        typeof p === 'string' ? p === '*' || p === 'ALL_PERMISSIONS' : p.permission_code === '*' || p.permission_code === 'ALL_PERMISSIONS'
+      )) ||
+      currentUser?.subroles?.some(s => s.role_code === 'SUPERADMIN' || s.role_code === 'SUPER_ADMIN' || s.subrole_code === 'CHIEF_ADMIN');
     const userSubroles = currentUser?.subroles || [];
 
     let granted = false;

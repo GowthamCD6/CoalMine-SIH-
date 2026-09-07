@@ -37,8 +37,21 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
   }, [initialTab]);
 
   // Determine Current User Scope & Capabilities
-  const isSuperAdmin = currentUser?.permissions?.includes('*') || 
-    currentUser?.subroles?.some(s => s.role_code === 'SUPER_ADMIN' || s.subrole_code === 'FULL_ACCESS_ROOT');
+  const isSuperAdmin =
+    currentUser?.username === 'superadmin' ||
+    currentUser?.email === 'admin@coalmin.org' ||
+    (Array.isArray(currentUser?.permissions) && currentUser.permissions.some(p =>
+      typeof p === 'string'
+        ? p === '*' || p === 'ALL_PERMISSIONS'
+        : p.permission_code === '*' || p.permission_code === 'ALL_PERMISSIONS' || p.code === '*'
+    )) ||
+    currentUser?.subroles?.some(s =>
+      s.role_code === 'SUPERADMIN' ||
+      s.role_code === 'SUPER_ADMIN' ||
+      s.subrole_code === 'CHIEF_ADMIN' ||
+      s.subrole_code === 'FULL_ACCESS_ROOT' ||
+      s.role_name?.toLowerCase?.().includes('super')
+    );
 
   // Find user's assigned Organization & Mine if applicable
   const primarySubrole = currentUser?.subroles?.[0];
@@ -588,7 +601,13 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
       let matchingRole = null;
 
       for (const s of userSubs) {
-        if (s.subrole_code === 'FULL_ACCESS_ROOT' || s.role_code === 'SUPER_ADMIN') {
+        if (
+          s.subrole_code === 'FULL_ACCESS_ROOT' ||
+          s.subrole_code === 'CHIEF_ADMIN' ||
+          s.role_code === 'SUPER_ADMIN' ||
+          s.role_code === 'SUPERADMIN' ||
+          s.role_name?.toLowerCase?.().includes('super')
+        ) {
           hasRoot = true;
           matchingRole = s;
           break;
