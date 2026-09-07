@@ -309,7 +309,7 @@ export const mobileApi = {
     });
   },
 
-  // Hazards (Camera)
+  // Hazards (Camera & Uploads)
   async getHazards() {
     return request('/hazards');
   },
@@ -319,6 +319,10 @@ export const mobileApi = {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  },
+
+  async getUploadLogs() {
+    return request('/uploads/logs');
   },
 
   // Emergency & SOS

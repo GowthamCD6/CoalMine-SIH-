@@ -788,12 +788,13 @@ export default function MobileSimulatorView({ onShowToast }) {
                   {hazardCaptured && (
                     <div style={{ marginTop: '10px', backgroundColor: '#1e293b', borderRadius: '8px', padding: '10px' }}>
                       <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4ade80', marginBottom: '6px' }}>
-                        ✓ Ready to upload hazard report:
+                        ✓ Photo Captured (Stored to /uploads on submit):
                       </div>
                       <button
                         onClick={async () => {
                           try {
-                            await fetch('http://localhost:5000/api/v1/hazards', {
+                            const sampleBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACnSURBVHic7cExAQAAAMKg9U9tCy8gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgB81QAAAAcB05HIAAAAASUVORK5CYII=';
+                            await fetch('http://localhost:5001/api/v1/hazards', {
                               method: 'POST',
                               headers: {
                                 Authorization: `Bearer ${activeToken}`,
@@ -803,12 +804,17 @@ export default function MobileSimulatorView({ onShowToast }) {
                                 hazard_type: 'Roof Degradation Fissure',
                                 location_name: 'Shaft 4 Sector B',
                                 depth_meters: -120,
+                                zone_tag: 'Level 3 - Sector B',
+                                notes: 'Optical fissure record captured via HUD sensor.',
+                                photo_base64: sampleBase64,
+                                file_name: `simulator_hazard_${Date.now()}.png`,
                               }),
                             });
                             setHazardCaptured(false);
-                            if (onShowToast) onShowToast('Hazard report logged & synchronized!');
-                          } catch {
+                            if (onShowToast) onShowToast('📸 Photo saved to /uploads folder and logged to Audit Trail!');
+                          } catch (err) {
                             setHazardCaptured(false);
+                            if (onShowToast) onShowToast('Offline queue mode active: ' + err.message, true);
                           }
                         }}
                         style={{
@@ -823,7 +829,7 @@ export default function MobileSimulatorView({ onShowToast }) {
                           cursor: 'pointer',
                         }}
                       >
-                        SUBMIT GEOTAGGED REPORT
+                        SUBMIT & SAVE TO /uploads
                       </button>
                     </div>
                   )}

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "LOG-17256942001",
+    "hazard_id": "HAZ-402",
+    "category": "Roof Support / Cracking",
+    "location": "Shaft 4 (Level 3 - Sector B)",
+    "zone_tag": "Level 3 - Sector B",
+    "depth": "-120m",
+    "coordinates": "23.7957° N, 86.4304° E",
+    "notes": "Structural fissure detected along roof timber support beam. Hydraulic bolt tension verified.",
+    "file_name": "hazard_roof_crack_level3.png",
+    "file_path": "uploads/hazard_roof_crack_level3.png",
+    "photo_url": "/uploads/hazard_roof_crack_level3.png",
+    "file_size": "142.6 KB",
+    "reporter": "nandha (Field Worker)",
+    "reporter_code": "EMP-7729",
+    "uploaded_at": "2026-09-07T05:29:47.757Z",
+    "status": "VERIFIED_ON_DISK"
+  },
+  {
+    "id": "LOG-17256942002",
+    "hazard_id": "HAZ-398",
+    "category": "Gas Seepage / Ventilation",
+    "location": "Zone B • Level 4 Deep",
+    "zone_tag": "Zone B - Level 4 Deep",
+    "depth": "-150m",
+    "coordinates": "23.7961° N, 86.4312° E",
+    "notes": "Methane tracer gas concentration at ventilation return airway intake.",
+    "file_name": "hazard_methane_face_c.png",
+    "file_path": "uploads/hazard_methane_face_c.png",
+    "photo_url": "/uploads/hazard_methane_face_c.png",
+    "file_size": "198.4 KB",
+    "reporter": "Amit Mondal (Shuttle Car)",
+    "reporter_code": "EMP-3301",
+    "uploaded_at": "2026-09-07T04:29:47.757Z",
+    "status": "VERIFIED_ON_DISK"
+  }
+]

@@ -274,6 +274,11 @@ export const api = {
   // Audit Logs
   getAuditLogs: (params) => request(`/audit-logs${toQueryString(params)}`),
 
+  // Hazards & Photo Upload Logs
+  getHazards: () => request('/hazards'),
+  createHazard: (data) => request('/hazards', { method: 'POST', body: JSON.stringify(data) }),
+  getUploadLogs: () => request('/uploads/logs'),
+
   // Emergency & Safety Alerts
   getEmergencyAlerts: (params) => request(`/emergencies/alerts${toQueryString(params)}`),
   getEmergencySignals: () => request('/emergencies/signals'),

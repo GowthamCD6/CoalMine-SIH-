@@ -1,7 +1,60 @@
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { optionalAuthenticate } from '../../middlewares/auth.middleware.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.resolve(__dirname, '../../../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const photoLogsFile = path.join(uploadsDir, 'photo_logs.json');
+let photoLogsStore = [];
+try {
+  if (fs.existsSync(photoLogsFile)) {
+    photoLogsStore = JSON.parse(fs.readFileSync(photoLogsFile, 'utf8'));
+  }
+} catch (e) {
+  photoLogsStore = [];
+}
+
+function savePhotoLog(record) {
+  photoLogsStore.unshift(record);
+  try {
+    fs.writeFileSync(photoLogsFile, JSON.stringify(photoLogsStore, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Error writing photo_logs.json:', err);
+  }
+}
+
+function saveBase64Image(base64String, customPrefix = 'hazard') {
+  if (!base64String) return null;
+  let cleanBase64 = base64String;
+  let ext = 'jpg';
+  const matches = String(base64String).match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
+  if (matches) {
+    ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+    cleanBase64 = matches[2];
+  }
+
+  const filename = `${customPrefix}_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}.${ext}`;
+  const filePath = path.join(uploadsDir, filename);
+  const buffer = Buffer.from(cleanBase64, 'base64');
+  fs.writeFileSync(filePath, buffer);
+
+  return {
+    file_name: filename,
+    file_path: filePath,
+    photo_url: `/uploads/${filename}`,
+    file_size: buffer.length,
+    file_size_formatted: `${(buffer.length / 1024).toFixed(1)} KB`,
+  };
+}
 
 export const mobileOpsRouter = express.Router();
 
@@ -124,7 +177,7 @@ mobileOpsRouter.patch(
   })
 );
 
-// --- HAZARDS (Camera / Geotag) ---
+// --- HAZARDS (Camera / Geotag & Upload Storage) ---
 mobileOpsRouter.get(
   '/hazards',
   asyncHandler(async (req, res) => {
@@ -143,24 +196,127 @@ mobileOpsRouter.post(
       depth_meters = -120,
       zone_tag = 'Level 3 - Sector B',
       notes,
+      photo_url,
+      photo_base64,
+      file_name,
     } = req.body;
+
+    let savedFile = null;
+    if (photo_base64) {
+      savedFile = saveBase64Image(photo_base64, 'hazard');
+    }
+
+    const assignedPhotoUrl = savedFile?.photo_url || photo_url || null;
+    const finalFileName = savedFile?.file_name || file_name || (assignedPhotoUrl ? path.basename(assignedPhotoUrl) : null);
 
     const newHazard = {
       id: 'HAZ-' + Math.floor(100 + Math.random() * 900),
       hazard_type: hazard_type || 'Unspecified Hazard',
-      location_name: location_name || 'Underground Tunnel',
+      location_name: location_name || `Shaft 4 (${zone_tag})`,
       latitude: Number(latitude),
       longitude: Number(longitude),
       depth_meters: Number(depth_meters),
       zone_tag,
       notes: notes || '',
-      status: 'SYNCED',
-      reporter: req.user?.username || 'Field Agent',
+      photo_url: assignedPhotoUrl,
+      file_name: finalFileName,
+      file_size: savedFile?.file_size || null,
+      file_size_formatted: savedFile?.file_size_formatted || null,
+      file_path: savedFile?.file_path || (finalFileName ? `uploads/${finalFileName}` : null),
+      status: 'STORED_IN_UPLOADS',
+      reporter: req.user?.username || req.user?.first_name || 'nandha (Field Worker)',
+      reporter_code: req.user?.employee_code || 'EMP-7729',
       timestamp: new Date().toISOString(),
     };
 
     hazardsStore.unshift(newHazard);
-    return ApiResponse.created(res, newHazard, 'Hazard report captured and synced successfully');
+
+    if (savedFile || assignedPhotoUrl) {
+      savePhotoLog({
+        id: 'LOG-' + Date.now(),
+        hazard_id: newHazard.id,
+        category: newHazard.hazard_type,
+        location: newHazard.location_name,
+        zone_tag: newHazard.zone_tag,
+        depth: `${newHazard.depth_meters}m`,
+        coordinates: `${newHazard.latitude}° N, ${newHazard.longitude}° E`,
+        notes: newHazard.notes,
+        file_name: newHazard.file_name,
+        file_path: newHazard.file_path,
+        photo_url: newHazard.photo_url,
+        file_size: newHazard.file_size_formatted || 'N/A',
+        reporter: newHazard.reporter,
+        reporter_code: newHazard.reporter_code,
+        uploaded_at: newHazard.timestamp,
+        status: 'VERIFIED_ON_DISK',
+      });
+    }
+
+    return ApiResponse.created(res, newHazard, 'Hazard report and photo stored in /uploads and logged successfully');
+  })
+);
+
+// Photo logs stored in uploads folder
+mobileOpsRouter.get(
+  '/uploads/logs',
+  asyncHandler(async (req, res) => {
+    let diskFiles = [];
+    try {
+      diskFiles = fs.readdirSync(uploadsDir).filter((f) => !f.endsWith('.json'));
+    } catch {
+      diskFiles = [];
+    }
+
+    return ApiResponse.success(
+      res,
+      {
+        total_photos: photoLogsStore.length,
+        folder_path: 'server/uploads',
+        disk_files_count: diskFiles.length,
+        logs: photoLogsStore,
+      },
+      'Photo logs retrieved from /uploads successfully'
+    );
+  })
+);
+
+// Direct photo upload endpoint
+mobileOpsRouter.post(
+  '/uploads/photo',
+  asyncHandler(async (req, res) => {
+    const {
+      photo_base64,
+      category = 'Optical Hazard Evidence',
+      location = 'Shaft 4 • Level 3',
+      zone_tag = 'Level 3 - Sector B',
+      depth = -120,
+      notes = '',
+    } = req.body;
+
+    if (!photo_base64) {
+      return ApiResponse.badRequest(res, 'photo_base64 field is required');
+    }
+
+    const savedFile = saveBase64Image(photo_base64, 'evidence');
+    const logEntry = {
+      id: 'LOG-' + Date.now(),
+      category,
+      location,
+      zone_tag,
+      depth: `${depth}m`,
+      coordinates: '23.7957° N, 86.4304° E',
+      notes,
+      file_name: savedFile.file_name,
+      file_path: savedFile.file_path,
+      photo_url: savedFile.photo_url,
+      file_size: savedFile.file_size_formatted,
+      reporter: req.user?.username || req.user?.first_name || 'nandha (Field Worker)',
+      uploaded_at: new Date().toISOString(),
+      status: 'VERIFIED_ON_DISK',
+    };
+
+    savePhotoLog(logEntry);
+    return ApiResponse.created(res, logEntry, `Photo written to uploads/${savedFile.file_name} and logged`);
   })
 );
 

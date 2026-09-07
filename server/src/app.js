@@ -47,9 +47,16 @@ if (env.NODE_ENV !== 'test') {
   app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 }
 
-// Request Parsers
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Request Parsers with 50mb limit for mobile camera photos
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Static Uploads Directory for camera photos & evidence logs
+const uploadsDir = path.resolve(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
 
 // Swagger Documentation
 const swaggerPath = path.resolve(__dirname, '../docs/swagger.json');
