@@ -61,6 +61,11 @@ function App() {
     setToast({ message, isDanger });
   }, []);
 
+  const navigateTo = useCallback((tab) => {
+    setActiveTab(tab);
+    setIsMobileSidebarOpen(false);
+  }, []);
+
   const checkStatus = async () => {
     setIsRefreshing(true);
     try {
@@ -164,11 +169,6 @@ function App() {
     setCurrentUser(null);
     showToast('Logged out of session.');
   };
-
-  const navigateTo = useCallback((tab) => {
-    setActiveTab(tab);
-    setIsMobileSidebarOpen(false);
-  }, []);
 
   return (
     <div className="app-layout">
