@@ -19,16 +19,34 @@ import {
   Lock,
   ArrowRight,
   Shield,
-  Briefcase,
-  HardHat,
-  Crown,
-  AlertTriangle,
-  Info
+  AlertTriangle
 } from 'lucide-react';
 import { api } from '../../services/api.js';
 
+// ─── Administration Tabs & Descriptions (Reference UI Pattern) ─────────────
+const TABS = [
+  { key: 'orgs', label: 'Organizations', icon: Building2, color: 'primary' },
+  { key: 'mines', label: 'Mines Directory', icon: Layers, color: 'blue' },
+  { key: 'users', label: 'User Directory', icon: Users, color: 'blue' },
+  { key: 'rbac', label: 'Roles & Subroles (RBAC)', icon: ShieldCheck, color: 'purple' },
+  { key: 'evaluator', label: 'Policy Resolution Tester', icon: Terminal, color: 'emerald' },
+];
+
+const TAB_DESCRIPTIONS = {
+  orgs: 'Manage tenant organizations, operational codes, and enterprise hierarchy',
+  mines: 'Configure mining concessions, open-cast and underground sites, and assign operational leadership',
+  users: 'Provision administrative personnel, manage active field accounts, and configure RBAC clearances',
+  rbac: 'Configure multi-tier role hierarchy, subrole scopes, and granular permission boundaries',
+  evaluator: 'Simulate policy resolution and verify real-time scope clearances against active user credentials',
+};
+
 export default function AdminManagement({ currentUser, onShowToast, initialTab }) {
   const [adminTab, setAdminTab] = useState(initialTab || 'orgs');
+  const [rbacSearchQuery, setRbacSearchQuery] = useState('');
+  const [rbacScopeFilter, setRbacScopeFilter] = useState('ALL');
+
+  const currentTabInfo = TABS.find((t) => t.key === adminTab) || TABS[0];
+  const CurrentTabIcon = currentTabInfo.icon;
 
   useEffect(() => {
     if (initialTab) {
@@ -284,7 +302,7 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
       // 2. Find or Create Role for this Org/Mine Admin
       const roleCode = isOrg ? `ORG_ADMIN_${target.code}` : `MINE_ADMIN_${target.code}`;
       const roleName = isOrg ? `${target.name} Admin` : `${target.name} Mine Admin`;
-      
+
       let targetRole = roles.find(r => r.code === roleCode);
       if (!targetRole) {
         targetRole = await api.createRole({
@@ -668,136 +686,86 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
       : mines.filter(m => m.id === userMineId);
 
   return (
-    <div className="manage-orders-container" style={{ padding: '0 0 20px', gap: '12px', width: '100%' }}>
-      {/* Header & Role Scope Banner */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%', paddingBottom: '2rem' }}>
+      {/* Page Header */}
       <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.75rem',
         borderBottom: '1px solid #e2e8f0',
         paddingBottom: '1.25rem',
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Building2 size={26} color="#2563eb" />
-              Multi-Tier Enterprise RBAC & Governance
-            </h1>
-            <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.9rem' }}>
-              Hierarchical Access Matrix: Super Admin &rarr; Organization Admin &rarr; Mine Admin &rarr; Site Personnel
-            </p>
-          </div>
-
-          {/* Current User Tier Badge */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 14px',
-            borderRadius: '10px',
-            backgroundColor: isSuperAdmin ? '#fef3c7' : isOrgAdmin ? '#eff6ff' : '#ecfdf5',
-            border: `1px solid ${isSuperAdmin ? '#fde68a' : isOrgAdmin ? '#bfdbfe' : '#a7f3d0'}`,
-            color: isSuperAdmin ? '#92400e' : isOrgAdmin ? '#1e40af' : '#065f46',
-            fontSize: '0.85rem',
-            fontWeight: 700,
-          }}>
-            {isSuperAdmin && <Crown size={18} color="#d97706" />}
-            {isOrgAdmin && <Briefcase size={18} color="#2563eb" />}
-            {isMineAdmin && <HardHat size={18} color="#059669" />}
-            <span>
-              {isSuperAdmin && 'Tier 1: Global Super Administrator (Unrestricted Root Access)'}
-              {isOrgAdmin && `Tier 2: Organization Administrator (${userOrgName || 'Org #' + userOrgId})`}
-              {isMineAdmin && `Tier 3: Mine Administrator (${userMineName || 'Mine #' + userMineId})`}
-            </span>
-          </div>
-        </div>
-
-        {/* Informational Guidance Alert */}
-        {!isSuperAdmin && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '10px 14px',
-            borderRadius: '8px',
-            backgroundColor: '#f8fafc',
-            border: '1px solid #e2e8f0',
-            fontSize: '0.82rem',
-            color: '#475569',
-          }}>
-            <Info size={16} color="#2563eb" />
-            <div>
-              {isOrgAdmin && (
-                <span>
-                  <strong>Organization Governance Rules:</strong> You can create & manage <strong>Mines</strong> within <em>{userOrgName}</em>, provision <strong>Mine Admins</strong>, create organization users (e.g. Site Advisors), and manage Org/Mine roles. You cannot create other Organizations (Super Admin authority only).
-                </span>
-              )}
-              {isMineAdmin && (
-                <span>
-                  <strong>Mine Operational Rules:</strong> You manage <em>{userMineName}</em>. You can create mine personnel (Safety Officers, Engineers), define mine-specific roles/subroles, and assign clearances. You cannot create organizations or other mines.
-                </span>
-              )}
-            </div>
-          </div>
-        )}
+        <h1 style={{
+          fontSize: '1.75rem',
+          fontWeight: 800,
+          color: '#0f172a',
+          letterSpacing: '-0.025em',
+          margin: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+        }}>
+          <CurrentTabIcon size={26} color="#2563eb" />
+          {currentTabInfo.label}
+        </h1>
+        <p style={{
+          marginTop: '0.375rem',
+          fontSize: '0.875rem',
+          color: '#64748b',
+          margin: '4px 0 0 0',
+        }}>
+          {TAB_DESCRIPTIONS[adminTab] || 'Multi-Tier Enterprise RBAC & Governance Management'}
+        </p>
       </div>
 
-      {/* Tabs Navigation */}
+      {/* Tabs Navigation Strip */}
       <div style={{
         display: 'flex',
-        gap: '6px',
+        gap: '4px',
         borderBottom: '1px solid #e2e8f0',
-        backgroundColor: '#ffffff',
-        padding: '6px 12px 0',
-        borderRadius: '12px 12px 0 0',
-        borderTop: '1px solid #e2e8f0',
-        borderLeft: '1px solid #e2e8f0',
-        borderRight: '1px solid #e2e8f0',
-        overflowX: 'auto'
+        overflowX: 'auto',
+        padding: '0 2px',
       }}>
-        {[
-          { id: 'orgs', label: '1. Organizations Hub', icon: Building2, count: displayOrgs.length },
-          { id: 'mines', label: '2. Mines Directory', icon: Layers, count: displayMines.length },
-          { id: 'users', label: '3. Users & Provisioning', icon: Users, count: users.length },
-          { id: 'rbac', label: '4. Roles & Subroles (RBAC)', icon: ShieldCheck, count: roles.length },
-          { id: 'evaluator', label: '5. Scoped RBAC Tester', icon: Terminal, tag: 'Live Engine' },
-        ].map((tab) => {
+        {TABS.map((tab) => {
           const Icon = tab.icon;
-          const isActive = adminTab === tab.id;
+          const isActive = adminTab === tab.key;
+          const count = tab.key === 'orgs' ? displayOrgs.length
+            : tab.key === 'mines' ? displayMines.length
+            : tab.key === 'users' ? users.length
+            : tab.key === 'rbac' ? roles.length
+            : null;
+
           return (
             <button
-              key={tab.id}
-              onClick={() => setAdminTab(tab.id)}
+              key={tab.key}
+              type="button"
+              onClick={() => setAdminTab(tab.key)}
               style={{
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '10px 16px',
-                fontSize: '0.85rem',
-                fontWeight: isActive ? 700 : 500,
+                padding: '11px 18px',
+                fontSize: '0.875rem',
+                fontWeight: isActive ? 600 : 500,
                 color: isActive ? '#2563eb' : '#64748b',
-                borderBottom: isActive ? '2px solid #2563eb' : '2px solid transparent',
-                borderRadius: '6px 6px 0 0',
                 backgroundColor: isActive ? '#eff6ff' : 'transparent',
-                borderTop: 'none',
-                borderLeft: 'none',
-                borderRight: 'none',
+                border: 'none',
+                borderBottom: isActive ? '2px solid #2563eb' : '2px solid transparent',
+                borderRadius: '8px 8px 0 0',
                 cursor: 'pointer',
-                whiteSpace: 'nowrap'
+                transition: 'all 0.15s ease',
+                whiteSpace: 'nowrap',
               }}
             >
-              <Icon size={16} />
+              <Icon size={16} color={isActive ? '#2563eb' : '#64748b'} />
               <span>{tab.label}</span>
-              {tab.count != null && (
+              {count !== null && (
                 <span style={{
-                  fontSize: '0.7rem',
-                  padding: '1px 6px',
-                  borderRadius: '10px',
-                  backgroundColor: isActive ? '#2563eb' : '#f1f5f9',
-                  color: isActive ? '#ffffff' : '#64748b',
+                  fontSize: '0.725rem',
                   fontWeight: 600,
+                  padding: '2px 8px',
+                  borderRadius: '10px',
+                  backgroundColor: isActive ? '#dbeafe' : '#f1f5f9',
+                  color: isActive ? '#1d4ed8' : '#64748b',
                 }}>
-                  {tab.count}
+                  {count}
                 </span>
               )}
             </button>
@@ -1299,15 +1267,15 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
                   gap: '6px',
                   padding: '8px 14px',
                   borderRadius: '8px',
-                  backgroundColor: '#059669',
-                  color: '#ffffff',
-                  border: 'none',
+                  backgroundColor: '#ffffff',
+                  color: '#1e293b',
+                  border: '1px solid #cbd5e1',
                   fontWeight: 600,
                   fontSize: '0.85rem',
                   cursor: 'pointer',
                 }}
               >
-                <Plus size={16} />
+                <Plus size={16} color="#64748b" />
                 Create Subrole
               </button>
             </div>
