@@ -111,14 +111,14 @@ export default function DashboardOverview({ serverStatus, onNavigateTo }) {
         </div>
 
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <div className="clay-card" style={{
+          <div className="sleek-card" style={{
             padding: '1rem 1.5rem',
             textAlign: 'center',
           }}>
             <div style={{ color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>TiDB SSL</div>
             <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0284c7', marginTop: '4px' }}>TLSv1.2</div>
           </div>
-          <div className="clay-card" style={{
+          <div className="sleek-card" style={{
             padding: '1rem 1.5rem',
             textAlign: 'center',
           }}>
@@ -139,7 +139,7 @@ export default function DashboardOverview({ serverStatus, onNavigateTo }) {
           return (
             <div
               key={idx}
-              className="clay-card"
+              className="sleek-card"
               onClick={() => onNavigateTo && onNavigateTo(card.tab)}
               style={{
                 padding: '1.5rem',

@@ -92,7 +92,7 @@ export default function Header({
           href="http://localhost:5001/api/docs"
           target="_blank"
           rel="noreferrer"
-          className="clay-btn"
+          className="sleek-btn"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -108,7 +108,7 @@ export default function Header({
         <button
           onClick={onToggleDiagnostics}
           title="Open API & Diagnostics Inspector"
-          className="clay-btn"
+          className="sleek-btn"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -134,7 +134,7 @@ export default function Header({
 
         {/* User Profile / Auth */}
         {currentUser && (
-          <div className="clay-card" style={{
+          <div className="sleek-card" style={{
             display: 'flex',
             alignItems: 'center',
             gap: '10px',

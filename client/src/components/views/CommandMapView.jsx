@@ -24,10 +24,10 @@ export default function CommandMapView({ onShowToast }) {
             </p>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button className="clay-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px' }}>
+            <button className="sleek-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px' }}>
               <Search size={16} /> Search Map
             </button>
-            <button className="clay-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px' }}>
+            <button className="sleek-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px' }}>
               <Filter size={16} /> Filters
             </button>
           </div>
@@ -76,7 +76,7 @@ export default function CommandMapView({ onShowToast }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto' }}>
           <h3 style={{ margin: '0 0 8px 0', fontSize: '1.1rem' }}>Active Coalfields</h3>
           {regions.map((region, i) => (
-            <div key={i} className="clay-card" style={{ padding: '16px' }}>
+            <div key={i} className="sleek-card" style={{ padding: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                 <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-main)' }}>{region.name}</h4>
                 <span className={`badge-pill ${region.status === 'Critical' ? 'badge-danger' : region.status === 'Warning' ? 'badge-warning' : 'badge-success'}`}>
