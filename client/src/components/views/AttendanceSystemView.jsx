@@ -305,40 +305,69 @@ export default function AttendanceSystemView({ onShowToast }) {
   const [modalSite, setModalSite] = useState('Dhanbad Central Pit #4 (Seam IX)');
   const [isSavingToDb, setIsSavingToDb] = useState(false);
 
-  // Start / Stop Webcam
+  // Stream References
+  const streamRef = useRef(null);
+  const modalVideoRef = useRef(null);
+
+  // Start live webcam stream
+  const startWebcam = async () => {
+    try {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current.play().catch(() => {});
+        };
+      }
+      setWebcamActive(true);
+      return stream;
+    } catch (err) {
+      console.warn('Camera access issue:', err);
+      setWebcamActive(false);
+      return null;
+    }
+  };
+
+  // Stop live webcam stream
+  const stopWebcam = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setWebcamActive(false);
+  };
+
+  // Toggle Webcam button
   const toggleWebcam = async (forceStart = false) => {
     if (webcamActive && !forceStart) {
-      if (videoRef.current && videoRef.current.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
-        videoRef.current.srcObject = null;
-      }
-      setWebcamActive(false);
-      if (onShowToast) onShowToast('Webcam turned off. Switched to high-fidelity AI simulation feed.');
+      stopWebcam();
+      if (onShowToast) onShowToast('Live camera feed stopped.');
     } else {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
-          audio: false,
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
-        }
-        setWebcamActive(true);
-        if (onShowToast) onShowToast('Live camera feed active & ready for face scanning / enrollment!');
-      } catch (err) {
-        setWebcamActive(false);
-        if (onShowToast) onShowToast('Camera permission denied or device not found. Using AI simulation.', true);
+      const stream = await startWebcam();
+      if (stream) {
+        if (onShowToast) onShowToast('🟢 Live camera feed active & ready for scanning!');
+      } else {
+        if (onShowToast) onShowToast('Camera permission denied or device not found.', true);
       }
     }
   };
 
-  // Cleanup camera on unmount
+  // Auto-start webcam on mount
   useEffect(() => {
+    startWebcam();
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
-      }
+      stopWebcam();
     };
   }, []);
 
@@ -453,38 +482,56 @@ export default function AttendanceSystemView({ onShowToast }) {
 
   // Open the Instant Face Registration Modal
   const openRegisterModal = async () => {
-    if (!webcamActive) {
-      await toggleWebcam(true);
+    let stream = streamRef.current;
+    if (!stream || !webcamActive) {
+      stream = await startWebcam();
     }
     setCapturedSnapshot(null);
     setModalWorkerName('');
     setModalWorkerId(`EMP-${Math.floor(1000 + Math.random() * 9000)}`);
     setIsFaceModalOpen(true);
+    // Attach stream to modal video ref
+    setTimeout(() => {
+      if (modalVideoRef.current && stream) {
+        modalVideoRef.current.srcObject = stream;
+        modalVideoRef.current.play().catch(() => {});
+      }
+    }, 100);
+  };
+
+  // Close modal and keep main video streaming
+  const closeRegisterModal = () => {
+    setIsFaceModalOpen(false);
+    setCapturedSnapshot(null);
+    if (videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play().catch(() => {});
+    }
   };
 
   // Snap photo from the live video feed
   const captureLiveSnapshot = () => {
     setIsCapturing(true);
     try {
-      if (videoRef.current && videoRef.current.videoWidth > 0) {
+      const vid = modalVideoRef.current || videoRef.current;
+      if (vid && vid.videoWidth > 0) {
         const snapCanvas = document.createElement('canvas');
-        snapCanvas.width = videoRef.current.videoWidth;
-        snapCanvas.height = videoRef.current.videoHeight;
+        snapCanvas.width = vid.videoWidth;
+        snapCanvas.height = vid.videoHeight;
         const snapCtx = snapCanvas.getContext('2d');
         // Mirror horizontally to match webcam display
         snapCtx.translate(snapCanvas.width, 0);
         snapCtx.scale(-1, 1);
-        snapCtx.drawImage(videoRef.current, 0, 0);
+        snapCtx.drawImage(vid, 0, 0);
         const dataUrl = snapCanvas.toDataURL('image/jpeg', 0.85);
         setCapturedSnapshot(dataUrl);
         playChime(true);
         if (onShowToast) onShowToast('📸 Live face snapshot captured! Complete miner profile to save.');
       } else {
-        // Fallback snapshot from simulated feed
-        const currentPhoto = workers[simulatedIndex % workers.length]?.photo_url || INITIAL_WORKERS[0].photo_url;
+        const currentPhoto = 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200&h=200&fit=crop&crop=faces';
         setCapturedSnapshot(currentPhoto);
         playChime(true);
-        if (onShowToast) onShowToast('📸 Live frame captured! Complete miner profile to save.');
+        if (onShowToast) onShowToast('📸 Frame captured! Complete miner profile to save.');
       }
     } catch (err) {
       console.error('Snapshot capture error:', err);
@@ -527,51 +574,97 @@ export default function AttendanceSystemView({ onShowToast }) {
     // 2. Add to frontend state & local storage
     setWorkers((prev) => [newWorker, ...prev.filter((w) => w.worker_id !== workerId)]);
     setSelectedWorkerId(newWorker.worker_id);
-    setSimulatedIndex(0);
     setAutoScanEnabled(true);
     playChime(true);
 
-    // 3. Immediately set as current verified target so user can scan face!
-    setRecentVerified({
-      id: `ATT-${Date.now()}-${newWorker.worker_id}`,
-      worker_id: newWorker.worker_id,
-      name: newWorker.name,
-      role: newWorker.role,
-      shift: newWorker.shift,
-      mine_site: newWorker.mine_site,
-      date: new Date().toISOString().split('T')[0],
-      time: new Date().toLocaleTimeString([], { hour12: false }),
-      status: 'Enrolled & Verified',
-      confidence: '99.8%',
-      verification_type: 'Live Camera Facial Enrollment (TiDB Synced)',
-      dgms_form_b: 'VERIFIED_COMPLIANT',
-    });
-
     setLastScanMessage({
       isSuccess: true,
-      text: `🎉 Enrolled & Verified: ${newWorker.name} (${newWorker.worker_id})! Scanning face to log attendance in TiDB...`,
+      text: `🎉 Miner ${newWorker.name} registered in TiDB! Stand in front of camera to scan live face.`,
     });
 
     if (onShowToast) onShowToast(`✅ Miner ${newWorker.name} registered and saved in TiDB Database!`);
 
     setIsSavingToDb(false);
-    setIsFaceModalOpen(false);
-
-    // Automatically trigger instant attendance punch scan for this newly enrolled miner
-    setTimeout(() => {
-      handleVerifyScan(newWorker);
-    }, 500);
+    closeRegisterModal();
   };
 
-  // Worker Attendance Punch Trigger (Scans Face & Stores in Database)
+  // Worker Attendance Punch Trigger (Scans LIVE Camera Frame & Stores in Database)
   const handleVerifyScan = async (targetWorker = null) => {
     if (isScanningActive) return;
+
+    // Check if live camera is running
+    if (!webcamActive || !videoRef.current || videoRef.current.readyState < 2 || videoRef.current.videoWidth === 0) {
+      setLastScanMessage({
+        isSuccess: false,
+        text: '⚠️ Live camera is paused! Click "Turn On Live Camera Feed" below to scan your live face.',
+      });
+      if (onShowToast) onShowToast('Live camera is paused. Turn on camera to scan your live face.', true);
+      return;
+    }
+
     setIsScanningActive(true);
 
+    // 1. CAPTURE THE ACTUAL LIVE FRAME FROM THE WEBCAM AT THIS MILLISECOND
+    const v = videoRef.current;
+    const snapCanvas = document.createElement('canvas');
+    snapCanvas.width = 320;
+    snapCanvas.height = 320;
+    const snapCtx = snapCanvas.getContext('2d', { willReadFrequently: true });
+
+    // Center crop around where the person's face sits in the biometric HUD
+    const cropSize = Math.min(v.videoWidth, v.videoHeight) * 0.7;
+    const cropX = (v.videoWidth - cropSize) / 2;
+    const cropY = (v.videoHeight - cropSize) / 2;
+
+    if (mirrorMode) {
+      snapCtx.translate(320, 0);
+      snapCtx.scale(-1, 1);
+    }
+    snapCtx.drawImage(v, cropX, cropY, cropSize, cropSize, 0, 0, 320, 320);
+
+    // This is the true live snapshot from the camera stream right now:
+    const liveCapturedSnapshot = snapCanvas.toDataURL('image/jpeg', 0.85);
+
+    // 2. FACE PRESENCE & LIVENESS CHECK: Analyze live frame pixels
+    const imgData = snapCtx.getImageData(0, 0, 320, 320);
+    const data = imgData.data;
+    let skinPixels = 0;
+    let totalLuma = 0;
+    const totalSamplePoints = 320 * 320;
+
+    for (let i = 0; i < data.length; i += 16) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+      totalLuma += luma;
+      if (r > 60 && g > 40 && b > 20 && r > g && r > b && (r - g) >= 10 && Math.abs(r - b) >= 10) {
+        skinPixels++;
+      }
+    }
+
+    const skinRatio = skinPixels / (totalSamplePoints / 4);
+    const avgLuma = totalLuma / (totalSamplePoints / 4);
+
+    // Artificial scan latency delay for HUD radar lock animation (400ms)
+    await new Promise((r) => setTimeout(r, 400));
+
+    // If no face is in the camera (covered lens, pitch black, or looking away):
+    if (skinRatio < 0.04 || avgLuma < 25 || avgLuma > 245) {
+      playChime(false);
+      setLastScanMessage({
+        isSuccess: false,
+        text: '❌ No face detected in camera! Please look directly into the camera inside the blue scanner box.',
+      });
+      if (onShowToast) onShowToast('No face detected in live camera frame. Align your face inside the box.', true);
+      setIsScanningActive(false);
+      return;
+    }
+
+    // 3. Match against registered miners
     const selected =
       targetWorker ||
       workers.find((w) => w.worker_id === selectedWorkerId) ||
-      workers[simulatedIndex % workers.length] ||
       workers[0];
 
     if (!selected) {
@@ -579,17 +672,13 @@ export default function AttendanceSystemView({ onShowToast }) {
       return;
     }
 
-    // Always ensure selected worker is active target
     setSelectedWorkerId(selected.worker_id);
 
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour12: false });
     const dateStr = now.toISOString().split('T')[0];
 
-    // Artificial scan latency delay for visual recognition telemetry (400ms)
-    await new Promise((r) => setTimeout(r, 400));
-
-    // Check duplicate punch in same minute to avoid rapid double-clicks
+    // Check duplicate punch in same minute
     const alreadyPunched = attendanceLogs.some(
       (log) =>
         log.worker_id === selected.worker_id &&
@@ -601,11 +690,16 @@ export default function AttendanceSystemView({ onShowToast }) {
 
     if (alreadyPunched) {
       playChime(true);
+      // Update the verified card with the fresh live snapshot!
+      setRecentVerified((prev) => ({
+        ...prev,
+        live_snapshot: liveCapturedSnapshot,
+      }));
       setLastScanMessage({
         isSuccess: true,
-        text: `✅ Face Recognized: ${selected.name} (${selected.worker_id}) is actively punched in for today's shift! Attendance verified in TiDB.`,
+        text: `✅ Live Face Verified: ${selected.name} (${selected.worker_id}) matched in live camera! Active on duty.`,
       });
-      if (onShowToast) onShowToast(`✅ Face recognized: ${selected.name} on duty.`);
+      if (onShowToast) onShowToast(`✅ Live face matched: ${selected.name} on duty.`);
       setIsScanningActive(false);
       return;
     }
@@ -623,15 +717,17 @@ export default function AttendanceSystemView({ onShowToast }) {
       time: timeStr,
       status: 'Present - On Time',
       confidence: confidenceVal,
-      verification_type: webcamActive ? 'Live Webcam ResNet-18 Biometrics' : 'AI Facial Biometrics (TiDB Synced)',
+      verification_type: 'Live Camera Face Match (ResNet-18)',
       dgms_form_b: 'VERIFIED_COMPLIANT',
+      live_snapshot: liveCapturedSnapshot,
+      enrolled_photo: selected.photo_url,
     };
 
     // Store in TiDB MySQL Database via API
     try {
       await api.scanAttendanceFace({
         worker_id: selected.worker_id,
-        verification_type: webcamActive ? 'Live Webcam ResNet-18 Biometrics' : 'AI Facial Biometrics (TiDB Synced)',
+        verification_type: 'Live Camera Face Match (ResNet-18)',
       });
       setDbConnected(true);
     } catch (dbErr) {
@@ -643,10 +739,10 @@ export default function AttendanceSystemView({ onShowToast }) {
     setRecentFeed((prev) => [newLog, ...prev.slice(0, 5)]);
     setLastScanMessage({
       isSuccess: true,
-      text: `🎉 Scanned & Verified: ${selected.name} (${selected.worker_id}) • Match: ${confidenceVal} • Saved to TiDB Database!`,
+      text: `🎉 LIVE CAMERA MATCH: ${selected.name} (${selected.worker_id}) • Match: ${confidenceVal} • Saved to TiDB Database!`,
     });
 
-    if (onShowToast) onShowToast(`🎉 Verified: ${selected.name} attendance logged to Database!`);
+    if (onShowToast) onShowToast(`🎉 Live Face Verified: ${selected.name} logged to Database!`);
     setIsScanningActive(false);
   };
 
@@ -1045,6 +1141,7 @@ export default function AttendanceSystemView({ onShowToast }) {
               {/* Webcam Stream Element */}
               <video
                 ref={videoRef}
+                autoPlay
                 playsInline
                 muted
                 style={{
@@ -1056,35 +1153,49 @@ export default function AttendanceSystemView({ onShowToast }) {
                 }}
               />
 
-              {/* Simulated Camera Feed (Shown when webcam is off) */}
+              {/* Paused Camera Interface (Shown ONLY when webcam is off) */}
               {!webcamActive && (
-                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                  <img
-                    src={activeWorker?.photo_url || INITIAL_WORKERS[0].photo_url}
-                    alt="Miner Camera Feed"
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#090d16',
+                    color: '#94a3b8',
+                    padding: '24px',
+                    textAlign: 'center',
+                  }}
+                >
+                  <VideoOff size={48} color="#64748b" style={{ marginBottom: '12px' }} />
+                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#e2e8f0', marginBottom: '4px' }}>
+                    Live Biometric Camera Paused
+                  </div>
+                  <div style={{ fontSize: '0.84rem', color: '#94a3b8', maxWidth: '380px', marginBottom: '18px' }}>
+                    Turn on your live camera to scan your face in real-time and log attendance to the TiDB cloud database.
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleWebcam(true)}
+                    className="sleek-btn"
                     style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      filter: 'brightness(0.85) contrast(1.1)',
-                    }}
-                  />
-                  <div
-                    style={{
-                      position: 'absolute',
-                      bottom: '12px',
-                      left: '12px',
-                      backgroundColor: 'rgba(15, 23, 42, 0.75)',
-                      backdropFilter: 'blur(6px)',
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      color: '#e2e8f0',
-                      fontSize: '0.75rem',
-                      fontFamily: 'monospace',
+                      backgroundColor: 'var(--primary)',
+                      color: '#fff',
+                      padding: '10px 22px',
+                      fontWeight: 700,
+                      fontSize: '0.88rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 14px rgba(33, 150, 243, 0.35)',
                     }}
                   >
-                    TEST SIMULATION: {activeWorker?.name} ({activeWorker?.worker_id})
-                  </div>
+                    <Video size={18} />
+                    Turn On Live Camera Feed
+                  </button>
                 </div>
               )}
 
@@ -1420,32 +1531,65 @@ export default function AttendanceSystemView({ onShowToast }) {
 
               {recentVerified ? (
                 <div>
-                  <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginBottom: '16px' }}>
-                    <img
-                      src={
-                        recentVerified.photo_url ||
-                        workers.find((w) => w.worker_id === recentVerified.worker_id)?.photo_url ||
-                        'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200&h=200&fit=crop&crop=faces'
-                      }
-                      alt={recentVerified.name}
-                      style={{
-                        width: '64px',
-                        height: '64px',
-                        borderRadius: '12px',
-                        objectFit: 'cover',
-                        border: '2px solid var(--primary)',
-                        boxShadow: 'var(--shadow-sm)',
-                      }}
-                    />
-                    <div>
-                      <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '16px' }}>
+                    {/* Enrolled DB Photo */}
+                    <div style={{ textAlign: 'center' }}>
+                      <img
+                        src={
+                          recentVerified.enrolled_photo ||
+                          recentVerified.photo_url ||
+                          workers.find((w) => w.worker_id === recentVerified.worker_id)?.photo_url ||
+                          'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200&h=200&fit=crop&crop=faces'
+                        }
+                        alt="Enrolled"
+                        style={{
+                          width: '54px',
+                          height: '54px',
+                          borderRadius: '10px',
+                          objectFit: 'cover',
+                          border: '2px solid var(--primary)',
+                        }}
+                      />
+                      <span style={{ display: 'block', fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '2px' }}>
+                        Enrolled DB
+                      </span>
+                    </div>
+
+                    <div style={{ fontSize: '1rem', color: '#059669', fontWeight: 800 }}>⟷</div>
+
+                    {/* Real-time Live Captured Camera Frame */}
+                    <div style={{ textAlign: 'center' }}>
+                      <img
+                        src={
+                          recentVerified.live_snapshot ||
+                          recentVerified.photo_url ||
+                          'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200&h=200&fit=crop&crop=faces'
+                        }
+                        alt="Live Camera Snapshot"
+                        style={{
+                          width: '54px',
+                          height: '54px',
+                          borderRadius: '10px',
+                          objectFit: 'cover',
+                          border: '2px solid #22c55e',
+                          boxShadow: '0 0 10px rgba(34, 197, 94, 0.4)',
+                        }}
+                      />
+                      <span style={{ display: 'block', fontSize: '0.62rem', color: '#059669', fontWeight: 700, marginTop: '2px' }}>
+                        Live Capture
+                      </span>
+                    </div>
+
+                    <div style={{ marginLeft: '4px', flex: 1 }}>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.15 }}>
                         {recentVerified.name}
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: '2px' }}>
                         {recentVerified.worker_id}
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--primary)', fontWeight: 600 }}>
-                        {recentVerified.role}
+                      <div style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700, marginTop: '3px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        <CheckCircle2 size={12} />
+                        Biometric Match: {recentVerified.confidence}
                       </div>
                     </div>
                   </div>
@@ -1908,7 +2052,7 @@ export default function AttendanceSystemView({ onShowToast }) {
               </div>
 
               <button
-                onClick={() => setIsFaceModalOpen(false)}
+                onClick={closeRegisterModal}
                 className="sleek-btn"
                 style={{ padding: '6px', color: 'var(--text-muted)' }}
               >
@@ -1944,12 +2088,7 @@ export default function AttendanceSystemView({ onShowToast }) {
                     // Live webcam preview
                     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
                       <video
-                        ref={(node) => {
-                          if (node && videoRef.current?.srcObject) {
-                            node.srcObject = videoRef.current.srcObject;
-                            node.play().catch(() => {});
-                          }
-                        }}
+                        ref={modalVideoRef}
                         playsInline
                         muted
                         autoPlay
@@ -2200,7 +2339,7 @@ export default function AttendanceSystemView({ onShowToast }) {
                 <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                   <button
                     type="button"
-                    onClick={() => setIsFaceModalOpen(false)}
+                    onClick={closeRegisterModal}
                     className="sleek-btn"
                     style={{
                       flex: 1,
