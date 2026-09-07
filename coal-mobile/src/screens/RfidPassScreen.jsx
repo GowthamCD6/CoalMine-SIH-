@@ -32,7 +32,7 @@ export const RfidPassScreen = ({ currentUser }) => {
         name: `${currentUser?.first_name || currentUser?.username || 'Field'} ${currentUser?.last_name || 'Operator'}`.trim(),
         username: currentUser?.username || 'operator',
         employee_code: currentUser?.employee_code || `EMP-${8000 + (currentUser?.id || 1)}`,
-        role: currentUser?.mobileRole === 'SUPERADMIN' ? 'Global Super Administrator' : 'Field Worker / Operator',
+        role: 'Field Worker / Underground Operator',
         cleared_zones: ['Zone A (Surface Logistics)', 'Zone B (Level 2 Deep)', 'Zone C (Shaft 4 Pit)'],
         qr_payload: `PASS-${currentUser?.id || 1}-${currentUser?.username || 'op'}-SIG89F71A`,
         status: 'ACTIVE_CLEARED',

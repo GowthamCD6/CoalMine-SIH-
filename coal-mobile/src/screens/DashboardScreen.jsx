@@ -8,11 +8,11 @@ export const DashboardScreen = ({ currentUser, onNavigate }) => {
       <View style={styles.welcomeBanner}>
         <View style={{ flex: 1 }}>
           <View style={styles.badgeRow}>
-            <Text style={styles.badgeText}>{currentUser?.mobileRole === 'SUPERADMIN' ? 'SUPER ADMIN' : 'FIELD WORKER'}</Text>
+            <Text style={styles.badgeText}>FIELD WORKER</Text>
           </View>
           <Text style={styles.welcomeTitle}>Subterranean Field Operations</Text>
           <Text style={styles.welcomeSubtitle}>
-            {currentUser?.mobileRole === 'SUPERADMIN' ? 'Admin' : 'Worker'}: {currentUser.first_name || currentUser.username} ({currentUser.employee_code || 'Staff'})
+            Worker: {currentUser?.first_name || currentUser?.username || 'Staff'} ({currentUser?.employee_code || 'Staff'})
           </Text>
         </View>
         <View style={styles.liveIndicator}>
@@ -86,125 +86,73 @@ export const DashboardScreen = ({ currentUser, onNavigate }) => {
       </View>
 
       {/* Operational Capabilities Hub */}
-      <Text style={styles.groupHeader}>
-        {currentUser?.mobileRole === 'SUPERADMIN' ? 'ADMINISTRATIVE DISPATCH' : 'STATUTORY FIELD MODULES'}
-      </Text>
+      <Text style={styles.groupHeader}>STATUTORY FIELD MODULES</Text>
       <View style={styles.toolGrid}>
-        {currentUser?.mobileRole === 'SUPERADMIN' ? (
-          <>
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('delegation')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#f0f9ff' }]}>
-                <Icon name="delegation" size={18} color="#0284c7" />
-              </View>
-              <Text style={styles.toolTitle}>Worker Management</Text>
-              <Text style={styles.toolDesc}>Manage field personnel</Text>
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.toolTile}
+          onPress={() => onNavigate('muster')}
+        >
+          <View style={[styles.toolIconBox, { backgroundColor: '#f0f9ff' }]}>
+            <Icon name="compass" size={18} color="#0284c7" />
+          </View>
+          <Text style={styles.toolTitle}>Shift Muster (Form B)</Text>
+          <Text style={styles.toolDesc}>Geofence & Cap-Lamp log</Text>
+        </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('emergency')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#fef2f2' }]}>
-                <Icon name="alert" size={18} color="#dc2626" />
-              </View>
-              <Text style={styles.toolTitle}>Crisis Console</Text>
-              <Text style={styles.toolDesc}>Muster & evacuation alarm</Text>
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.toolTile}
+          onPress={() => onNavigate('gas-monitor')}
+        >
+          <View style={[styles.toolIconBox, { backgroundColor: '#ecfdf5' }]}>
+            <Icon name="wind" size={18} color="#059669" />
+          </View>
+          <Text style={styles.toolTitle}>Gas & Ventilation</Text>
+          <Text style={styles.toolDesc}>CH₄/CO/O₂ & Strata check</Text>
+        </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('hazard-cam')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#fff7ed' }]}>
-                <Icon name="camera" size={18} color="#ea580c" />
-              </View>
-              <Text style={styles.toolTitle}>Hazard Camera</Text>
-              <Text style={styles.toolDesc}>Geotagged audit log</Text>
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.toolTile}
+          onPress={() => onNavigate('hazard-cam')}
+        >
+          <View style={[styles.toolIconBox, { backgroundColor: '#fff7ed' }]}>
+            <Icon name="camera" size={18} color="#ea580c" />
+          </View>
+          <Text style={styles.toolTitle}>Hazard Camera</Text>
+          <Text style={styles.toolDesc}>Snap near-miss & GPS HUD</Text>
+        </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('gas-monitor')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#ecfdf5' }]}>
-                <Icon name="wind" size={18} color="#059669" />
-              </View>
-              <Text style={styles.toolTitle}>Gas & Ventilation</Text>
-              <Text style={styles.toolDesc}>Atmospheric monitoring</Text>
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.toolTile}
+          onPress={() => onNavigate('sos-panic')}
+        >
+          <View style={[styles.toolIconBox, { backgroundColor: '#fef2f2' }]}>
+            <Icon name="sos" size={18} color="#dc2626" />
+          </View>
+          <Text style={styles.toolTitle}>Emergency SOS</Text>
+          <Text style={styles.toolDesc}>Siren, Strobe & Evacuation</Text>
+        </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('muster')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#eff6ff' }]}>
-                <Icon name="compass" size={18} color="#2563eb" />
-              </View>
-              <Text style={styles.toolTitle}>Shift Muster</Text>
-              <Text style={styles.toolDesc}>Form B attendance register</Text>
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.toolTile}
+          onPress={() => onNavigate('rfid-pass')}
+        >
+          <View style={[styles.toolIconBox, { backgroundColor: '#eff6ff' }]}>
+            <Icon name="id-card" size={18} color="#2563eb" />
+          </View>
+          <Text style={styles.toolTitle}>Digital RFID Pass</Text>
+          <Text style={styles.toolDesc}>Worker badge & gate scan</Text>
+        </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('offline-sync')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#f5f3ff' }]}>
-                <Icon name="wifi" size={18} color="#7c3aed" />
-              </View>
-              <Text style={styles.toolTitle}>Offline Sync</Text>
-              <Text style={styles.toolDesc}>Store & forward buffer</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <>
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('muster')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#f0f9ff' }]}>
-                <Icon name="compass" size={18} color="#0284c7" />
-              </View>
-              <Text style={styles.toolTitle}>Shift Muster (Form B)</Text>
-              <Text style={styles.toolDesc}>Geofence & Cap-Lamp log</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('gas-monitor')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#ecfdf5' }]}>
-                <Icon name="wind" size={18} color="#059669" />
-              </View>
-              <Text style={styles.toolTitle}>Gas & Ventilation</Text>
-              <Text style={styles.toolDesc}>CH₄/CO/O₂ & Strata check</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('hazard-cam')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#fff7ed' }]}>
-                <Icon name="camera" size={18} color="#ea580c" />
-              </View>
-              <Text style={styles.toolTitle}>Hazard Camera</Text>
-              <Text style={styles.toolDesc}>Snap near-miss & GPS HUD</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('sos-panic')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#fef2f2' }]}>
-                <Icon name="sos" size={18} color="#dc2626" />
-              </View>
-              <Text style={styles.toolTitle}>Emergency SOS</Text>
-              <Text style={styles.toolDesc}>Siren, Strobe & Evacuation</Text>
-            </TouchableOpacity>
-          </>
-        )}
+        <TouchableOpacity
+          style={styles.toolTile}
+          onPress={() => onNavigate('offline-sync')}
+        >
+          <View style={[styles.toolIconBox, { backgroundColor: '#f5f3ff' }]}>
+            <Icon name="wifi" size={18} color="#7c3aed" />
+          </View>
+          <Text style={styles.toolTitle}>Offline Sync</Text>
+          <Text style={styles.toolDesc}>Store & forward buffer</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Live Operations Feed */}

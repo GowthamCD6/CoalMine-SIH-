@@ -19,12 +19,19 @@ import {
 } from '../services/api';
 
 const PRESET_USERS = [
-  { tier: 'SUPERADMIN', name: 'Global Superadmin', email: 'admin@coalmin.org', pass: 'Admin@12345', desc: 'Full system authority — manage workers & operations', icon: 'shield', color: '#d97706' },
-  { tier: 'WORKER', name: 'Field Worker', email: 'sollamaten@gmail.com', pass: 'Admin@12345', desc: 'Turnstile access, SOS beacon & hazard reporting', icon: 'user', color: '#64748b' },
+  {
+    tier: 'FIELD WORKER',
+    name: 'Field Worker (Nandha)',
+    email: 'sollamaten@gmail.com',
+    pass: 'Admin@12345',
+    desc: 'Turnstile check-in, SOS beacon, gas monitor & Form B shift muster',
+    icon: 'user',
+    color: '#0284c7',
+  },
 ];
 
 export const LoginScreen = ({ onLoginSuccess }) => {
-  const [login, setLogin] = useState('admin@coalmin.org');
+  const [login, setLogin] = useState('sollamaten@gmail.com');
   const [password, setPassword] = useState('Admin@12345');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -114,7 +121,7 @@ export const LoginScreen = ({ onLoginSuccess }) => {
             </View>
             <Text style={styles.title}>NexusMine Mobile</Text>
           </View>
-          <Text style={styles.subtitle}>Super Admin & Field Worker Operations</Text>
+          <Text style={styles.subtitle}>Field Worker Subterranean Terminal</Text>
         </View>
 
         {/* Real-time Server Link Status Badge */}
@@ -239,7 +246,7 @@ export const LoginScreen = ({ onLoginSuccess }) => {
 
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>SELECT YOUR ROLE</Text>
+          <Text style={styles.dividerText}>FIELD WORKER PROFILE</Text>
           <View style={styles.dividerLine} />
         </View>
 
