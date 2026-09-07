@@ -199,8 +199,13 @@ export default function CorporateDashboard({ currentUser, onNavigateTo }) {
                   <td style={{ padding: '14px 16px', textAlign: 'center', color: mine.open_violations > 0 ? '#d97706' : '#16a34a', fontWeight: '700' }}>{mine.open_violations}</td>
                   <td style={{ padding: '14px 16px', textAlign: 'center' }}>
                     {mine.active_alerts > 0 ? (
-                      <span style={{ padding: '2px 8px', borderRadius: '99px', backgroundColor: '#fee2e2', color: '#991b1b', fontWeight: '700', fontSize: '0.78rem' }}>
-                        🔴 {mine.active_alerts}
+                      <span style={{
+                        padding: '2px 8px', borderRadius: '99px',
+                        backgroundColor: '#fee2e2', color: '#991b1b',
+                        fontWeight: '700', fontSize: '0.78rem',
+                        display: 'inline-flex', alignItems: 'center', gap: '4px'
+                      }}>
+                        <AlertTriangle size={12} color="#dc2626" /> {mine.active_alerts}
                       </span>
                     ) : (
                       <CheckCircle2 size={16} color="#16a34a" />

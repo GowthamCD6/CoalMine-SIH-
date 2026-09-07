@@ -16,7 +16,9 @@ import {
   Check,
   Code2,
   FileJson,
-  Search
+  Search,
+  Upload,
+  Download
 } from 'lucide-react';
 import { subscribeToApiLogs, getAccessToken } from '../../services/api.js';
 
@@ -348,8 +350,8 @@ export default function DiagnosticsDrawer({ isOpen, onClose, currentUser }) {
                                 justifyContent: 'space-between',
                                 alignItems: 'center'
                               }}>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155' }}>
-                                  📤 Request Payload (Body)
+                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                                  <Upload size={13} color="#2563eb" /> Request Payload (Body)
                                 </span>
                                 {log.requestPayload && (
                                   <button
@@ -389,8 +391,8 @@ export default function DiagnosticsDrawer({ isOpen, onClose, currentUser }) {
                                 justifyContent: 'space-between',
                                 alignItems: 'center'
                               }}>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155' }}>
-                                  📥 Response Data (HTTP {log.status})
+                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                                  <Download size={13} color="#059669" /> Response Data (HTTP {log.status})
                                 </span>
                                 {log.response && (
                                   <button

@@ -18,6 +18,7 @@ import {
   ArrowRight,
   Download,
   Filter,
+  ShieldCheck,
 } from 'lucide-react';
 import api from '../../services/api.js';
 
@@ -309,11 +310,11 @@ export default function LaborDeploymentView({ onShowToast, onNavigateTo }) {
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-main)', fontWeight: 600 }}>
-                    👥 Headcount: <span style={{ color: 'var(--primary)' }}>{shift.headcount} Workers</span>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-main)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <Users size={13} color="var(--primary)" /> Headcount: <span style={{ color: 'var(--primary)' }}>{shift.headcount} Workers</span>
                   </div>
-                  <div style={{ fontSize: '0.82rem', color: '#059669', fontWeight: 600 }}>
-                    🛡️ Safety Rating: {shift.safetyScore}
+                  <div style={{ fontSize: '0.82rem', color: '#059669', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <ShieldCheck size={13} color="#059669" /> Safety Rating: {shift.safetyScore}
                   </div>
                 </div>
               </div>
@@ -385,8 +386,8 @@ export default function LaborDeploymentView({ onShowToast, onNavigateTo }) {
                   <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--primary)' }}>
                     {log.check_in_time || '06:30 AM'}
                   </div>
-                  <span style={{ fontSize: '0.7rem', color: '#16a34a', fontWeight: 700 }}>
-                    ✓ Biometric Match
+                  <span style={{ fontSize: '0.7rem', color: '#16a34a', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    <CheckCircle2 size={11} /> Biometric Match
                   </span>
                 </div>
               </div>

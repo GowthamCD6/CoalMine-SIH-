@@ -2,24 +2,29 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Flame, Plus, RefreshCw, AlertTriangle, CheckCircle2,
   Clock, XCircle, Search, Filter, ShieldAlert, MapPin,
-  Calendar, User, X, FileText, Check, ChevronRight, Activity
+  Calendar, User, X, FileText, Check, ChevronRight, Activity,
+  Wrench, AlertCircle
 } from 'lucide-react';
 import { api } from '../../services/api.js';
 
 const StatusBadge = ({ status }) => {
   const map = {
-    OPEN:                { bg: '#fee2e2', text: '#991b1b', label: '🔴 Open' },
-    UNDER_INVESTIGATION: { bg: '#fef3c7', text: '#92400e', label: '🔍 Under Investigation' },
-    CORRECTIVE_ACTION:   { bg: '#dbeafe', text: '#1e40af', label: '🛠️ Action in Progress' },
-    CLOSED:              { bg: '#dcfce7', text: '#166534', label: '✅ Closed' },
+    OPEN:                { bg: '#fee2e2', text: '#991b1b', label: 'Open', icon: AlertCircle },
+    UNDER_INVESTIGATION: { bg: '#fef3c7', text: '#92400e', label: 'Under Investigation', icon: Search },
+    CORRECTIVE_ACTION:   { bg: '#dbeafe', text: '#1e40af', label: 'Action in Progress', icon: Wrench },
+    CLOSED:              { bg: '#dcfce7', text: '#166534', label: 'Closed', icon: CheckCircle2 },
   };
   const c = map[status] || { bg: '#f1f5f9', text: '#475569', label: status };
+  const Icon = c.icon;
   return (
     <span style={{
       padding: '3px 10px', borderRadius: '99px',
       backgroundColor: c.bg, color: c.text,
-      fontSize: '0.75rem', fontWeight: '700', display: 'inline-flex', alignItems: 'center'
-    }}>{c.label}</span>
+      fontSize: '0.75rem', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '4px'
+    }}>
+      {Icon && <Icon size={12} />}
+      {c.label}
+    </span>
   );
 };
 
@@ -177,117 +182,164 @@ export default function IncidentManagementView({ onShowToast }) {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', boxSizing: 'border-box' }}>
 
-      {/* Header Banner */}
-      <div className="glass-panel" style={{
-        padding: '1.5rem 2rem',
-        borderRadius: '16px',
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(248,250,252,0.8))',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-        border: '1px solid rgba(226, 232, 240, 0.8)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            width: '42px', height: '42px', borderRadius: '12px',
-            backgroundColor: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}>
-            <ShieldAlert size={24} color="#dc2626" />
+      {/* Top Header Bar */}
+      <div
+        style={{
+          padding: '0.65rem 1.25rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+          borderRadius: '12px',
+          backgroundColor: '#ffffff',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+          border: '1px solid #e2e8f0',
+          overflowX: 'auto',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+          <div
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              backgroundColor: '#fee2e2',
+              color: '#dc2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <ShieldAlert size={20} />
           </div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.015em', whiteSpace: 'nowrap' }}>
               Incident Management & Investigations
-            </h1>
-            <p style={{ margin: '2px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Report, investigate, and track corrective & preventive actions (CAPA) for mine incidents.
-            </p>
+            </h2>
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                backgroundColor: '#fef2f2',
+                color: '#dc2626',
+                border: '1px solid #fecaca',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444' }} />
+              CAPA LIVE TRACKING
+            </span>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
           <button
             onClick={loadData}
             className="sleek-btn"
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#fff', border: '1px solid #cbd5e1' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#fff', border: '1px solid #cbd5e1', padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700 }}
           >
-            <RefreshCw size={16} className={loading ? 'spin' : ''} /> Refresh
+            <RefreshCw size={14} className={loading ? 'spin' : ''} /> Refresh
           </button>
           <button
             onClick={() => setShowReportModal(true)}
             className="sleek-btn"
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#dc2626', color: '#fff' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#dc2626', color: '#fff', padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700 }}
           >
-            <Plus size={16} /> Report New Incident
+            <Plus size={15} /> Report Incident
           </button>
         </div>
       </div>
 
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-        <div style={{
-          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
-          border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '14px'
-        }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Activity size={22} color="#475569" />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>
-              {summary?.total || incidents.length || 0}
+        {loading ? (
+          [1, 2, 3, 4].map((n) => (
+            <div key={n} style={{
+              backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+              border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '14px'
+            }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '10px' }} className="mo-skeleton-cell" />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ width: '45px', height: '24px' }} className="mo-skeleton-val" />
+                <div style={{ width: '90px', height: '12px' }} className="mo-skeleton-cell" />
+              </div>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Incidents</div>
-          </div>
-        </div>
+          ))
+        ) : (
+          <>
+            <div style={{
+              backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+              border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              display: 'flex', alignItems: 'center', gap: '14px'
+            }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Activity size={22} color="#475569" />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                  {summary?.total || incidents.length || 0}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Incidents</div>
+              </div>
+            </div>
 
-        <div style={{
-          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
-          border: '1px solid #fee2e2', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '14px'
-        }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <AlertTriangle size={22} color="#dc2626" />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#dc2626' }}>
-              {summary?.open_count ?? incidents.filter(i => i.status === 'OPEN').length}
+            <div style={{
+              backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+              border: '1px solid #fee2e2', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              display: 'flex', alignItems: 'center', gap: '14px'
+            }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AlertTriangle size={22} color="#dc2626" />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#dc2626' }}>
+                  {summary?.open_count ?? incidents.filter(i => i.status === 'OPEN').length}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active / Open</div>
+              </div>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active / Open</div>
-          </div>
-        </div>
 
-        <div style={{
-          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
-          border: '1px solid #ffedd5', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '14px'
-        }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#ffedd5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Flame size={22} color="#ea580c" />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ea580c' }}>
-              {summary?.high_severity ?? incidents.filter(i => i.severity === 'HIGH' || i.severity === 'CRITICAL').length}
+            <div style={{
+              backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+              border: '1px solid #ffedd5', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              display: 'flex', alignItems: 'center', gap: '14px'
+            }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#ffedd5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Flame size={22} color="#ea580c" />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ea580c' }}>
+                  {summary?.high_severity ?? incidents.filter(i => i.severity === 'HIGH' || i.severity === 'CRITICAL').length}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>High / Critical</div>
+              </div>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>High / Critical</div>
-          </div>
-        </div>
 
-        <div style={{
-          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
-          border: '1px solid #dcfce7', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '14px'
-        }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CheckCircle2 size={22} color="#16a34a" />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#16a34a' }}>
-              {summary?.closed_count ?? incidents.filter(i => i.status === 'CLOSED').length}
+            <div style={{
+              backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+              border: '1px solid #dcfce7', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              display: 'flex', alignItems: 'center', gap: '14px'
+            }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CheckCircle2 size={22} color="#16a34a" />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#16a34a' }}>
+                  {summary?.closed_count ?? incidents.filter(i => i.status === 'CLOSED').length}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Closed & Resolved</div>
+              </div>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Closed & Resolved</div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
       {/* Filter & Search Bar */}
@@ -348,7 +400,22 @@ export default function IncidentManagementView({ onShowToast }) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((item) => (
+            {loading ? (
+              [1, 2, 3, 4, 5].map((n) => (
+                <tr key={n} style={{ borderBottom: '1px solid #f1f5f9' }} className="mo-skeleton-row">
+                  <td style={{ padding: '14px 16px' }}>
+                    <div className="mo-skeleton-cell" style={{ width: '65%', height: '14px', marginBottom: '6px' }} />
+                    <div className="mo-skeleton-cell" style={{ width: '45%', height: '10px' }} />
+                  </td>
+                  <td style={{ padding: '14px 16px' }}><div className="mo-skeleton-cell" style={{ width: '70%', height: '14px' }} /></td>
+                  <td style={{ padding: '14px 16px' }}><div className="mo-skeleton-cell" style={{ width: '60px', height: '22px', borderRadius: '6px' }} /></td>
+                  <td style={{ padding: '14px 16px' }}><div className="mo-skeleton-cell" style={{ width: '80px', height: '14px' }} /></td>
+                  <td style={{ padding: '14px 16px' }}><div className="mo-skeleton-cell" style={{ width: '85px', height: '22px', borderRadius: '99px' }} /></td>
+                  <td style={{ padding: '14px 16px', textAlign: 'center' }}><div className="mo-skeleton-cell" style={{ width: '70px', height: '18px', margin: '0 auto', borderRadius: '6px' }} /></td>
+                  <td style={{ padding: '14px 16px', textAlign: 'right' }}><div className="mo-skeleton-cell" style={{ width: '60px', height: '26px', marginLeft: 'auto', borderRadius: '6px' }} /></td>
+                </tr>
+              ))
+            ) : filtered.map((item) => (
               <tr key={item.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                 <td style={{ padding: '12px 16px' }}>
                   <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>#{item.id} • {item.title}</div>

@@ -745,8 +745,8 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                         <span style={{ color: '#475569' }}>
                           <strong>Target:</strong> {alert.target_zone_name || alert.target_zone}
                         </span>
-                        <span style={{ color: '#0284c7', fontWeight: 700 }}>
-                          📡 {alert.signal_filter || 'ALL_NODES'}
+                        <span style={{ color: '#0284c7', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Radio size={13} /> {alert.signal_filter || 'ALL_NODES'}
                         </span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
@@ -782,8 +782,11 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                             borderRadius: '999px',
                             backgroundColor: '#f1f5f9',
                             color: '#334155',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
                           }}>
-                            👥 Sector Roster: {alert.muster?.total_workers || alert.affected_workers_count || 16}
+                            <Users size={11} /> Sector Roster: {alert.muster?.total_workers || alert.affected_workers_count || 16}
                           </span>
                           <span style={{
                             fontSize: '0.72rem',
@@ -792,8 +795,11 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                             borderRadius: '999px',
                             backgroundColor: '#dcfce7',
                             color: '#15803d',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
                           }}>
-                            🟢 Safe: {alert.muster?.safe_count || 0}
+                            <CheckCircle2 size={11} /> Safe: {alert.muster?.safe_count || 0}
                           </span>
                           <span style={{
                             fontSize: '0.72rem',
@@ -802,8 +808,11 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                             borderRadius: '999px',
                             backgroundColor: (alert.muster?.unaccounted_count || alert.affected_workers_count) > 0 ? '#fee2e2' : '#f1f5f9',
                             color: (alert.muster?.unaccounted_count || alert.affected_workers_count) > 0 ? '#b91c1c' : '#64748b',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
                           }}>
-                            Unaccounted: {alert.muster?.unaccounted_count ?? (alert.affected_workers_count || 0)}
+                            <AlertTriangle size={11} /> Unaccounted: {alert.muster?.unaccounted_count ?? (alert.affected_workers_count || 0)}
                           </span>
                         </div>
                       </div>
@@ -847,8 +856,8 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                                       {worker.role || worker.id}
                                     </span>
                                   </div>
-                                  <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '2px' }}>
-                                    📍 Last Coordinates: {worker.lat}° N, {worker.lng}° E • Depth: <strong style={{ color: '#0284c7' }}>{worker.depth}m</strong> • Battery: {worker.battery}%
+                                  <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                    <MapPin size={11} color="#0284c7" /> Last Coordinates: {worker.lat}° N, {worker.lng}° E • Depth: <strong style={{ color: '#0284c7' }}>{worker.depth}m</strong> • Battery: {worker.battery}%
                                   </div>
                                 </div>
 
@@ -908,7 +917,7 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
                             <CheckCircle2 size={14} color="#16a34a" />
                             <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#166534' }}>
-                              ✅ Confirmed Safe & Evacuated Personnel ({alert.muster.confirmed_safe.length}):
+                              Confirmed Safe & Evacuated Personnel ({alert.muster.confirmed_safe.length}):
                             </span>
                           </div>
 
@@ -957,8 +966,8 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                           </div>
                           {alert.muster.rescue_dispatches.map((mission, idx) => (
                             <div key={idx} style={{ fontSize: '0.7rem', color: '#78350f', display: 'flex', justifyContent: 'space-between' }}>
-                              <span>
-                                <strong>{mission.rescue_team_name}</strong> ➔ {mission.target_worker_name} ({mission.target_depth}m)
+                              <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                <strong>{mission.rescue_team_name}</strong> <ArrowRight size={11} style={{ margin: '0 4px' }} /> {mission.target_worker_name} ({mission.target_depth}m)
                               </span>
                               <span style={{ fontWeight: 700, color: '#b45309' }}>
                                 {mission.status} (ETA {mission.estimated_arrival})
@@ -1058,7 +1067,9 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                     }}>
                       {sos.responders && sos.responders.length > 0 ? (
                         <div>
-                          <strong style={{ color: '#9a3412' }}>🏃 Nearby Responding Colleagues ({sos.responders.length}):</strong>
+                          <strong style={{ color: '#9a3412', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <Users size={12} /> Nearby Responding Colleagues ({sos.responders.length}):
+                          </strong>
                           <div style={{ color: '#431407', marginTop: '2px' }}>
                             {sos.responders.map((r, idx) => (
                               <span key={idx} style={{ marginRight: '8px' }}>
@@ -1068,8 +1079,8 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                           </div>
                         </div>
                       ) : (
-                        <span style={{ color: '#9a3412' }}>
-                          📡 Distress broadcast transmitting to nearby peer workers in {sos.zone}...
+                        <span style={{ color: '#9a3412', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Radio size={12} /> Distress broadcast transmitting to nearby peer workers in {sos.zone}...
                         </span>
                       )}
                     </div>
@@ -1106,9 +1117,12 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                           fontSize: '0.72rem',
                           fontWeight: 700,
                           cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
                         }}
                       >
-                        ✅ Stand Down
+                        <CheckCircle2 size={13} /> Stand Down
                       </button>
                     </div>
                   </div>

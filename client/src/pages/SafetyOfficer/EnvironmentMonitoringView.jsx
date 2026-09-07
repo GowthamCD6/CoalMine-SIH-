@@ -65,17 +65,21 @@ const PARAMETER_CONFIG = {
 
 const StatusBadge = ({ status }) => {
   const map = {
-    NORMAL:             { bg: '#dcfce7', text: '#166534', label: '✅ Normal' },
-    THRESHOLD_EXCEEDED: { bg: '#fef3c7', text: '#92400e', label: '⚠️ Threshold Exceeded' },
-    CRITICAL:           { bg: '#fee2e2', text: '#991b1b', label: '🚨 Critical Breach' },
+    NORMAL:             { bg: '#dcfce7', text: '#166534', label: 'Normal', icon: CheckCircle2 },
+    THRESHOLD_EXCEEDED: { bg: '#fef3c7', text: '#92400e', label: 'Threshold Exceeded', icon: AlertTriangle },
+    CRITICAL:           { bg: '#fee2e2', text: '#991b1b', label: 'Critical Breach', icon: ShieldAlert },
   };
   const c = map[status] || { bg: '#f1f5f9', text: '#475569', label: status };
+  const Icon = c.icon;
   return (
     <span style={{
       padding: '3px 10px', borderRadius: '99px',
       backgroundColor: c.bg, color: c.text,
-      fontSize: '0.75rem', fontWeight: '700', display: 'inline-flex', alignItems: 'center'
-    }}>{c.label}</span>
+      fontSize: '0.75rem', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '4px'
+    }}>
+      {Icon && <Icon size={12} />}
+      {c.label}
+    </span>
   );
 };
 
@@ -131,124 +135,171 @@ export default function EnvironmentMonitoringView({ onShowToast }) {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', boxSizing: 'border-box' }}>
 
-      {/* Header Banner */}
-      <div className="glass-panel" style={{
-        padding: '1.5rem 2rem',
-        borderRadius: '16px',
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(248,250,252,0.8))',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-        border: '1px solid rgba(226, 232, 240, 0.8)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            width: '42px', height: '42px', borderRadius: '12px',
-            backgroundColor: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}>
-            <Cloud size={24} color="#0284c7" />
+      {/* Top Header Bar */}
+      <div
+        style={{
+          padding: '0.65rem 1.25rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+          borderRadius: '12px',
+          backgroundColor: '#ffffff',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+          border: '1px solid #e2e8f0',
+          overflowX: 'auto',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+          <div
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              backgroundColor: '#e0f2fe',
+              color: '#0284c7',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Cloud size={20} />
           </div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)' }}>
-              Environmental & Pollution Monitoring (MoEFCC / DGMS)
-            </h1>
-            <p style={{ margin: '2px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Continuous emission readings, ambient air quality, mine water discharge, and toxic gas sensor feeds.
-            </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.015em', whiteSpace: 'nowrap' }}>
+              Environmental & Pollution Monitoring
+            </h2>
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                backgroundColor: '#ecfdf5',
+                color: '#059669',
+                border: '1px solid #a7f3d0',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+              MoEFCC & DGMS TELEMETRY
+            </span>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
           <button
             onClick={loadData}
             className="sleek-btn"
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#fff', border: '1px solid #cbd5e1' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#fff', border: '1px solid #cbd5e1', padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700 }}
           >
-            <RefreshCw size={16} className={loading ? 'spin' : ''} /> Refresh
+            <RefreshCw size={14} className={loading ? 'spin' : ''} /> Refresh
           </button>
           <button
             onClick={() => setShowThresholdModal(true)}
             className="sleek-btn"
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#f1f5f9', color: '#334155' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#f1f5f9', color: '#334155', padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700 }}
           >
-            <Sliders size={16} /> Statutory Limits
+            <Sliders size={15} /> Statutory Limits
           </button>
           <button
             onClick={() => setShowLogModal(true)}
             className="sleek-btn"
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#0284c7', color: '#fff' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#0284c7', color: '#fff', padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700 }}
           >
-            <Plus size={16} /> Log Reading
+            <Plus size={15} /> Log Reading
           </button>
         </div>
       </div>
 
       {/* KPI Cards Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-        <div style={{
-          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
-          border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '14px'
-        }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CheckCircle2 size={22} color="#16a34a" />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#16a34a' }}>
-              {summary?.normal_count ?? observations.filter(o => o.status === 'NORMAL').length}
+        {loading ? (
+          [1, 2, 3, 4].map((n) => (
+            <div key={n} style={{
+              backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+              border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '14px'
+            }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '10px' }} className="mo-skeleton-cell" />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ width: '45px', height: '24px' }} className="mo-skeleton-val" />
+                <div style={{ width: '90px', height: '12px' }} className="mo-skeleton-cell" />
+              </div>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Normal Parameters</div>
-          </div>
-        </div>
+          ))
+        ) : (
+          <>
+            <div style={{
+              backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+              border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              display: 'flex', alignItems: 'center', gap: '14px'
+            }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CheckCircle2 size={22} color="#16a34a" />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#16a34a' }}>
+                  {summary?.normal_count ?? observations.filter(o => o.status === 'NORMAL').length}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Normal Parameters</div>
+              </div>
+            </div>
 
-        <div style={{
-          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
-          border: '1px solid #fef3c7', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '14px'
-        }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <AlertTriangle size={22} color="#d97706" />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#d97706' }}>
-              {summary?.exceeded_count ?? observations.filter(o => o.status === 'THRESHOLD_EXCEEDED').length}
+            <div style={{
+              backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+              border: '1px solid #fef3c7', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              display: 'flex', alignItems: 'center', gap: '14px'
+            }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AlertTriangle size={22} color="#d97706" />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#d97706' }}>
+                  {summary?.exceeded_count ?? observations.filter(o => o.status === 'THRESHOLD_EXCEEDED').length}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Threshold Exceeded</div>
+              </div>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Threshold Exceeded</div>
-          </div>
-        </div>
 
-        <div style={{
-          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
-          border: '1px solid #fee2e2', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '14px'
-        }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ShieldAlert size={22} color="#dc2626" />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#dc2626' }}>
-              {summary?.critical_count ?? observations.filter(o => o.status === 'CRITICAL').length}
+            <div style={{
+              backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+              border: '1px solid #fee2e2', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              display: 'flex', alignItems: 'center', gap: '14px'
+            }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ShieldAlert size={22} color="#dc2626" />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#dc2626' }}>
+                  {summary?.critical_count ?? observations.filter(o => o.status === 'CRITICAL').length}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Critical Breaches</div>
+              </div>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Critical Breaches</div>
-          </div>
-        </div>
 
-        <div style={{
-          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
-          border: '1px solid #e0f2fe', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '14px'
-        }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Activity size={22} color="#0284c7" />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0284c7' }}>
-              {summary?.last_24h_count || observations.length || 0}
+            <div style={{
+              backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+              border: '1px solid #e0f2fe', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              display: 'flex', alignItems: 'center', gap: '14px'
+            }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <BarChart2 size={22} color="#0284c7" />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0284c7' }}>
+                  {summary?.total || observations.length || 0}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Monitored Logs</div>
+              </div>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Readings in Last 24h</div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
       {/* Parameter Cards Overview */}
@@ -356,7 +407,21 @@ export default function EnvironmentMonitoringView({ onShowToast }) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((obs) => {
+            {loading ? (
+              [1, 2, 3, 4, 5].map((n) => (
+                <tr key={n} style={{ borderBottom: '1px solid #f1f5f9' }} className="mo-skeleton-row">
+                  <td style={{ padding: '14px 16px' }}>
+                    <div className="mo-skeleton-cell" style={{ width: '65%', height: '14px', marginBottom: '6px' }} />
+                    <div className="mo-skeleton-cell" style={{ width: '45%', height: '10px' }} />
+                  </td>
+                  <td style={{ padding: '14px 16px' }}><div className="mo-skeleton-cell" style={{ width: '70%', height: '14px' }} /></td>
+                  <td style={{ padding: '14px 16px' }}><div className="mo-skeleton-cell" style={{ width: '65px', height: '18px' }} /></td>
+                  <td style={{ padding: '14px 16px' }}><div className="mo-skeleton-cell" style={{ width: '85px', height: '22px', borderRadius: '99px' }} /></td>
+                  <td style={{ padding: '14px 16px' }}><div className="mo-skeleton-cell" style={{ width: '90px', height: '14px' }} /></td>
+                  <td style={{ padding: '14px 16px', textAlign: 'right' }}><div className="mo-skeleton-cell" style={{ width: '80px', height: '14px', marginLeft: 'auto' }} /></td>
+                </tr>
+              ))
+            ) : filtered.map((obs) => {
               const cfg = PARAMETER_CONFIG[obs.parameter_type] || {};
               return (
                 <tr key={obs.id} style={{ borderBottom: '1px solid #f1f5f9' }}>

@@ -2,42 +2,52 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   MessageSquare, Plus, RefreshCw, AlertTriangle, CheckCircle2,
   Clock, Search, Filter, Shield, UserX, Send, Check, X,
-  FileText, CornerDownRight, AlertOctagon, User
+  FileText, CornerDownRight, AlertOctagon, User, Lock
 } from 'lucide-react';
 import { api } from '../../services/api.js';
 
 const PriorityBadge = ({ priority }) => {
   const map = {
-    HIGH:   { bg: '#fee2e2', text: '#dc2626', label: '🔴 High Priority' },
-    MEDIUM: { bg: '#fef3c7', text: '#d97706', label: '🟡 Medium Priority' },
-    LOW:    { bg: '#f1f5f9', text: '#64748b', label: '🟢 Low Priority' },
+    HIGH:   { bg: '#fee2e2', text: '#dc2626', label: 'High Priority', icon: AlertTriangle },
+    MEDIUM: { bg: '#fef3c7', text: '#d97706', label: 'Medium Priority', icon: Clock },
+    LOW:    { bg: '#f1f5f9', text: '#64748b', label: 'Low Priority', icon: CheckCircle2 },
   };
   const c = map[priority] || { bg: '#f1f5f9', text: '#475569', label: priority };
+  const Icon = c.icon;
   return (
     <span style={{
       padding: '2px 8px', borderRadius: '6px',
       backgroundColor: c.bg, color: c.text,
-      fontSize: '0.72rem', fontWeight: 700
-    }}>{c.label}</span>
+      fontSize: '0.72rem', fontWeight: 700,
+      display: 'inline-flex', alignItems: 'center', gap: '4px'
+    }}>
+      {Icon && <Icon size={11} />}
+      {c.label}
+    </span>
   );
 };
 
 const StatusBadge = ({ status }) => {
   const map = {
-    SUBMITTED:           { bg: '#fef3c7', text: '#92400e', label: '⏳ Submitted' },
-    ASSIGNED:            { bg: '#e0e7ff', text: '#3730a3', label: '👤 Assigned' },
-    UNDER_INVESTIGATION: { bg: '#dbeafe', text: '#1e40af', label: '🔍 Under Investigation' },
-    RESOLVED:            { bg: '#dcfce7', text: '#166534', label: '✅ Resolved' },
-    CLOSED:              { bg: '#f1f5f9', text: '#475569', label: '🔒 Closed' },
-    REOPENED:            { bg: '#fee2e2', text: '#991b1b', label: '🔄 Reopened' },
+    SUBMITTED:           { bg: '#fef3c7', text: '#92400e', label: 'Submitted', icon: Clock },
+    ASSIGNED:            { bg: '#e0e7ff', text: '#3730a3', label: 'Assigned', icon: User },
+    UNDER_INVESTIGATION: { bg: '#dbeafe', text: '#1e40af', label: 'Under Investigation', icon: Search },
+    RESOLVED:            { bg: '#dcfce7', text: '#166534', label: 'Resolved', icon: CheckCircle2 },
+    CLOSED:              { bg: '#f1f5f9', text: '#475569', label: 'Closed', icon: Lock },
+    REOPENED:            { bg: '#fee2e2', text: '#991b1b', label: 'Reopened', icon: RefreshCw },
   };
   const c = map[status] || { bg: '#f1f5f9', text: '#475569', label: status };
+  const Icon = c.icon;
   return (
     <span style={{
       padding: '3px 10px', borderRadius: '99px',
       backgroundColor: c.bg, color: c.text,
-      fontSize: '0.75rem', fontWeight: '700'
-    }}>{c.label}</span>
+      fontSize: '0.75rem', fontWeight: '700',
+      display: 'inline-flex', alignItems: 'center', gap: '4px'
+    }}>
+      {Icon && <Icon size={12} />}
+      {c.label}
+    </span>
   );
 };
 

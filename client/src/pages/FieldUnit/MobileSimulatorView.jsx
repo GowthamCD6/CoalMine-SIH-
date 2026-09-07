@@ -544,10 +544,19 @@ export default function MobileSimulatorView({ onShowToast }) {
                       backgroundColor: '#0f172a',
                       fontSize: '0.75rem',
                       color: actor?.can_manage_access ? '#86efac' : '#fca5a5',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
                     }}>
-                      {actor?.can_manage_access
-                        ? `✓ You can manage and grant access to ${manageableCount} smaller subordinate user(s).`
-                        : `✕ You lack USERS_MANAGE_ROLES authority. Cannot delegate access.`}
+                      {actor?.can_manage_access ? (
+                        <>
+                          <Check size={13} color="#86efac" /> You can manage and grant access to {manageableCount} smaller subordinate user(s).
+                        </>
+                      ) : (
+                        <>
+                          <X size={13} color="#fca5a5" /> You lack USERS_MANAGE_ROLES authority. Cannot delegate access.
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -618,9 +627,9 @@ export default function MobileSimulatorView({ onShowToast }) {
                                   {u.is_manageable && (
                                     <button
                                       onClick={() => handleRevokeSubrole(u.id, r.subrole_id)}
-                                      style={{ background: 'none', border: 'none', color: '#ef4444', fontWeight: 800, cursor: 'pointer', fontSize: '0.75rem' }}
+                                      style={{ background: 'none', border: 'none', color: '#ef4444', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                                     >
-                                      ✕
+                                      <X size={13} />
                                     </button>
                                   )}
                                 </div>
@@ -733,10 +742,10 @@ export default function MobileSimulatorView({ onShowToast }) {
 
                   <div style={{ backgroundColor: '#1e293b', borderRadius: '8px', padding: '10px' }}>
                     <div style={{ fontSize: '0.75rem', fontWeight: 700, marginBottom: '6px' }}>Pre-Shift Safety Confirmations</div>
-                    <div style={{ fontSize: '0.7rem', color: '#cbd5e1', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <div>✓ Form B Digital Attendance & Cap-Lamp logged</div>
-                      <div>✓ Atmospheric multi-gas detector operational</div>
-                      <div>✓ Subterranean mesh distress receiver armed</div>
+                    <div style={{ fontSize: '0.7rem', color: '#cbd5e1', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Check size={12} color="#4ade80" /> Form B Digital Attendance & Cap-Lamp logged</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Check size={12} color="#4ade80" /> Atmospheric multi-gas detector operational</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Check size={12} color="#4ade80" /> Subterranean mesh distress receiver armed</div>
                     </div>
                   </div>
                 </div>
@@ -764,8 +773,12 @@ export default function MobileSimulatorView({ onShowToast }) {
                       <div>DEPTH: -120m &bull; ZONE: Shaft 4 Sector B</div>
                     </div>
 
-                    <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.75rem' }}>
-                      {hazardCaptured ? '✓ Photo Geotagged with coordinates' : 'Point camera at structural fissure'}
+                    <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                      {hazardCaptured ? (
+                        <><Check size={12} color="#4ade80" /> Photo Geotagged with coordinates</>
+                      ) : (
+                        'Point camera at structural fissure'
+                      )}
                     </div>
 
                     <button
@@ -774,21 +787,28 @@ export default function MobileSimulatorView({ onShowToast }) {
                         if (onShowToast) onShowToast('Geotagged optical frame captured!');
                       }}
                       style={{
-                        alignSelf: 'center',
-                        width: '50px',
-                        height: '50px',
-                        borderRadius: '25px',
-                        backgroundColor: '#ffffff',
-                        border: '4px solid rgba(255,255,255,0.4)',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        backgroundColor: '#ea580c',
+                        color: '#fff',
+                        border: 'none',
+                        fontWeight: 800,
+                        fontSize: '0.75rem',
                         cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
                       }}
-                    />
+                    >
+                      <Camera size={14} /> CAPTURE OPTICAL FRAME
+                    </button>
                   </div>
 
                   {hazardCaptured && (
                     <div style={{ marginTop: '10px', backgroundColor: '#1e293b', borderRadius: '8px', padding: '10px' }}>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4ade80', marginBottom: '6px' }}>
-                        ✓ Photo Captured (Stored to /uploads on submit):
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4ade80', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Check size={12} /> Photo Captured (Stored to /uploads on submit):
                       </div>
                       <button
                         onClick={async () => {
@@ -988,8 +1008,8 @@ export default function MobileSimulatorView({ onShowToast }) {
                       QR CODE
                     </div>
 
-                    <div style={{ backgroundColor: '#f0fdf4', borderRadius: '6px', padding: '6px', color: '#16a34a', fontSize: '0.75rem', fontWeight: 700 }}>
-                      ✓ Cleared for Zones A, B, C
+                    <div style={{ backgroundColor: '#f0fdf4', borderRadius: '6px', padding: '6px', color: '#16a34a', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                      <Check size={12} /> Cleared for Zones A, B, C
                     </div>
                   </div>
 
@@ -1015,8 +1035,8 @@ export default function MobileSimulatorView({ onShowToast }) {
                   </button>
 
                   {rfidCheckedIn && (
-                    <div style={{ marginTop: '8px', fontSize: '0.7rem', color: '#4ade80', textAlign: 'center' }}>
-                      ✓ Last Check-in: Shaft 3 Turnstile ({new Date().toLocaleTimeString()})
+                    <div style={{ marginTop: '8px', fontSize: '0.7rem', color: '#4ade80', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                      <Check size={12} /> Last Check-in: Shaft 3 Turnstile ({new Date().toLocaleTimeString()})
                     </div>
                   )}
                 </div>
@@ -1062,8 +1082,8 @@ export default function MobileSimulatorView({ onShowToast }) {
 
                   {ocrText && (
                     <div style={{ marginTop: '10px', backgroundColor: '#1e293b', borderRadius: '8px', padding: '10px' }}>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4ade80', marginBottom: '4px' }}>
-                        ✓ Extracted 452 words (97% confidence):
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4ade80', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Check size={12} /> Extracted 452 words (97% confidence):
                       </div>
                       <pre style={{ margin: 0, fontSize: '0.65rem', color: '#cbd5e1', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
                         {ocrText}
@@ -1150,7 +1170,9 @@ export default function MobileSimulatorView({ onShowToast }) {
 
                   <div style={{ backgroundColor: '#1e293b', borderRadius: '8px', padding: '10px' }}>
                     <div style={{ fontSize: '0.75rem', fontWeight: 700, marginBottom: '4px' }}>Distress Signal Feed</div>
-                    <div style={{ fontSize: '0.7rem', color: '#4ade80' }}>✓ All monitored shaft channels clear</div>
+                    <div style={{ fontSize: '0.7rem', color: '#4ade80', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Check size={12} /> All monitored shaft channels clear
+                    </div>
                   </div>
                 </div>
               )}
@@ -1227,7 +1249,7 @@ export default function MobileSimulatorView({ onShowToast }) {
                       <div style={{ fontSize: '0.8rem', fontWeight: 700 }}>{s.name}</div>
                       <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Role: {s.role_name} &bull; Scope: {s.mine_name || s.organization_name || 'Global'}</div>
                     </div>
-                    <span style={{ fontSize: '0.75rem', color: '#22c55e', fontWeight: 700 }}>Grant ➔</span>
+                    <span style={{ fontSize: '0.75rem', color: '#22c55e', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>Grant <ArrowRight size={12} /></span>
                   </button>
                 ))}
               </div>

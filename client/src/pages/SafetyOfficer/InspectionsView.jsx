@@ -3,30 +3,34 @@ import {
   ClipboardCheck, Plus, RefreshCw, AlertTriangle, CheckCircle2,
   Clock, XCircle, Search, Filter, ChevronRight, MapPin, Eye,
   Check, AlertOctagon, ShieldAlert, ListChecks, Calendar, User,
-  X, ChevronDown, CheckSquare, Square
+  X, ChevronDown, CheckSquare, Square, Lock, Activity, AlertCircle
 } from 'lucide-react';
 import { api } from '../../services/api.js';
 
 // ─── Reusable Status Badge ───────────────────────────────────────────────────
 const StatusBadge = ({ status }) => {
   const map = {
-    SCHEDULED:   { bg: '#e0e7ff', text: '#3730a3', label: '📅 Scheduled' },
-    IN_PROGRESS: { bg: '#dbeafe', text: '#1e40af', label: '🔵 In Progress' },
-    COMPLETED:   { bg: '#dcfce7', text: '#166534', label: '✅ Completed' },
-    CANCELLED:   { bg: '#f1f5f9', text: '#475569', label: '⚪ Cancelled' },
-    OVERDUE:     { bg: '#fee2e2', text: '#991b1b', label: '🔴 Overdue' },
-    OPEN:        { bg: '#fef3c7', text: '#92400e', label: '⚠️ Open' },
-    RESOLVED:    { bg: '#dcfce7', text: '#166534', label: '✅ Resolved' },
-    CLOSED:      { bg: '#f1f5f9', text: '#475569', label: '🔒 Closed' },
-    UNDER_REVIEW:{ bg: '#ede9fe', text: '#5b21b6', label: '🔍 Review' },
+    SCHEDULED:    { bg: '#e0e7ff', text: '#3730a3', label: 'Scheduled', icon: Calendar },
+    IN_PROGRESS:  { bg: '#dbeafe', text: '#1e40af', label: 'In Progress', icon: Activity },
+    COMPLETED:    { bg: '#dcfce7', text: '#166534', label: 'Completed', icon: CheckCircle2 },
+    CANCELLED:    { bg: '#f1f5f9', text: '#475569', label: 'Cancelled', icon: XCircle },
+    OVERDUE:      { bg: '#fee2e2', text: '#991b1b', label: 'Overdue', icon: AlertTriangle },
+    OPEN:         { bg: '#fef3c7', text: '#92400e', label: 'Open', icon: AlertCircle },
+    RESOLVED:     { bg: '#dcfce7', text: '#166534', label: 'Resolved', icon: CheckCircle2 },
+    CLOSED:       { bg: '#f1f5f9', text: '#475569', label: 'Closed', icon: Lock },
+    UNDER_REVIEW: { bg: '#ede9fe', text: '#5b21b6', label: 'Review', icon: Search },
   };
   const c = map[status] || { bg: '#f1f5f9', text: '#475569', label: status };
+  const Icon = c.icon;
   return (
     <span style={{
       padding: '3px 10px', borderRadius: '99px',
       backgroundColor: c.bg, color: c.text,
       fontSize: '0.75rem', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '4px'
-    }}>{c.label}</span>
+    }}>
+      {Icon && <Icon size={12} />}
+      {c.label}
+    </span>
   );
 };
 
@@ -189,68 +193,97 @@ export default function InspectionsView({ onShowToast }) {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', boxSizing: 'border-box' }}>
 
-      {/* Header Banner */}
-      <div className="glass-panel" style={{
-        padding: '1.5rem 2rem',
-        borderRadius: '16px',
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(248,250,252,0.8))',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-        border: '1px solid rgba(226, 232, 240, 0.8)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-      }}>
-        <div>
+      {/* Top Header Bar */}
+      <div
+        style={{
+          padding: '0.65rem 1.25rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+          borderRadius: '12px',
+          backgroundColor: '#ffffff',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+          border: '1px solid #e2e8f0',
+          overflowX: 'auto',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+          <div
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              backgroundColor: '#eff6ff',
+              color: 'var(--primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <ClipboardCheck size={20} />
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{
-              width: '42px', height: '42px', borderRadius: '12px',
-              backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }}>
-              <ClipboardCheck size={24} color="var(--primary)" />
-            </div>
-            <div>
-              <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                Inspections, Observations & Violations
-              </h1>
-              <p style={{ margin: '2px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Field safety inspection logs, hazard observations, and statutory violation tracking under DGMS guidelines.
-              </p>
-            </div>
+            <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.015em', whiteSpace: 'nowrap' }}>
+              Inspections & Statutory Violations
+            </h2>
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                backgroundColor: '#ecfdf5',
+                color: '#059669',
+                border: '1px solid #a7f3d0',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+              DGMS FIELD AUDIT
+            </span>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
           <button
             onClick={loadData}
             className="sleek-btn"
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#fff', border: '1px solid #cbd5e1' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#fff', border: '1px solid #cbd5e1', padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700 }}
           >
-            <RefreshCw size={16} className={loading ? 'spin' : ''} /> Refresh
+            <RefreshCw size={14} className={loading ? 'spin' : ''} /> Refresh
           </button>
           {activeTab === 'inspections' && (
             <button
               onClick={() => setShowNewInspection(true)}
               className="sleek-btn"
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--primary)', color: '#fff' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--primary)', color: '#fff', padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700 }}
             >
-              <Plus size={16} /> Schedule Inspection
+              <Plus size={15} /> Schedule
             </button>
           )}
           {activeTab === 'observations' && (
             <button
               onClick={() => setShowNewObservation(true)}
               className="sleek-btn"
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#d97706', color: '#fff' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#d97706', color: '#fff', padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700 }}
             >
-              <Plus size={16} /> Report Observation
+              <Plus size={15} /> Observation
             </button>
           )}
           {activeTab === 'violations' && (
             <button
               onClick={() => setShowNewViolation(true)}
               className="sleek-btn"
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#dc2626', color: '#fff' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#dc2626', color: '#fff', padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700 }}
             >
-              <Plus size={16} /> Record Violation
+              <Plus size={15} /> Violation
             </button>
           )}
         </div>
@@ -258,69 +291,86 @@ export default function InspectionsView({ onShowToast }) {
 
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-        <div style={{
-          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
-          border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '14px'
-        }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ClipboardCheck size={22} color="#2563eb" />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>
-              {summary?.total_inspections || inspections.length || 0}
+        {loading ? (
+          [1, 2, 3, 4].map((n) => (
+            <div key={n} style={{
+              backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+              border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '14px'
+            }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '10px' }} className="mo-skeleton-cell" />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ width: '45px', height: '24px' }} className="mo-skeleton-val" />
+                <div style={{ width: '90px', height: '12px' }} className="mo-skeleton-cell" />
+              </div>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Inspections</div>
-          </div>
-        </div>
+          ))
+        ) : (
+          <>
+            <div style={{
+              backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+              border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              display: 'flex', alignItems: 'center', gap: '14px'
+            }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ClipboardCheck size={22} color="#2563eb" />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                  {summary?.total_inspections || inspections.length || 0}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Inspections</div>
+              </div>
+            </div>
 
-        <div style={{
-          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
-          border: '1px solid #fef3c7', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '14px'
-        }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Clock size={22} color="#d97706" />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#d97706' }}>
-              {summary?.scheduled_inspections ?? inspections.filter(i => i.status === 'SCHEDULED').length}
+            <div style={{
+              backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+              border: '1px solid #fef3c7', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              display: 'flex', alignItems: 'center', gap: '14px'
+            }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Clock size={22} color="#d97706" />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#d97706' }}>
+                  {summary?.scheduled_inspections ?? inspections.filter(i => i.status === 'SCHEDULED').length}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Scheduled / Pending</div>
+              </div>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Scheduled / Pending</div>
-          </div>
-        </div>
 
-        <div style={{
-          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
-          border: '1px solid #e0e7ff', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '14px'
-        }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <AlertTriangle size={22} color="#4f46e5" />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#4f46e5' }}>
-              {summary?.open_observations ?? observations.filter(o => o.status === 'OPEN').length}
+            <div style={{
+              backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+              border: '1px solid #e0e7ff', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              display: 'flex', alignItems: 'center', gap: '14px'
+            }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AlertTriangle size={22} color="#4f46e5" />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#4f46e5' }}>
+                  {summary?.open_observations ?? observations.filter(o => o.status === 'OPEN').length}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Open Observations</div>
+              </div>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Open Observations</div>
-          </div>
-        </div>
 
-        <div style={{
-          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
-          border: '1px solid #fee2e2', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '14px'
-        }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <AlertOctagon size={22} color="#dc2626" />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#dc2626' }}>
-              {summary?.open_violations ?? violations.filter(v => v.status === 'OPEN').length}
+            <div style={{
+              backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
+              border: '1px solid #fee2e2', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              display: 'flex', alignItems: 'center', gap: '14px'
+            }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AlertOctagon size={22} color="#dc2626" />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#dc2626' }}>
+                  {summary?.open_violations ?? violations.filter(v => v.status === 'OPEN').length}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Violations</div>
+              </div>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Violations</div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
       {/* Tabs Navigation */}
@@ -386,7 +436,22 @@ export default function InspectionsView({ onShowToast }) {
               </tr>
             </thead>
             <tbody>
-              {filteredInspections.map((item) => (
+              {loading ? (
+                [1, 2, 3, 4, 5].map((n) => (
+                  <tr key={n} style={{ borderBottom: '1px solid #f1f5f9' }} className="mo-skeleton-row">
+                    <td style={{ padding: '14px 16px' }}>
+                      <div className="mo-skeleton-cell" style={{ width: '65%', height: '14px', marginBottom: '6px' }} />
+                      <div className="mo-skeleton-cell" style={{ width: '45%', height: '10px' }} />
+                    </td>
+                    <td style={{ padding: '14px 16px' }}><div className="mo-skeleton-cell" style={{ width: '70%', height: '14px' }} /></td>
+                    <td style={{ padding: '14px 16px' }}><div className="mo-skeleton-cell" style={{ width: '80px', height: '14px' }} /></td>
+                    <td style={{ padding: '14px 16px' }}><div className="mo-skeleton-cell" style={{ width: '70px', height: '14px' }} /></td>
+                    <td style={{ padding: '14px 16px' }}><div className="mo-skeleton-cell" style={{ width: '80px', height: '22px', borderRadius: '99px' }} /></td>
+                    <td style={{ padding: '14px 16px', textAlign: 'center' }}><div className="mo-skeleton-cell" style={{ width: '60px', height: '18px', margin: '0 auto', borderRadius: '6px' }} /></td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right' }}><div className="mo-skeleton-cell" style={{ width: '50px', height: '26px', marginLeft: 'auto', borderRadius: '6px' }} /></td>
+                  </tr>
+                ))
+              ) : filteredInspections.map((item) => (
                 <tr key={item.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>#{item.id} • {item.inspection_type}</div>
@@ -416,7 +481,13 @@ export default function InspectionsView({ onShowToast }) {
                       color: item.total_checklist_items > 0 ? '#2563eb' : '#94a3b8',
                       fontSize: '0.75rem', fontWeight: 700
                     }}>
-                      {item.checklist_issues > 0 ? `⚠️ ${item.checklist_issues} issues` : `${item.total_checklist_items || 0} items`}
+                      {item.checklist_issues > 0 ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#b45309' }}>
+                          <AlertTriangle size={12} /> {item.checklist_issues} issues
+                        </span>
+                      ) : (
+                        `${item.total_checklist_items || 0} items`
+                      )}
                     </span>
                   </td>
                   <td style={{ padding: '12px 16px', textAlign: 'right' }}>

@@ -3,21 +3,23 @@ import {
   Pickaxe, Plus, RefreshCw, AlertTriangle, CheckCircle2,
   Clock, Search, Filter, TrendingUp, Calendar, User,
   Wrench, Activity, AlertOctagon, Target, Zap, CloudRain,
-  X, Check
+  X, Check, Sunrise, Sun, Moon
 } from 'lucide-react';
 import { api } from '../../services/api.js';
 
 const ShiftBadge = ({ shift }) => {
   const map = {
-    MORNING:   { bg: '#fef3c7', text: '#92400e', label: 'Morning' },
-    AFTERNOON: { bg: '#eff6ff', text: '#1e40af', label: 'Afternoon' },
-    NIGHT:     { bg: '#f5f3ff', text: '#6b21a8', label: 'Night' },
+    MORNING:   { bg: '#fef3c7', text: '#92400e', label: 'Morning', icon: Sunrise },
+    AFTERNOON: { bg: '#e0f2fe', text: '#0369a1', label: 'Afternoon', icon: Sun },
+    NIGHT:     { bg: '#ede9fe', text: '#5b21b6', label: 'Night', icon: Moon },
   };
   const c = map[shift] || { bg: '#f1f5f9', text: '#475569', label: shift };
+  const Icon = c.icon;
   return (
     <span style={{
       display: 'inline-flex',
       alignItems: 'center',
+      gap: '4px',
       padding: '2px 8px',
       borderRadius: '6px',
       backgroundColor: c.bg,
@@ -25,8 +27,11 @@ const ShiftBadge = ({ shift }) => {
       fontSize: '0.75rem',
       fontWeight: 600,
     }}>
+      {Icon && <Icon size={12} />}
       {c.label}
     </span>
+  );
+};
   );
 };
 

@@ -27,7 +27,9 @@ import {
   Download,
   ExternalLink,
   MapPin,
-  FolderDown
+  FolderDown,
+  Upload,
+  Folder
 } from 'lucide-react';
 import { api, subscribeToApiLogs, getAccessToken } from '../../services/api.js';
 
@@ -440,8 +442,8 @@ export default function AuditLogsView({ onShowToast }) {
                               justifyContent: 'space-between',
                               alignItems: 'center'
                             }}>
-                              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0f172a' }}>
-                                📤 Request Payload (Body)
+                              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0f172a', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                                <Upload size={13} color="#2563eb" /> Request Payload (Body)
                               </span>
                               {log.requestPayload && (
                                 <button
@@ -492,8 +494,8 @@ export default function AuditLogsView({ onShowToast }) {
                               justifyContent: 'space-between',
                               alignItems: 'center'
                             }}>
-                              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0f172a' }}>
-                                📥 Response Data (HTTP {log.status})
+                              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0f172a', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                                <Download size={13} color="#059669" /> Response Data (HTTP {log.status})
                               </span>
                               {log.response && (
                                 <button
@@ -978,8 +980,8 @@ export default function AuditLogsView({ onShowToast }) {
                           color: '#475569',
                           fontFamily: 'monospace',
                         }}>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px' }}>
-                            📁 {log.file_path || `uploads/${log.file_name}`}
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <Folder size={12} color="#64748b" /> {log.file_path || `uploads/${log.file_name}`}
                           </span>
                           <span style={{ color: '#059669', fontWeight: 600 }}>{log.file_size || 'Verified'}</span>
                         </div>
@@ -1080,9 +1082,13 @@ export default function AuditLogsView({ onShowToast }) {
                 </div>
 
                 <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: '0.8rem', color: '#475569' }}>
-                    <div>📍 Location: <strong>{selectedPhoto.location || selectedPhoto.zone_tag}</strong> ({selectedPhoto.depth || '-120m'})</div>
-                    <div>👤 Reporter: <strong>{selectedPhoto.reporter}</strong> ({selectedPhoto.reporter_code || 'EMP'})</div>
+                  <div style={{ fontSize: '0.8rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <MapPin size={13} color="var(--primary)" /> Location: <strong>{selectedPhoto.location || selectedPhoto.zone_tag}</strong> ({selectedPhoto.depth || '-120m'})
+                    </div>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <User size={13} color="#64748b" /> Reporter: <strong>{selectedPhoto.reporter}</strong> ({selectedPhoto.reporter_code || 'EMP'})
+                    </div>
                   </div>
                   <a
                     href={`http://localhost:5001${selectedPhoto.photo_url || `/uploads/${selectedPhoto.file_name}`}`}

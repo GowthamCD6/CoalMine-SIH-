@@ -541,7 +541,7 @@ export default function AttendanceSystemView({ onShowToast }) {
     } else {
       const stream = await startWebcam();
       if (stream) {
-        if (onShowToast) onShowToast('🟢 Live camera feed active & ready for scanning!');
+        if (onShowToast) onShowToast('Live camera feed active & ready for scanning!');
       } else {
         if (onShowToast) onShowToast('Camera permission denied or device not found.', true);
       }
@@ -786,10 +786,10 @@ export default function AttendanceSystemView({ onShowToast }) {
 
     setLastScanMessage({
       isSuccess: true,
-      text: `🎉 Miner ${newWorker.name} registered in TiDB! Stand in front of camera to scan live face.`,
+      text: `Miner ${newWorker.name} registered in TiDB! Stand in front of camera to scan live face.`,
     });
 
-    if (onShowToast) onShowToast(`✅ Miner ${newWorker.name} registered and saved in TiDB Database!`);
+    if (onShowToast) onShowToast(`Miner ${newWorker.name} registered and saved in TiDB Database!`);
 
     setIsSavingToDb(false);
     closeRegisterModal();
@@ -861,7 +861,7 @@ export default function AttendanceSystemView({ onShowToast }) {
       playChime(false);
       setLastScanMessage({
         isSuccess: false,
-        text: '❌ No face detected in camera! Please look directly into the camera inside the blue scanner box.',
+        text: 'No face detected in camera! Please look directly into the camera inside the blue scanner box.',
       });
       if (onShowToast) onShowToast('No face detected in live camera frame. Align your face inside the box.', true);
       setIsScanningActive(false);
@@ -968,9 +968,9 @@ export default function AttendanceSystemView({ onShowToast }) {
       }));
       setLastScanMessage({
         isSuccess: true,
-        text: `✅ Live Face Verified: ${selected.name} (${selected.worker_id}) matched in live camera! Active on duty.`,
+        text: `Live Face Verified: ${selected.name} (${selected.worker_id}) matched in live camera! Active on duty.`,
       });
-      if (onShowToast) onShowToast(`✅ Live face matched: ${selected.name} on duty.`);
+      if (onShowToast) onShowToast(`Live face matched: ${selected.name} on duty.`);
       setIsScanningActive(false);
       return;
     }
@@ -1010,10 +1010,10 @@ export default function AttendanceSystemView({ onShowToast }) {
     setRecentFeed((prev) => [newLog, ...prev.slice(0, 5)]);
     setLastScanMessage({
       isSuccess: true,
-      text: `🎉 LIVE CAMERA MATCH: ${selected.name} (${selected.worker_id}) • Biometric Score: ${confidenceVal} • Saved to TiDB Database!`,
+      text: `LIVE CAMERA MATCH: ${selected.name} (${selected.worker_id}) • Biometric Score: ${confidenceVal} • Saved to TiDB Database!`,
     });
 
-    if (onShowToast) onShowToast(`🎉 Live Face Verified: ${selected.name} logged to Database!`);
+    if (onShowToast) onShowToast(`Live Face Verified: ${selected.name} logged to Database!`);
     setIsScanningActive(false);
   };
 
@@ -1089,7 +1089,7 @@ export default function AttendanceSystemView({ onShowToast }) {
     link.click();
     document.body.removeChild(link);
 
-    if (onShowToast) onShowToast('📥 DGMS Form B Attendance Report exported to CSV!');
+    if (onShowToast) onShowToast('DGMS Form B Attendance Report exported to CSV!');
   };
 
   const deleteWorker = async (workerId) => {
@@ -2488,7 +2488,7 @@ export default function AttendanceSystemView({ onShowToast }) {
                       fontWeight: 700,
                     }}
                   >
-                    {capturedSnapshot ? '✓ SNAPSHOT READY' : 'LIVE FACE DETECTOR'}
+                    {capturedSnapshot ? 'SNAPSHOT READY' : 'LIVE FACE DETECTOR'}
                   </div>
                 </div>
 

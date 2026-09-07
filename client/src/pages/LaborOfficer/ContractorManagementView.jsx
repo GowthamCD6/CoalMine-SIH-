@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Briefcase, Plus, RefreshCw, AlertTriangle, CheckCircle2,
   Clock, Search, Filter, ShieldCheck, Users, FileText,
-  Building2, Phone, Mail, UserCheck, X, Check, Eye
+  Building2, Phone, Mail, UserCheck, X, Check, Eye, XCircle
 } from 'lucide-react';
 import { api } from '../../services/api.js';
 
@@ -403,9 +403,16 @@ export default function ContractorManagementView({ onShowToast }) {
                       padding: '3px 10px', borderRadius: '99px',
                       backgroundColor: w.training_status === 'CERTIFIED' ? '#dcfce7' : w.training_status === 'PENDING' ? '#fef3c7' : '#fee2e2',
                       color: w.training_status === 'CERTIFIED' ? '#166534' : w.training_status === 'PENDING' ? '#92400e' : '#991b1b',
-                      fontSize: '0.75rem', fontWeight: 700
+                      fontSize: '0.75rem', fontWeight: 700,
+                      display: 'inline-flex', alignItems: 'center', gap: '4px'
                     }}>
-                      {w.training_status === 'CERTIFIED' ? '✅ Certified' : w.training_status === 'PENDING' ? '⏳ Pending VTC' : '❌ Expired'}
+                      {w.training_status === 'CERTIFIED' ? (
+                        <><CheckCircle2 size={12} /> Certified</>
+                      ) : w.training_status === 'PENDING' ? (
+                        <><Clock size={12} /> Pending VTC</>
+                      ) : (
+                        <><XCircle size={12} /> Expired</>
+                      )}
                     </span>
                   </td>
                   <td style={{ padding: '12px 16px', textAlign: 'right' }}>

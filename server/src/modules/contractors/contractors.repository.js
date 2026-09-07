@@ -18,7 +18,7 @@ export class ContractorsRepository {
        LEFT JOIN contractor_contracts cc ON cc.contractor_id = c.id AND cc.status = 'ACTIVE'
        LEFT JOIN contractor_workers cw ON cw.contractor_id = c.id AND cw.status = 'ACTIVE'
        ${w}
-       GROUP BY c.id
+       GROUP BY c.id, o.name
        ORDER BY c.company_name ASC
        LIMIT ? OFFSET ?`,
       [...params, limit, offset]

@@ -26,7 +26,7 @@ export class IncidentsRepository {
        JOIN users u ON i.reported_by = u.id
        LEFT JOIN incident_actions ia ON ia.incident_id = i.id
        ${w}
-       GROUP BY i.id
+       GROUP BY i.id, m.name, u.first_name, u.last_name
        ORDER BY i.incident_at DESC
        LIMIT ? OFFSET ?`,
       [...params, limit, offset]

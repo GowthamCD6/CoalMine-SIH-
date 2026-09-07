@@ -2,26 +2,31 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   FileCheck, Plus, RefreshCw, Shield, AlertTriangle, CheckCircle2,
   Clock, XCircle, Search, Filter, ChevronDown, Paperclip, Wrench,
-  Eye, Edit2, BrainCircuit, ClipboardList, Calendar, X
+  Eye, Edit2, BrainCircuit, ClipboardList, Calendar, X, Globe
 } from 'lucide-react';
 import { api } from '../../services/api.js';
 
 // ─── Reusable Status Badge ───────────────────────────────────────────────────
 const StatusBadge = ({ status }) => {
   const map = {
-    COMPLIANT:     { bg: '#dcfce7', text: '#166534', label: '✅ Compliant' },
-    NON_COMPLIANT: { bg: '#fee2e2', text: '#991b1b', label: '❌ Non-Compliant' },
-    OVERDUE:       { bg: '#fef2f2', text: '#dc2626', label: '🔴 Overdue' },
-    PENDING:       { bg: '#f1f5f9', text: '#475569', label: '⏳ Pending' },
-    IN_PROGRESS:   { bg: '#dbeafe', text: '#1e40af', label: '🔵 In Progress' },
+    COMPLIANT:     { bg: '#dcfce7', text: '#166534', label: 'Compliant', icon: CheckCircle2 },
+    NON_COMPLIANT: { bg: '#fee2e2', text: '#991b1b', label: 'Non-Compliant', icon: XCircle },
+    OVERDUE:       { bg: '#fef2f2', text: '#dc2626', label: 'Overdue', icon: AlertTriangle },
+    PENDING:       { bg: '#f1f5f9', text: '#475569', label: 'Pending', icon: Clock },
+    IN_PROGRESS:   { bg: '#dbeafe', text: '#1e40af', label: 'In Progress', icon: RefreshCw },
   };
   const c = map[status] || { bg: '#f1f5f9', text: '#475569', label: status };
+  const Icon = c.icon;
   return (
     <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: '5px',
       padding: '3px 10px', borderRadius: '99px',
       backgroundColor: c.bg, color: c.text,
       fontSize: '0.75rem', fontWeight: '700',
-    }}>{c.label}</span>
+    }}>
+      {Icon && <Icon size={12} />}
+      {c.label}
+    </span>
   );
 };
 
@@ -37,8 +42,6 @@ const FreqBadge = ({ freq }) => {
 
 // ─── KPI Cards Row ───────────────────────────────────────────────────────────
 function StatusBoard({ board, loading }) {
-  if (loading) return <div style={{ height: '80px', borderRadius: '12px', backgroundColor: '#f1f5f9' }} />;
-  const { summary = {}, compliance_pct } = board || {};
   const cards = [
     { key: 'COMPLIANT', label: 'Compliant', color: '#16a34a', bg: '#dcfce7', icon: CheckCircle2 },
     { key: 'NON_COMPLIANT', label: 'Non-Compliant', color: '#dc2626', bg: '#fee2e2', icon: XCircle },
@@ -46,8 +49,30 @@ function StatusBoard({ board, loading }) {
     { key: 'PENDING', label: 'Pending', color: '#64748b', bg: '#f1f5f9', icon: Clock },
     { key: 'IN_PROGRESS', label: 'In Progress', color: '#2563eb', bg: '#dbeafe', icon: ClipboardList },
   ];
+
+  if (loading) {
+    return (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+        {cards.map(({ key, label }) => (
+          <div key={key} style={{
+            backgroundColor: '#ffffff', border: '1px solid #e2e8f0',
+            borderRadius: '12px', padding: '1rem',
+            display: 'flex', alignItems: 'center', gap: '12px',
+          }}>
+            <div style={{ width: '38px', height: '38px', borderRadius: '10px' }} className="mo-skeleton-cell" />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ width: '45px', height: '22px' }} className="mo-skeleton-val" />
+              <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600' }}>{label}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const { summary = {}, compliance_pct } = board || {};
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
       {cards.map(({ key, label, color, bg, icon: Icon }) => (
         <div key={key} style={{
           backgroundColor: '#ffffff', border: `1px solid ${bg}`,
@@ -227,31 +252,78 @@ export default function ComplianceView({ onShowToast }) {
   );
 
   return (
-    <div style={{ padding: '0', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {/* Page Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Shield size={28} color="#2563eb" />
-            AI Statutory & Compliance Hub
-          </h1>
-          <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.9rem' }}>
-            Track statutory requirements, assignments, evidence, and corrective actions across all mine sites.
-          </p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', boxSizing: 'border-box' }}>
+      {/* Top Header Bar */}
+      <div
+        style={{
+          padding: '0.65rem 1.25rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+          borderRadius: '12px',
+          backgroundColor: '#ffffff',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+          border: '1px solid #e2e8f0',
+          overflowX: 'auto',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+          <div
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              backgroundColor: 'rgba(37, 99, 235, 0.1)',
+              color: 'var(--primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Shield size={20} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.015em', whiteSpace: 'nowrap' }}>
+              AI Statutory & Compliance Hub
+            </h2>
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                backgroundColor: '#ecfdf5',
+                color: '#059669',
+                border: '1px solid #a7f3d0',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+              DGMS STATUTORY ACTIVE
+            </span>
+          </div>
         </div>
-        <button
-          onClick={loadAll}
-          disabled={loading}
-          style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            padding: '8px 14px', borderRadius: '8px',
-            backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0',
-            color: '#475569', fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer',
-          }}
-        >
-          <RefreshCw size={14} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
-          Refresh
-        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+          <button
+            onClick={loadAll}
+            disabled={loading}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '6px 14px', borderRadius: '8px',
+              backgroundColor: '#f8fafc', border: '1px solid #cbd5e1',
+              color: '#334155', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer',
+            }}
+          >
+            <RefreshCw size={14} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Status Board */}
@@ -312,7 +384,35 @@ export default function ComplianceView({ onShowToast }) {
       {activeTab === 'assignments' && (
         <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', overflow: 'hidden' }}>
           {loading ? (
-            <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>Loading assignments…</div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f8fafc', color: '#475569', fontSize: '0.75rem', fontWeight: '700' }}>
+                  <th style={{ padding: '12px 16px', textAlign: 'left' }}>Requirement</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left' }}>Mine</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Frequency</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Due Date</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Status</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Assigned To</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <tr key={n} style={{ borderBottom: '1px solid #f1f5f9' }} className="mo-skeleton-row">
+                    <td style={{ padding: '14px 16px' }}>
+                      <div className="mo-skeleton-cell" style={{ width: '65%', height: '14px', marginBottom: '6px' }} />
+                      <div className="mo-skeleton-cell" style={{ width: '40%', height: '10px' }} />
+                    </td>
+                    <td style={{ padding: '14px 16px' }}><div className="mo-skeleton-cell" style={{ width: '70%', height: '14px' }} /></td>
+                    <td style={{ padding: '14px 16px', textAlign: 'center' }}><div className="mo-skeleton-cell" style={{ width: '50px', height: '18px', margin: '0 auto', borderRadius: '4px' }} /></td>
+                    <td style={{ padding: '14px 16px', textAlign: 'center' }}><div className="mo-skeleton-cell" style={{ width: '75px', height: '14px', margin: '0 auto' }} /></td>
+                    <td style={{ padding: '14px 16px', textAlign: 'center' }}><div className="mo-skeleton-cell" style={{ width: '80px', height: '22px', margin: '0 auto', borderRadius: '99px' }} /></td>
+                    <td style={{ padding: '14px 16px', textAlign: 'center' }}><div className="mo-skeleton-cell" style={{ width: '90px', height: '14px', margin: '0 auto' }} /></td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right' }}><div className="mo-skeleton-cell" style={{ width: '60px', height: '28px', marginLeft: 'auto', borderRadius: '6px' }} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : filteredAssignments.length === 0 ? (
             <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>
               <ClipboardList size={40} style={{ display: 'block', margin: '0 auto 12px', opacity: 0.4 }} />
@@ -407,7 +507,11 @@ export default function ComplianceView({ onShowToast }) {
                     <td style={{ padding: '14px 16px', color: '#2563eb', fontFamily: 'monospace', fontSize: '0.8rem' }}>{r.statutory_reference || '—'}</td>
                     <td style={{ padding: '14px 16px', textAlign: 'center' }}><FreqBadge freq={r.frequency} /></td>
                     <td style={{ padding: '14px 16px', color: '#475569', fontSize: '0.8rem' }}>
-                      {r.mine_name ? `Mine: ${r.mine_name}` : r.org_name ? `Org: ${r.org_name}` : '🌐 Global'}
+                      {r.mine_name ? `Mine: ${r.mine_name}` : r.org_name ? `Org: ${r.org_name}` : (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Globe size={13} /> Global
+                        </span>
+                      )}
                     </td>
                     <td style={{ padding: '14px 16px', textAlign: 'center' }}>
                       <span style={{ padding: '2px 8px', borderRadius: '99px', fontSize: '0.72rem', fontWeight: '700', backgroundColor: r.status === 'ACTIVE' ? '#dcfce7' : '#fee2e2', color: r.status === 'ACTIVE' ? '#166534' : '#991b1b' }}>{r.status}</span>

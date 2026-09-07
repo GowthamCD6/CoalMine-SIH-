@@ -223,9 +223,7 @@ function App() {
           )}
 
           {activeTab === 'production' && (
-            <div style={{ padding: '2rem' }}>
-              <ProductionDashboardView onShowToast={showToast} />
-            </div>
+            <ProductionDashboardView onShowToast={showToast} />
           )}
 
           {/* ── Administration (Unified module with horizontal selector) ── */}
@@ -239,20 +237,18 @@ function App() {
             activeTab === 'pages' ||
             activeTab === 'evaluator'
           ) && (
-            <div style={{ padding: '2rem' }}>
-              <AdminManagement
-                currentUser={currentUser}
-                onShowToast={showToast}
-                initialTab={
-                  activeTab === 'mines' ? 'mines' :
-                  activeTab === 'users' ? 'users' :
-                  activeTab === 'rbac' ? 'rbac' :
-                  activeTab === 'pages' ? 'pages' :
-                  activeTab === 'evaluator' ? 'evaluator' :
-                  'orgs'
-                }
-              />
-            </div>
+            <AdminManagement
+              currentUser={currentUser}
+              onShowToast={showToast}
+              initialTab={
+                activeTab === 'mines' ? 'mines' :
+                activeTab === 'users' ? 'users' :
+                activeTab === 'rbac' ? 'rbac' :
+                activeTab === 'pages' ? 'pages' :
+                activeTab === 'evaluator' ? 'evaluator' :
+                'orgs'
+              }
+            />
           )}
 
           {activeTab === 'mobile-app' && (
@@ -268,21 +264,15 @@ function App() {
           )}
 
           {activeTab === 'inspections' && (
-            <div style={{ padding: '2rem' }}>
-              <InspectionsView onShowToast={showToast} />
-            </div>
+            <InspectionsView onShowToast={showToast} />
           )}
 
           {activeTab === 'incidents' && (
-            <div style={{ padding: '2rem' }}>
-              <IncidentManagementView onShowToast={showToast} />
-            </div>
+            <IncidentManagementView onShowToast={showToast} />
           )}
 
           {activeTab === 'emergency' && (
-            <div style={{ padding: '2rem' }}>
-              <EmergencyAlertsView currentUser={currentUser} onShowToast={showToast} />
-            </div>
+            <EmergencyAlertsView currentUser={currentUser} onShowToast={showToast} />
           )}
 
           {activeTab === 'command-map' && (
@@ -290,57 +280,39 @@ function App() {
           )}
 
           {activeTab === 'analytics' && (
-            <div style={{ padding: '2rem' }}>
-              <AnalyticsView onShowToast={showToast} />
-            </div>
+            <AnalyticsView onShowToast={showToast} />
           )}
 
           {activeTab === 'compliance' && (
-            <div style={{ padding: '2rem' }}>
-              <ComplianceView onShowToast={showToast} />
-            </div>
+            <ComplianceView onShowToast={showToast} />
           )}
 
           {activeTab === 'environment' && (
-            <div style={{ padding: '2rem' }}>
-              <EnvironmentMonitoringView onShowToast={showToast} />
-            </div>
+            <EnvironmentMonitoringView onShowToast={showToast} />
           )}
 
           {activeTab === 'labor' && (
-            <div style={{ padding: '2rem' }}>
-              <LaborDeploymentView onShowToast={showToast} onNavigateTo={navigateTo} />
-            </div>
+            <LaborDeploymentView onShowToast={showToast} onNavigateTo={navigateTo} />
           )}
 
           {activeTab === 'contractors' && (
-            <div style={{ padding: '2rem' }}>
-              <ContractorManagementView onShowToast={showToast} />
-            </div>
+            <ContractorManagementView onShowToast={showToast} />
           )}
 
           {activeTab === 'grievances' && (
-            <div style={{ padding: '2rem' }}>
-              <GrievanceBoardView onShowToast={showToast} />
-            </div>
+            <GrievanceBoardView onShowToast={showToast} />
           )}
 
           {activeTab === 'smoke-detection' && (
-            <div style={{ padding: '2rem' }}>
-              <SmokeDetectionView />
-            </div>
+            <SmokeDetectionView onShowToast={showToast} />
           )}
 
           {activeTab === 'attendance' && (
-            <div style={{ padding: '2rem' }}>
-              <AttendanceSystemView onShowToast={showToast} />
-            </div>
+            <AttendanceSystemView onShowToast={showToast} />
           )}
 
           {activeTab === 'resources' && (
-            <div style={{ padding: '2rem' }}>
-              <ResourceAllocationView onShowToast={showToast} />
-            </div>
+            <ResourceAllocationView onShowToast={showToast} />
           )}
 
           {/* Safe Fallback: if activeTab does not match any known view, show DashboardOverview */}

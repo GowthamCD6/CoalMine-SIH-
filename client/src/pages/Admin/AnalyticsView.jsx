@@ -310,8 +310,8 @@ export default function AnalyticsView({ onShowToast }) {
               <Shield size={24} />
             </div>
           </div>
-          <div style={{ marginTop: '12px', fontSize: '0.8rem', color: '#059669', fontWeight: 600 }}>
-            ✓ DGMS CMR 2017 & EPA Filings Current
+          <div style={{ marginTop: '12px', fontSize: '0.8rem', color: '#059669', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <CheckCircle2 size={13} /> DGMS CMR 2017 & EPA Filings Current
           </div>
         </div>
 

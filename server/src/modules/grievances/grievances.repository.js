@@ -22,7 +22,7 @@ export class GrievancesRepository {
        JOIN users u ON g.submitted_by = u.id
        LEFT JOIN grievance_responses gr ON gr.grievance_id = g.id
        ${w}
-       GROUP BY g.id
+       GROUP BY g.id, m.name, u.first_name, u.last_name
        ORDER BY g.submitted_at DESC
        LIMIT ? OFFSET ?`,
       [...params, limit, offset]

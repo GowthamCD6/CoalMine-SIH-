@@ -16,6 +16,9 @@ import {
   ArrowRight,
   Activity,
   X,
+  Fuel,
+  MapPin,
+  User,
 } from 'lucide-react';
 
 const INITIAL_MACHINERY = [
@@ -264,8 +267,8 @@ export default function ResourceAllocationView({ onShowToast }) {
           <div style={{ fontSize: '2.2rem', fontWeight: 800, color: '#059669', lineHeight: 1.1 }}>
             {fleetAvailability}%
           </div>
-          <div style={{ marginTop: '8px', fontSize: '0.78rem', color: '#059669', fontWeight: 600 }}>
-            ✓ Exceeds DGMS 75% Availability Norm
+          <div style={{ marginTop: '8px', fontSize: '0.78rem', color: '#059669', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <CheckCircle2 size={12} /> Exceeds DGMS 75% Availability Norm
           </div>
         </div>
 
@@ -399,12 +402,20 @@ export default function ResourceAllocationView({ onShowToast }) {
                     </span>
                   </div>
 
-                  <div style={{ fontSize: '0.8rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '4px', margin: '8px 0' }}>
-                    <div>📍 <strong>Location:</strong> {res.location}</div>
-                    <div>👤 <strong>Operator:</strong> {res.operator}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '5px', margin: '8px 0' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <MapPin size={13} color="var(--primary)" /> <strong>Location:</strong> {res.location}
+                    </div>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <User size={13} color="#64748b" /> <strong>Operator:</strong> {res.operator}
+                    </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                      <span>⛽ Fuel: <strong>{res.fuelPct}%</strong></span>
-                      <span>⏱️ <strong>{res.hoursOperated} hrs</strong></span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <Fuel size={12} color="#0284c7" /> Fuel: <strong>{res.fuelPct}%</strong>
+                      </span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <Clock size={12} color="#64748b" /> <strong>{res.hoursOperated} hrs</strong>
+                      </span>
                     </div>
                   </div>
 
@@ -488,12 +499,20 @@ export default function ResourceAllocationView({ onShowToast }) {
                     </span>
                   </div>
 
-                  <div style={{ fontSize: '0.8rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '4px', margin: '8px 0' }}>
-                    <div>📍 <strong>Location:</strong> {res.location}</div>
-                    <div>👤 <strong>Operator:</strong> Unassigned</div>
+                  <div style={{ fontSize: '0.8rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '5px', margin: '8px 0' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <MapPin size={13} color="var(--primary)" /> <strong>Location:</strong> {res.location}
+                    </div>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <User size={13} color="#64748b" /> <strong>Operator:</strong> Unassigned
+                    </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                      <span>⛽ Fuel: <strong>{res.fuelPct}%</strong></span>
-                      <span>⏱️ <strong>{res.hoursOperated} hrs</strong></span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <Fuel size={12} color="#0284c7" /> Fuel: <strong>{res.fuelPct}%</strong>
+                      </span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <Clock size={12} color="#64748b" /> <strong>{res.hoursOperated} hrs</strong>
+                      </span>
                     </div>
                   </div>
 
@@ -565,10 +584,12 @@ export default function ResourceAllocationView({ onShowToast }) {
                     </span>
                   </div>
 
-                  <div style={{ fontSize: '0.8rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '4px', margin: '8px 0' }}>
-                    <div>📍 <strong>Bay:</strong> {res.location}</div>
-                    <div style={{ color: '#b91c1c', fontWeight: 600 }}>
-                      ⚠️ <strong>Job:</strong> {res.health}
+                  <div style={{ fontSize: '0.8rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '5px', margin: '8px 0' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <MapPin size={13} color="var(--primary)" /> <strong>Bay:</strong> {res.location}
+                    </div>
+                    <div style={{ color: '#b91c1c', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <AlertTriangle size={13} color="#b91c1c" /> <strong>Job:</strong> {res.health}
                     </div>
                   </div>
 

@@ -7,9 +7,16 @@ const RAGBadge = ({ compliant, total }) => {
   if (pct === null) return <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>No data</span>;
   const color = pct >= 80 ? '#16a34a' : pct >= 60 ? '#d97706' : '#dc2626';
   const bg = pct >= 80 ? '#dcfce7' : pct >= 60 ? '#fef3c7' : '#fee2e2';
-  const label = pct >= 80 ? '✅ Compliant' : pct >= 60 ? '⚠️ Partial' : '❌ Non-Compliant';
+  const Icon = pct >= 80 ? CheckCircle2 : pct >= 60 ? AlertTriangle : XCircle;
+  const label = pct >= 80 ? 'Compliant' : pct >= 60 ? 'Partial' : 'Non-Compliant';
   return (
-    <span style={{ padding: '3px 10px', borderRadius: '99px', fontSize: '0.78rem', fontWeight: '700', backgroundColor: bg, color }}>
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: '4px',
+      padding: '3px 10px', borderRadius: '99px',
+      fontSize: '0.78rem', fontWeight: '700',
+      backgroundColor: bg, color
+    }}>
+      <Icon size={12} />
       {label} ({pct}%)
     </span>
   );
