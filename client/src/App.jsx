@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/common/Header.jsx';
 import Sidebar from './components/common/Sidebar.jsx';
 import DiagnosticsDrawer from './components/common/DiagnosticsDrawer.jsx';
@@ -57,9 +57,9 @@ function App() {
   // Derive permission helpers from the logged-in user
   const { hasPermission, getDashboardType, isSuperAdmin, isRegulatory } = usePermissions(currentUser);
 
-  const showToast = (message, isDanger = false) => {
+  const showToast = useCallback((message, isDanger = false) => {
     setToast({ message, isDanger });
-  };
+  }, []);
 
   const checkStatus = async () => {
     setIsRefreshing(true);
@@ -165,10 +165,10 @@ function App() {
     showToast('Logged out of session.');
   };
 
-  const navigateTo = (tab) => {
+  const navigateTo = useCallback((tab) => {
     setActiveTab(tab);
     setIsMobileSidebarOpen(false);
-  };
+  }, []);
 
   return (
     <div className="app-layout">

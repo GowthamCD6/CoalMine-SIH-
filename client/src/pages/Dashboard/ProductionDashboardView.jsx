@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Pickaxe, Plus, RefreshCw, AlertTriangle, CheckCircle2,
   Clock, Search, Filter, TrendingUp, Calendar, User,
@@ -9,17 +9,24 @@ import { api } from '../../services/api.js';
 
 const ShiftBadge = ({ shift }) => {
   const map = {
-    MORNING:   { bg: '#fef3c7', text: '#92400e', label: '🌅 Morning' },
-    AFTERNOON: { bg: '#e0f2fe', text: '#0369a1', label: '☀️ Afternoon' },
-    NIGHT:     { bg: '#ede9fe', text: '#5b21b6', label: '🌙 Night' },
+    MORNING:   { bg: '#fef3c7', text: '#92400e', label: 'Morning' },
+    AFTERNOON: { bg: '#eff6ff', text: '#1e40af', label: 'Afternoon' },
+    NIGHT:     { bg: '#f5f3ff', text: '#6b21a8', label: 'Night' },
   };
   const c = map[shift] || { bg: '#f1f5f9', text: '#475569', label: shift };
   return (
     <span style={{
-      padding: '3px 10px', borderRadius: '99px',
-      backgroundColor: c.bg, color: c.text,
-      fontSize: '0.75rem', fontWeight: '700'
-    }}>{c.label}</span>
+      display: 'inline-flex',
+      alignItems: 'center',
+      padding: '2px 8px',
+      borderRadius: '6px',
+      backgroundColor: c.bg,
+      color: c.text,
+      fontSize: '0.75rem',
+      fontWeight: 600,
+    }}>
+      {c.label}
+    </span>
   );
 };
 
@@ -41,7 +48,10 @@ export default function ProductionDashboardView({ onShowToast }) {
   const [showTargetModal, setShowTargetModal] = useState(false);
   const [showIssueModal, setShowIssueModal] = useState(false);
 
-  // Load mines list
+  const toastRef = useRef(onShowToast);
+  toastRef.current = onShowToast;
+
+  // Load mines list once
   useEffect(() => {
     api.getMines({ limit: 100 })
       .then(res => setMines(Array.isArray(res) ? res : res?.data || res?.rows || []))
@@ -63,11 +73,11 @@ export default function ProductionDashboardView({ onShowToast }) {
       setTargets(targRes?.data || targRes || (Array.isArray(targRes) ? targRes : []));
       setIssues(issRes?.data?.rows || issRes?.data || issRes?.rows || (Array.isArray(issRes) ? issRes : []));
     } catch (err) {
-      if (onShowToast) onShowToast(err.message || 'Failed to load production data', true);
+      if (toastRef.current) toastRef.current(err.message || 'Failed to load production data', true);
     } finally {
       setLoading(false);
     }
-  }, [shiftFilter, onShowToast]);
+  }, [shiftFilter]);
 
   useEffect(() => {
     loadData();
@@ -76,10 +86,10 @@ export default function ProductionDashboardView({ onShowToast }) {
   const handleResolveIssue = async (id) => {
     try {
       await api.updateOperationalIssueStatus(id, 'RESOLVED');
-      if (onShowToast) onShowToast('Operational issue marked resolved');
+      if (toastRef.current) toastRef.current('Operational issue marked resolved');
       loadData();
     } catch (err) {
-      if (onShowToast) onShowToast(err.message, true);
+      if (toastRef.current) toastRef.current(err.message, true);
     }
   };
 
@@ -96,62 +106,128 @@ export default function ProductionDashboardView({ onShowToast }) {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%', paddingBottom: '2rem' }}>
 
-      {/* Header Banner */}
-      <div className="glass-panel" style={{
-        padding: '1.5rem 2rem',
-        borderRadius: '16px',
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(248,250,252,0.8))',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-        border: '1px solid rgba(226, 232, 240, 0.8)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+      {/* Page Header */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        flexWrap: 'wrap',
+        gap: '1rem',
+        borderBottom: '1px solid #e2e8f0',
+        paddingBottom: '1.25rem',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            width: '42px', height: '42px', borderRadius: '12px',
-            backgroundColor: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center'
+        <div>
+          <h1 style={{
+            fontSize: '1.75rem',
+            fontWeight: 800,
+            color: '#0f172a',
+            letterSpacing: '-0.025em',
+            margin: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
           }}>
-            <Pickaxe size={24} color="#d97706" />
-          </div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)' }}>
-              Production & Mining Operations
-            </h1>
-            <p style={{ margin: '2px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Shift-wise coal dispatch logging, target tracking, machinery downtime, and bottleneck remediation.
-            </p>
-          </div>
+            <Pickaxe size={26} color="#2563eb" />
+            Production & Mining Operations
+          </h1>
+          <p style={{
+            marginTop: '0.375rem',
+            fontSize: '0.875rem',
+            color: '#64748b',
+            margin: '4px 0 0 0',
+          }}>
+            Shift-wise coal dispatch logging, target tracking, machinery downtime, and bottleneck remediation
+          </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        {/* Header Action Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <button
             onClick={loadData}
-            className="sleek-btn"
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#fff', border: '1px solid #cbd5e1' }}
+            title="Refresh production records"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 14px',
+              borderRadius: '8px',
+              backgroundColor: '#ffffff',
+              border: '1px solid #cbd5e1',
+              color: '#334155',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
           >
-            <RefreshCw size={16} className={loading ? 'spin' : ''} /> Refresh
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            <span>Refresh</span>
           </button>
+
           <button
             onClick={() => setShowTargetModal(true)}
-            className="sleek-btn"
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#f1f5f9', color: '#334155' }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 14px',
+              borderRadius: '8px',
+              backgroundColor: '#ffffff',
+              border: '1px solid #cbd5e1',
+              color: '#334155',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
           >
-            <Target size={16} /> Set Targets
+            <Target size={14} color="#2563eb" />
+            <span>Set Targets</span>
           </button>
+
           <button
             onClick={() => setShowIssueModal(true)}
-            className="sleek-btn"
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#fee2e2', color: '#dc2626' }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 14px',
+              borderRadius: '8px',
+              backgroundColor: '#ffffff',
+              border: '1px solid #cbd5e1',
+              color: '#334155',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
           >
-            <AlertTriangle size={16} /> Log Issue
+            <AlertTriangle size={14} color="#d97706" />
+            <span>Log Bottleneck</span>
           </button>
+
           <button
             onClick={() => setShowReportModal(true)}
-            className="sleek-btn"
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#d97706', color: '#fff' }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              backgroundColor: '#2563eb',
+              border: 'none',
+              color: '#ffffff',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(37, 99, 235, 0.2)',
+              transition: 'all 0.15s ease',
+            }}
           >
-            <Plus size={16} /> Record Shift Output
+            <Plus size={16} />
+            <span>Record Shift Output</span>
           </button>
         </div>
       </div>
@@ -159,120 +235,242 @@ export default function ProductionDashboardView({ onShowToast }) {
       {/* KPI Cards Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
         <div style={{
-          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
-          border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '14px'
+          backgroundColor: '#ffffff',
+          padding: '1.25rem',
+          borderRadius: '12px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
         }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Pickaxe size={22} color="#d97706" />
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '10px',
+            backgroundColor: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#2563eb',
+            flexShrink: 0,
+          }}>
+            <Pickaxe size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
               {Number(summary?.total_actual_tonnes || 0).toLocaleString()} <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b' }}>Tonnes</span>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Coal Produced</div>
+            <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, marginTop: '3px' }}>Total Coal Produced</div>
           </div>
         </div>
 
         <div style={{
-          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
-          border: '1px solid #dcfce7', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '14px'
+          backgroundColor: '#ffffff',
+          padding: '1.25rem',
+          borderRadius: '12px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
         }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <TrendingUp size={22} color="#16a34a" />
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '10px',
+            backgroundColor: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#16a34a',
+            flexShrink: 0,
+          }}>
+            <TrendingUp size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#16a34a' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#16a34a', lineHeight: 1.1 }}>
               {summary?.achievement_rate || 100}%
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Target Achievement</div>
+            <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, marginTop: '3px' }}>Target Achievement</div>
           </div>
         </div>
 
         <div style={{
-          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
-          border: '1px solid #fee2e2', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '14px'
+          backgroundColor: '#ffffff',
+          padding: '1.25rem',
+          borderRadius: '12px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
         }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Wrench size={22} color="#dc2626" />
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '10px',
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#dc2626',
+            flexShrink: 0,
+          }}>
+            <Wrench size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#dc2626' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
               {Number(summary?.total_downtime_hrs || 0).toFixed(1)} <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b' }}>Hrs</span>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Equipment Downtime</div>
+            <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, marginTop: '3px' }}>Equipment Downtime</div>
           </div>
         </div>
 
         <div style={{
-          backgroundColor: '#fff', padding: '1.2rem', borderRadius: '12px',
-          border: '1px solid #ffedd5', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '14px'
+          backgroundColor: '#ffffff',
+          padding: '1.25rem',
+          borderRadius: '12px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
         }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#ffedd5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <AlertTriangle size={22} color="#ea580c" />
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '10px',
+            backgroundColor: '#fffbeb',
+            border: '1px solid #fde68a',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#d97706',
+            flexShrink: 0,
+          }}>
+            <AlertTriangle size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ea580c' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
               {summary?.open_issues ?? issues.filter(i => i.status === 'OPEN').length}
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Bottlenecks</div>
+            <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, marginTop: '3px' }}>Active Bottlenecks</div>
           </div>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '2px' }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
+      {/* Tabs Navigation Strip & Filter Bar */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottom: '1px solid #e2e8f0',
+        flexWrap: 'wrap',
+        gap: '12px',
+        padding: '0 2px',
+      }}>
+        <div style={{ display: 'flex', gap: '4px', overflowX: 'auto' }}>
           {[
             { key: 'reports', label: 'Shift Output Logs', count: reports.length, icon: Pickaxe },
             { key: 'targets', label: 'Production Targets', count: targets.length, icon: Target },
             { key: 'issues', label: 'Operational Bottlenecks', count: issues.length, icon: AlertTriangle },
-          ].map(({ key, label, count, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => { setActiveTab(key); setSearchTerm(''); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '10px 18px', border: 'none', background: 'transparent',
-                cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem',
-                color: activeTab === key ? '#d97706' : 'var(--text-muted)',
-                borderBottom: activeTab === key ? '3px solid #d97706' : '3px solid transparent',
-                transition: 'all 0.2s', marginBottom: '-2px'
-              }}
-            >
-              <Icon size={18} />
-              {label}
-              <span style={{
-                fontSize: '0.72rem', padding: '2px 7px', borderRadius: '99px',
-                backgroundColor: activeTab === key ? '#fef3c7' : '#f1f5f9',
-                color: activeTab === key ? '#d97706' : '#64748b'
-              }}>
-                {count}
-              </span>
-            </button>
-          ))}
+          ].map(({ key, label, count, icon: Icon }) => {
+            const isActive = activeTab === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => { setActiveTab(key); setSearchTerm(''); }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '11px 18px',
+                  fontSize: '0.875rem',
+                  fontWeight: isActive ? 600 : 500,
+                  color: isActive ? '#2563eb' : '#64748b',
+                  backgroundColor: isActive ? '#eff6ff' : 'transparent',
+                  border: 'none',
+                  borderBottom: isActive ? '2px solid #2563eb' : '2px solid transparent',
+                  borderRadius: '8px 8px 0 0',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <Icon size={16} color={isActive ? '#2563eb' : '#64748b'} />
+                <span>{label}</span>
+                <span style={{
+                  fontSize: '0.725rem',
+                  fontWeight: 600,
+                  padding: '2px 8px',
+                  borderRadius: '10px',
+                  backgroundColor: isActive ? '#dbeafe' : '#f1f5f9',
+                  color: isActive ? '#1d4ed8' : '#64748b',
+                }}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        <div style={{ position: 'relative', width: '320px' }}>
-          <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          <input
-            type="text"
-            className="sleek-input"
-            placeholder={`Search ${activeTab}...`}
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            style={{ width: '100%', paddingLeft: '36px', height: '38px', fontSize: '0.85rem' }}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '4px' }}>
+          {activeTab === 'reports' && (
+            <select
+              value={shiftFilter}
+              onChange={(e) => setShiftFilter(e.target.value)}
+              style={{
+                height: '36px',
+                padding: '0 10px',
+                borderRadius: '8px',
+                border: '1px solid #cbd5e1',
+                fontSize: '0.8125rem',
+                color: '#334155',
+                backgroundColor: '#ffffff',
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="">All Shifts</option>
+              <option value="MORNING">Morning Shift</option>
+              <option value="AFTERNOON">Afternoon Shift</option>
+              <option value="NIGHT">Night Shift</option>
+            </select>
+          )}
+
+          <div style={{ position: 'relative', width: '240px' }}>
+            <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <input
+              type="text"
+              placeholder={`Search ${activeTab === 'reports' ? 'logs' : activeTab}...`}
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              style={{
+                width: '100%',
+                paddingLeft: '32px',
+                paddingRight: '12px',
+                height: '36px',
+                borderRadius: '8px',
+                border: '1px solid #cbd5e1',
+                fontSize: '0.8125rem',
+                color: '#0f172a',
+                backgroundColor: '#ffffff',
+                outline: 'none',
+              }}
+            />
+          </div>
         </div>
       </div>
 
       {/* ─── TAB 1: SHIFT REPORTS ─── */}
       {activeTab === 'reports' && (
-        <div className="table-container glass-panel" style={{ borderRadius: '12px', overflow: 'hidden' }}>
-          <table className="table-white" style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
                 <th style={{ textAlign: 'left', padding: '12px 16px' }}>Date & Shift</th>
@@ -336,8 +534,8 @@ export default function ProductionDashboardView({ onShowToast }) {
 
       {/* ─── TAB 2: TARGETS ─── */}
       {activeTab === 'targets' && (
-        <div className="table-container glass-panel" style={{ borderRadius: '12px', overflow: 'hidden' }}>
-          <table className="table-white" style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
                 <th style={{ textAlign: 'left', padding: '12px 16px' }}>Mine Facility</th>
@@ -385,8 +583,8 @@ export default function ProductionDashboardView({ onShowToast }) {
 
       {/* ─── TAB 3: OPERATIONAL ISSUES ─── */}
       {activeTab === 'issues' && (
-        <div className="table-container glass-panel" style={{ borderRadius: '12px', overflow: 'hidden' }}>
-          <table className="table-white" style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
                 <th style={{ textAlign: 'left', padding: '12px 16px' }}>Issue ID / Type</th>
@@ -590,8 +788,8 @@ function RecordShiftModal({ mines, onClose, onSuccess }) {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-            <button type="button" onClick={onClose} className="sleek-btn" style={{ backgroundColor: '#f1f5f9', color: '#475569' }}>Cancel</button>
-            <button type="submit" disabled={submitting} className="sleek-btn" style={{ backgroundColor: '#d97706', color: '#fff' }}>
+            <button type="button" onClick={onClose} style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', color: '#475569', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>Cancel</button>
+            <button type="submit" disabled={submitting} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: '#2563eb', color: '#ffffff', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>
               {submitting ? 'Recording...' : 'Record Output'}
             </button>
           </div>
@@ -674,8 +872,8 @@ function SetTargetModal({ mines, onClose, onSuccess }) {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-            <button type="button" onClick={onClose} className="sleek-btn" style={{ backgroundColor: '#f1f5f9', color: '#475569' }}>Cancel</button>
-            <button type="submit" disabled={submitting} className="sleek-btn" style={{ backgroundColor: 'var(--primary)', color: '#fff' }}>
+            <button type="button" onClick={onClose} style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', color: '#475569', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>Cancel</button>
+            <button type="submit" disabled={submitting} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: '#2563eb', color: '#ffffff', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>
               {submitting ? 'Saving...' : 'Set Target'}
             </button>
           </div>
@@ -725,7 +923,7 @@ function ReportIssueModal({ mines, onClose, onSuccess }) {
         padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#dc2626' }}>Log Operational Bottleneck</h2>
+          <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>Log Operational Bottleneck</h2>
           <button type="button" onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
         </div>
 
@@ -770,8 +968,8 @@ function ReportIssueModal({ mines, onClose, onSuccess }) {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-            <button type="button" onClick={onClose} className="sleek-btn" style={{ backgroundColor: '#f1f5f9', color: '#475569' }}>Cancel</button>
-            <button type="submit" disabled={submitting} className="sleek-btn" style={{ backgroundColor: '#dc2626', color: '#fff' }}>
+            <button type="button" onClick={onClose} style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', color: '#475569', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>Cancel</button>
+            <button type="submit" disabled={submitting} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: '#dc2626', color: '#ffffff', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>
               {submitting ? 'Logging...' : 'Log Issue'}
             </button>
           </div>
