@@ -7,9 +7,10 @@ import {
   ShieldCheck,
   FolderTree,
   FileText,
-  ChevronRight,
   Database,
   Smartphone,
+  ShieldAlert,
+  ChevronRight,
   ClipboardCheck,
   Ambulance,
   Map,
@@ -18,6 +19,7 @@ import {
   Tractor,
   Cloud,
   HardHat,
+  Camera,
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onSelectTab }) {
@@ -34,6 +36,7 @@ export default function Sidebar({ activeTab, onSelectTab }) {
       title: 'Smart Governance & Compliance',
       items: [
         { id: 'compliance', label: 'AI Statutory Hub', icon: FileCheck },
+        { id: 'smoke-detection', label: 'AI Smoke CCTV', icon: Camera },
         { id: 'environment', label: 'Environmental Control', icon: Cloud },
         { id: 'labor', label: 'Labor & Safety Tracking', icon: HardHat },
         { id: 'audit-logs', label: 'Blockchain Audit Log', icon: FileText },
@@ -50,6 +53,7 @@ export default function Sidebar({ activeTab, onSelectTab }) {
     {
       title: 'Mobile & Field Unit',
       items: [
+        { id: 'alerts', label: 'Emergency Alerts & Dispatch', icon: ShieldAlert },
         { id: 'mobile-app', label: 'Mobile App & Delegation', icon: Smartphone },
       ],
     },

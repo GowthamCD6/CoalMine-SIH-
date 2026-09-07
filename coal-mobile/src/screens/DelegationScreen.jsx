@@ -96,7 +96,7 @@ export const DelegationScreen = ({ currentUser, onSwitchUser }) => {
           <View style={styles.actorIdentity}>
             <Icon name="user" size={14} color="#38bdf8" style={{ marginRight: 6 }} />
             <Text style={styles.actorGreeting}>
-              ACTOR: <Text style={styles.actorName}>{currentUser.username.toUpperCase()}</Text>
+              SIGNED IN AS: <Text style={styles.actorName}>{currentUser.username.toUpperCase()}</Text>
             </Text>
           </View>
           <View
@@ -117,26 +117,22 @@ export const DelegationScreen = ({ currentUser, onSwitchUser }) => {
                 actor?.can_manage_access ? styles.badgeTextSuccess : styles.badgeTextDanger,
               ]}
             >
-              {actor?.can_manage_access ? 'DELEGATION ACTIVE' : 'READ-ONLY STAFF'}
+              {actor?.can_manage_access ? 'ADMIN MODE' : 'WORKER MODE'}
             </Text>
           </View>
         </View>
 
         <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>AUTHORITY TIER:</Text>
-          <Text style={styles.metaVal}>{actor?.level || 'UNKNOWN'}</Text>
+          <Text style={styles.metaLabel}>ROLE:</Text>
+          <Text style={styles.metaVal}>{currentUser?.mobileRole === 'SUPERADMIN' ? 'SUPER ADMIN' : 'FIELD WORKER'}</Text>
         </View>
 
         <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>JURISDICTION:</Text>
+          <Text style={styles.metaLabel}>ACCESS SCOPE:</Text>
           <Text style={styles.metaVal}>
-            {actor?.level === 'SUPERADMIN'
-              ? 'GLOBAL PLATFORM (ALL ORGS & MINES)'
-              : actor?.level === 'ORG_ADMIN'
-              ? `ORGANIZATION JURISDICTION (ORG #${actor.organization_id})`
-              : actor?.level === 'MINE_ADMIN'
-              ? `MINE JURISDICTION (MINE #${actor.mine_id})`
-              : 'STANDARD WORKER (DELEGATION RESTRICTED)'}
+            {currentUser?.mobileRole === 'SUPERADMIN'
+              ? 'FULL PLATFORM — ALL WORKERS'
+              : 'FIELD WORKER — LIMITED ACCESS'}
           </Text>
         </View>
 
@@ -154,8 +150,8 @@ export const DelegationScreen = ({ currentUser, onSwitchUser }) => {
           />
           <Text style={styles.summaryText}>
             {actor?.can_manage_access
-              ? `Authorized to grant and revoke access for ${manageableCount} subordinate personnel.`
-              : 'USERS_MANAGE_ROLES authority restricted. Subordinate access modification disabled.'}
+              ? `Authorized to manage ${manageableCount} field workers.`
+              : 'Worker accounts cannot manage other users. Contact your Super Admin.'}
           </Text>
         </View>
       </View>
@@ -167,7 +163,7 @@ export const DelegationScreen = ({ currentUser, onSwitchUser }) => {
           onPress={() => setFilter('ALL')}
         >
           <Text style={[styles.tabText, filter === 'ALL' && styles.tabTextActive]}>
-            ALL USERS ({users.length})
+              ALL WORKERS ({users.length})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -175,7 +171,7 @@ export const DelegationScreen = ({ currentUser, onSwitchUser }) => {
           onPress={() => setFilter('MANAGEABLE')}
         >
           <Text style={[styles.tabText, filter === 'MANAGEABLE' && styles.tabTextActive]}>
-            SUBORDINATES ({manageableCount})
+              MANAGEABLE ({manageableCount})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -378,13 +374,18 @@ export const DelegationScreen = ({ currentUser, onSwitchUser }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090d16',
+    backgroundColor: '#f8fafc',
   },
   actorCard: {
-    backgroundColor: '#0f172a',
-    padding: 14,
+    backgroundColor: '#ffffff',
+    padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: '#e2e8f0',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 2,
   },
   actorRow: {
     flexDirection: 'row',
@@ -398,148 +399,152 @@ const styles = StyleSheet.create({
   },
   actorGreeting: {
     color: '#64748b',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    fontSize: 12,
+    fontWeight: '500',
   },
   actorName: {
-    color: '#ffffff',
-    fontWeight: '900',
+    color: '#0f172a',
+    fontWeight: '700',
   },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 4,
+    paddingVertical: 4,
+    borderRadius: 6,
     borderWidth: 1,
   },
   badgeSuccess: {
-    backgroundColor: 'rgba(56, 189, 248, 0.1)',
-    borderColor: 'rgba(56, 189, 248, 0.25)',
+    backgroundColor: '#ecfdf5',
+    borderColor: '#a7f3d0',
   },
   badgeDanger: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderColor: 'rgba(239, 68, 68, 0.25)',
+    backgroundColor: '#f1f5f9',
+    borderColor: '#e2e8f0',
   },
   badgeText: {
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 0.6,
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   badgeTextSuccess: {
-    color: '#38bdf8',
+    color: '#047857',
   },
   badgeTextDanger: {
-    color: '#ef4444',
+    color: '#64748b',
   },
   metaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 3,
+    marginTop: 4,
   },
   metaLabel: {
-    color: '#475569',
-    fontSize: 9.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    color: '#64748b',
+    fontSize: 11,
+    fontWeight: '500',
   },
   metaVal: {
-    color: '#cbd5e1',
-    fontSize: 9.5,
-    fontWeight: '700',
+    color: '#0f172a',
+    fontSize: 11,
+    fontWeight: '600',
   },
   summaryBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 6,
-    padding: 9,
-    marginTop: 9,
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 10,
     borderWidth: 1,
   },
   summaryBoxSuccess: {
-    backgroundColor: 'rgba(56, 189, 248, 0.06)',
-    borderColor: 'rgba(56, 189, 248, 0.2)',
+    backgroundColor: '#f0f9ff',
+    borderColor: '#bae6fd',
   },
   summaryBoxWarn: {
-    backgroundColor: 'rgba(245, 158, 11, 0.06)',
-    borderColor: 'rgba(245, 158, 11, 0.2)',
+    backgroundColor: '#fffbeb',
+    borderColor: '#fde68a',
   },
   summaryText: {
-    color: '#cbd5e1',
-    fontSize: 10,
-    fontWeight: '600',
+    color: '#334155',
+    fontSize: 11,
+    fontWeight: '500',
     flex: 1,
-    lineHeight: 14,
+    lineHeight: 15,
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#090d16',
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: '#e2e8f0',
   },
   tabBtn: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 11,
     alignItems: 'center',
   },
   tabBtnActive: {
     borderBottomWidth: 2,
-    borderBottomColor: '#38bdf8',
+    borderBottomColor: '#0284c7',
   },
   tabText: {
     color: '#64748b',
-    fontSize: 9.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    fontSize: 11,
+    fontWeight: '500',
   },
   tabTextActive: {
-    color: '#38bdf8',
+    color: '#0284c7',
+    fontWeight: '600',
   },
   messageBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderColor: 'rgba(239, 68, 68, 0.2)',
+    backgroundColor: '#fef2f2',
+    borderColor: '#fecaca',
     borderWidth: 1,
-    padding: 8,
-    margin: 10,
-    borderRadius: 4,
+    padding: 10,
+    margin: 12,
+    borderRadius: 8,
   },
   messageText: {
-    color: '#f87171',
-    fontSize: 10,
+    color: '#b91c1c',
+    fontSize: 11.5,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 24,
   },
   loadingText: {
     color: '#64748b',
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '500',
     marginTop: 8,
   },
   listContent: {
-    padding: 10,
-    gap: 8,
+    padding: 12,
+    gap: 10,
   },
   userCard: {
-    backgroundColor: '#0f172a',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    padding: 14,
     borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
   },
   userCardManageable: {
-    borderColor: '#1e293b',
-    borderLeftWidth: 3,
-    borderLeftColor: '#38bdf8',
+    borderColor: '#e2e8f0',
+    borderLeftWidth: 3.5,
+    borderLeftColor: '#0284c7',
   },
   userCardRestricted: {
-    borderColor: '#1e293b',
-    opacity: 0.8,
+    borderColor: '#e2e8f0',
+    opacity: 0.85,
   },
   userCardHeader: {
     flexDirection: 'row',
@@ -551,109 +556,105 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatarBox: {
-    width: 28,
-    height: 28,
-    borderRadius: 4,
-    backgroundColor: '#1e293b',
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
+    marginRight: 10,
   },
   userName: {
-    color: '#ffffff',
-    fontSize: 12.5,
-    fontWeight: '800',
+    color: '#0f172a',
+    fontSize: 13.5,
+    fontWeight: '600',
   },
   userEmail: {
     color: '#64748b',
-    fontSize: 10,
-    fontFamily: 'monospace',
+    fontSize: 11,
   },
   statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 6,
     borderWidth: 1,
   },
   statusPillGreen: {
-    backgroundColor: 'rgba(34, 197, 94, 0.1)',
-    borderColor: 'rgba(34, 197, 94, 0.25)',
+    backgroundColor: '#ecfdf5',
+    borderColor: '#a7f3d0',
   },
   statusPillGray: {
-    backgroundColor: 'rgba(100, 116, 139, 0.1)',
-    borderColor: 'rgba(100, 116, 139, 0.25)',
+    backgroundColor: '#f1f5f9',
+    borderColor: '#e2e8f0',
   },
   statusPillText: {
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+    fontSize: 9.5,
+    fontWeight: '600',
   },
-  textGreen: { color: '#4ade80' },
-  textGray: { color: '#94a3b8' },
+  textGreen: { color: '#047857' },
+  textGray: { color: '#64748b' },
   reasonBox: {
-    backgroundColor: '#090d16',
-    borderRadius: 4,
-    padding: 7,
-    marginTop: 8,
+    backgroundColor: '#f8fafc',
+    borderRadius: 6,
+    padding: 8,
+    marginTop: 10,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#f1f5f9',
   },
   reasonLabel: {
-    color: '#475569',
-    fontSize: 8.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    color: '#64748b',
+    fontSize: 9.5,
+    fontWeight: '600',
   },
   reasonVal: {
-    color: '#cbd5e1',
-    fontSize: 10,
-    fontWeight: '600',
-    marginTop: 1,
+    color: '#334155',
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 2,
   },
   rolesSection: {
-    marginTop: 8,
+    marginTop: 10,
   },
   rolesLabel: {
-    color: '#475569',
-    fontSize: 8.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-  noRolesText: {
     color: '#64748b',
     fontSize: 10,
+    fontWeight: '600',
+    marginBottom: 5,
+  },
+  noRolesText: {
+    color: '#94a3b8',
+    fontSize: 11,
     fontStyle: 'italic',
   },
   subroleChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: '#f8fafc',
+    borderRadius: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
     marginVertical: 2,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#e2e8f0',
   },
   subroleChipText: {
-    color: '#cbd5e1',
-    fontSize: 10.5,
-    fontWeight: '700',
+    color: '#0f172a',
+    fontSize: 11.5,
+    fontWeight: '500',
     flex: 1,
   },
   revokeBtn: {
-    padding: 3,
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    borderRadius: 3,
+    padding: 4,
+    backgroundColor: '#fef2f2',
+    borderRadius: 4,
   },
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
-    gap: 6,
+    marginTop: 12,
+    gap: 8,
   },
   grantBtn: {
     flex: 1,
@@ -661,139 +662,140 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#0284c7',
-    borderRadius: 4,
-    paddingVertical: 8,
+    borderRadius: 6,
+    paddingVertical: 9,
   },
   grantBtnText: {
     color: '#ffffff',
-    fontSize: 9.5,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+    fontSize: 11,
+    fontWeight: '600',
   },
   disabledBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1e293b',
-    borderRadius: 4,
-    paddingVertical: 8,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 6,
+    paddingVertical: 9,
   },
   disabledBtnText: {
-    color: '#64748b',
-    fontSize: 9.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    color: '#94a3b8',
+    fontSize: 11,
+    fontWeight: '500',
   },
   switchBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#090d16',
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 4,
-    paddingVertical: 7,
-    paddingHorizontal: 10,
+    borderColor: '#cbd5e1',
+    borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
   switchBtnText: {
-    color: '#38bdf8',
-    fontSize: 9.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    color: '#0284c7',
+    fontSize: 11,
+    fontWeight: '600',
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
     justifyContent: 'center',
     padding: 16,
   },
   modalContent: {
-    backgroundColor: '#0f172a',
-    borderRadius: 8,
-    padding: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 18,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#e2e8f0',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 6,
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
-  },
-  modalTitle: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 0.8,
-  },
-  modalSubtitle: {
-    color: '#94a3b8',
-    fontSize: 10.5,
-    marginBottom: 12,
-  },
-  bold: {
-    color: '#ffffff',
-    fontWeight: '800',
-  },
-  modalSectionLabel: {
-    color: '#475569',
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.8,
     marginBottom: 6,
   },
-  noSubroles: {
+  modalTitle: {
+    color: '#0f172a',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  modalSubtitle: {
     color: '#64748b',
-    fontSize: 11,
+    fontSize: 12,
+    marginBottom: 14,
+  },
+  bold: {
+    color: '#0f172a',
+    fontWeight: '600',
+  },
+  modalSectionLabel: {
+    color: '#64748b',
+    fontSize: 10.5,
+    fontWeight: '600',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
+  noSubroles: {
+    color: '#94a3b8',
+    fontSize: 12,
     paddingVertical: 12,
   },
   subroleOption: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
-    borderRadius: 4,
-    padding: 10,
-    marginVertical: 3,
+    backgroundColor: '#f8fafc',
+    borderRadius: 8,
+    padding: 12,
+    marginVertical: 4,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#e2e8f0',
   },
   subroleOptionTitle: {
-    color: '#ffffff',
-    fontSize: 11.5,
-    fontWeight: '800',
+    color: '#0f172a',
+    fontSize: 12.5,
+    fontWeight: '600',
   },
   subroleOptionMeta: {
     color: '#64748b',
-    fontSize: 9.5,
+    fontSize: 10.5,
     marginTop: 2,
   },
   assignBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#090d16',
+    backgroundColor: '#e0f2fe',
     borderWidth: 1,
     borderColor: '#0284c7',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    gap: 3,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 6,
+    gap: 4,
   },
   assignBadgeText: {
-    color: '#38bdf8',
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+    color: '#0369a1',
+    fontSize: 10.5,
+    fontWeight: '600',
   },
   closeBtn: {
-    marginTop: 12,
+    marginTop: 14,
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 9,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 6,
   },
   closeBtnText: {
-    color: '#64748b',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    color: '#475569',
+    fontSize: 11.5,
+    fontWeight: '600',
   },
 });
 

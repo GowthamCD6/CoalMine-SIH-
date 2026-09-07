@@ -32,13 +32,118 @@ const pool = mysql.createPool({
   ssl: sslConfig,
   waitForConnections: true,
   connectionLimit: 10,
+  maxIdle: 3,                 // Keep idle pool small so dead connections are cleared
+  idleTimeout: 30000,         // Cull idle connection after 30s before remote resets it
   queueLimit: 0,
   enableKeepAlive: true,
-  keepAliveInitialDelay: 0,
+  keepAliveInitialDelay: 10000,
 });
 
+// Suppress unhandled errors on background idle connections in pool
+if (pool.pool && typeof pool.pool.on === 'function') {
+  pool.pool.on('error', (err) => {
+    console.warn('⚠️ [TiDB Pool Warning] Background connection dropped (auto-recovering):', err.code || err.message);
+  });
+}
+
+const TRANSIENT_ERRORS = new Set([
+  'ECONNRESET',
+  'PROTOCOL_CONNECTION_LOST',
+  'ETIMEDOUT',
+  'EPIPE',
+  'ENOTFOUND',
+  'ER_LOCK_DEADLOCK',
+  'PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR',
+  'ER_QUERY_INTERRUPTED',
+  'SERVER_SHUTDOWN',
+]);
+
+const isTransientError = (err) => {
+  if (!err) return false;
+  if (TRANSIENT_ERRORS.has(err.code)) return true;
+  if (err.fatal) return true;
+  const msg = String(err.message || '');
+  return (
+    msg.includes('ECONNRESET') ||
+    msg.includes('Connection lost') ||
+    msg.includes('closed network connection') ||
+    msg.includes('deadlock') ||
+    msg.includes('ETIMEDOUT')
+  );
+};
+
+// Resilient wrapper with auto-retry for transient network drops (ECONNRESET)
+const originalQuery = pool.query.bind(pool);
+const originalExecute = pool.execute.bind(pool);
+const originalGetConnection = pool.getConnection.bind(pool);
+
+async function resilientQuery(sql, params = [], maxRetries = 3) {
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    try {
+      return await originalQuery(sql, params);
+    } catch (error) {
+      attempt++;
+      if (attempt < maxRetries && isTransientError(error)) {
+        const backoff = attempt * 300;
+        console.warn(
+          `⚠️ [TiDB] Transient error (${error.code || error.message}). Retrying query attempt ${attempt}/${maxRetries} in ${backoff}ms...`
+        );
+        await new Promise((r) => setTimeout(r, backoff));
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
+async function resilientExecute(sql, params = [], maxRetries = 3) {
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    try {
+      return await originalExecute(sql, params);
+    } catch (error) {
+      attempt++;
+      if (attempt < maxRetries && isTransientError(error)) {
+        const backoff = attempt * 300;
+        console.warn(
+          `⚠️ [TiDB] Transient error (${error.code || error.message}). Retrying execute attempt ${attempt}/${maxRetries} in ${backoff}ms...`
+        );
+        await new Promise((r) => setTimeout(r, backoff));
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
+async function resilientGetConnection(maxRetries = 3) {
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    try {
+      return await originalGetConnection();
+    } catch (error) {
+      attempt++;
+      if (attempt < maxRetries && isTransientError(error)) {
+        const backoff = attempt * 300;
+        console.warn(
+          `⚠️ [TiDB] Transient error getting connection (${error.code || error.message}). Retrying attempt ${attempt}/${maxRetries}...`
+        );
+        await new Promise((r) => setTimeout(r, backoff));
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
+// Monkey-patch pool methods so all repositories importing `db` benefit automatically
+pool.query = resilientQuery;
+pool.execute = resilientExecute;
+pool.getConnection = resilientGetConnection;
+
 export const query = async (sql, params = []) => {
-  const [rows] = await pool.query(sql, params);
+  const [rows] = await resilientQuery(sql, params);
   return rows;
 };
 

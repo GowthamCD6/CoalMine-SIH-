@@ -10,7 +10,8 @@ import {
   CheckCircle2,
   Clock,
   ArrowUpRight,
-  Server
+  Server,
+  BellRing,
 } from 'lucide-react';
 import { api } from '../../services/api.js';
 
@@ -67,7 +68,8 @@ export default function DashboardOverview({ serverStatus, onNavigateTo }) {
     { title: 'Mines / Sites', count: counts.mines, icon: Layers, color: '#059669', tab: 'mines' },
     { title: 'Registered Users', count: counts.users, icon: Users, color: '#7c3aed', tab: 'users' },
     { title: 'RBAC Roles', count: counts.roles, icon: ShieldCheck, color: '#d97706', tab: 'rbac' },
-    { title: 'Audit Trail Records', count: counts.auditLogs, icon: FileText, color: '#dc2626', tab: 'audit' },
+    { title: 'Safety & Alerts Dispatch', count: 'Live Matrix', icon: BellRing, color: '#dc2626', tab: 'alerts' },
+    { title: 'Audit Trail Records', count: counts.auditLogs, icon: FileText, color: '#0284c7', tab: 'audit' },
   ];
 
   return (

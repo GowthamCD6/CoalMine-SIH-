@@ -37,6 +37,14 @@ const startServer = async () => {
       });
     };
 
+    process.on('unhandledRejection', (reason) => {
+      logger.error('⚠️ [Server Process] Unhandled Promise Rejection (auto-recovered):', reason);
+    });
+
+    process.on('uncaughtException', (err) => {
+      logger.error('⚠️ [Server Process] Uncaught Exception (auto-recovered):', err);
+    });
+
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
   } catch (error) {

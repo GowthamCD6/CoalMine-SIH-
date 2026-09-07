@@ -3,32 +3,32 @@ import { Platform } from 'react-native';
 export const CANDIDATE_ENDPOINTS = [
   {
     id: 'usb',
-    label: 'USB ADB (localhost)',
-    url: 'http://localhost:5000/api/v1',
+    label: 'USB ADB (localhost:5001)',
+    url: 'http://localhost:5001/api/v1',
     desc: 'For physical phone connected via USB cable with adb reverse',
   },
   {
     id: 'wifi',
-    label: 'Wi-Fi LAN (10.150.255.156)',
-    url: 'http://10.150.255.156:5000/api/v1',
+    label: 'Wi-Fi LAN (10.232.78.180:5001)',
+    url: 'http://10.232.78.180:5001/api/v1',
     desc: 'For wireless phone connected to same Wi-Fi network',
   },
   {
-    id: 'emulator',
-    label: 'Android Emulator (10.0.2.2)',
-    url: 'http://10.0.2.2:5000/api/v1',
-    desc: 'For Android Studio virtual emulator',
+    id: 'usb_legacy',
+    label: 'USB ADB (localhost:5000)',
+    url: 'http://localhost:5000/api/v1',
+    desc: 'Legacy ADB reverse port forwarding to 5001',
   },
   {
-    id: 'ethernet',
-    label: 'LAN Ethernet (10.251.188.198)',
-    url: 'http://10.251.188.198:5000/api/v1',
-    desc: 'Secondary local network interface',
+    id: 'emulator',
+    label: 'Android Emulator (10.0.2.2:5001)',
+    url: 'http://10.0.2.2:5001/api/v1',
+    desc: 'For Android Studio virtual emulator',
   },
 ];
 
-// Default to localhost:5000 (works over USB via adb reverse, iOS, and desktop)
-let currentBaseUrl = 'http://localhost:5000/api/v1';
+// Default to localhost:5001 (server port)
+let currentBaseUrl = 'http://localhost:5001/api/v1';
 let activeAccessToken = null;
 let activeRefreshToken = null;
 let cachedCurrentUser = null;
@@ -183,6 +183,37 @@ async function request(endpoint, options = {}, retryOnNetworkError = true) {
   }
 }
 
+/**
+ * Classify a user into a mobile-app role based on their subroles/permissions.
+ * Returns: 'WORKER' | 'RESTRICTED_ADMIN'
+ */
+export function getUserMobileRole(userProfile) {
+  if (!userProfile) return 'WORKER';
+
+  const permissions = userProfile.permissions || [];
+  const subroles = userProfile.subroles || [];
+
+  // Check for any admin roles or administrative permissions
+  const isAdmin =
+    permissions.some((p) => p.permission_code === '*' || p.permission_code === 'ALL_PERMISSIONS') ||
+    subroles.some((sr) => {
+      const code = (sr.role_code || '').toUpperCase();
+      return (
+        code.includes('SUPER_ADMIN') ||
+        code.includes('ORG_ADMIN') ||
+        code.includes('MINE_ADMIN') ||
+        code.includes('SITE_ADVISOR') ||
+        code.includes('EXECUTIVE') ||
+        code.includes('DIRECTOR')
+      );
+    });
+
+  if (isAdmin) return 'RESTRICTED_ADMIN';
+
+  // Field worker
+  return 'WORKER';
+}
+
 export const mobileApi = {
   // Diagnostic
   testHealth: (url) => testEndpointHealth(url || currentBaseUrl),
@@ -200,13 +231,41 @@ export const mobileApi = {
     if (res?.user) {
       setCurrentCachedUser(res.user);
     }
+
+    // Fetch full profile with subroles/permissions to classify role
+    try {
+      const profile = await request('/auth/me');
+      const mobileRole = getUserMobileRole(profile);
+
+      if (mobileRole === 'RESTRICTED_ADMIN') {
+        // Clear auth since admin users must use Web Portal
+        clearAuth();
+        throw new Error(
+          'Access Denied: Administrators must use the NexusMine Web Portal. This mobile application is dedicated strictly to Field Workers.'
+        );
+      }
+
+      // Attach worker role and enriched profile to response
+      res.user = { ...res.user, ...profile, mobileRole: 'WORKER' };
+      setCurrentCachedUser(res.user);
+    } catch (err) {
+      if (err.message?.includes('Access Denied')) {
+        throw err;
+      }
+      if (res?.user) {
+        res.user.mobileRole = 'WORKER';
+      }
+    }
+
     return res;
   },
 
   async getMe() {
     const res = await request('/auth/me');
-    setCurrentCachedUser(res);
-    return res;
+    const mobileRole = getUserMobileRole(res);
+    const enriched = { ...res, mobileRole };
+    setCurrentCachedUser(enriched);
+    return enriched;
   },
 
   logout() {
@@ -263,21 +322,66 @@ export const mobileApi = {
   },
 
   // Emergency & SOS
-  async getEmergencyAlerts() {
-    return request('/emergencies/alerts');
+  async getEmergencyAlerts(zone = null) {
+    const query = zone ? `?zone=${encodeURIComponent(zone)}` : '';
+    return request(`/emergencies/alerts${query}`);
   },
 
-  async triggerSos(zone = 'Zone B (Deep)', depth = -150) {
-    return request('/emergencies/sos', {
+  async getEmergencySignals() {
+    return request('/emergencies/signals');
+  },
+
+  async createEmergencyAlert(data) {
+    return request('/emergencies/alerts', {
       method: 'POST',
-      body: JSON.stringify({ zone, depth }),
+      body: JSON.stringify(data),
     });
   },
 
-  async triggerBroadcast(type = 'EVACUATION', message) {
+  async resolveEmergencyAlert(id) {
+    return request(`/emergencies/alerts/${id}/resolve`, {
+      method: 'POST',
+    });
+  },
+
+  async triggerSos(zone = 'Zone B (Level 4 Deep)', depth = -150, notes = '') {
+    return request('/emergencies/sos', {
+      method: 'POST',
+      body: JSON.stringify({ zone, depth, notes }),
+    });
+  },
+
+  async resolveSos(id = 'ACTIVE') {
+    return request(`/emergencies/sos/${id}/resolve`, {
+      method: 'POST',
+    });
+  },
+
+  async triggerBroadcast(type = 'EVACUATION', message, target_zone = 'ALL') {
     return request('/emergencies/broadcast', {
       method: 'POST',
-      body: JSON.stringify({ type, message }),
+      body: JSON.stringify({ type, message, target_zone }),
+    });
+  },
+
+  async reportEvacuationSafe(data) {
+    return request('/emergencies/evacuation/report-safe', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async dispatchRescueTeam(data) {
+    return request('/emergencies/rescue/dispatch', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async respondToDistress(id, data) {
+    return request(`/emergencies/sos/${id}/respond`, {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
   },
 

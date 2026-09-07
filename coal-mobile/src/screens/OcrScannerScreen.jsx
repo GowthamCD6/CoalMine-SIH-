@@ -18,6 +18,7 @@ import {
   pickPhotoFromGallery,
   requestCameraPermission,
 } from '../services/cameraService';
+import { theme } from '../theme';
 
 export const OcrScannerScreen = ({ currentUser }) => {
   const [scanning, setScanning] = useState(false);
@@ -48,11 +49,11 @@ export const OcrScannerScreen = ({ currentUser }) => {
     const granted = await requestCameraPermission();
     setCameraPermitted(granted);
     if (granted) {
-      Alert.alert('Camera Access Granted', 'Hardware link active. You can now scan documents with your phone camera.');
+      Alert.alert('Camera Access Granted', 'Hardware link active. You can now scan documents with your device camera.');
     } else {
       Alert.alert(
         'Access Denied',
-        'Camera permission was not granted. Check device Settings -> Apps -> CoalMobile -> Permissions.'
+        'Camera permission was not granted. Please enable camera in device Settings -> Apps -> CoalMobile -> Permissions.'
       );
     }
   };
@@ -64,7 +65,6 @@ export const OcrScannerScreen = ({ currentUser }) => {
       if (res.success && res.uri) {
         setCapturedImageUri(res.uri);
         setCameraPermitted(true);
-        // Execute OCR on the captured document
         await runDocumentOcr(res.uri);
       }
     } finally {
@@ -94,7 +94,7 @@ export const OcrScannerScreen = ({ currentUser }) => {
       setOcrResult({
         extracted_words: 452,
         raw_text:
-          'SHIFT LOG - SHAFT 3 (2026-09-05)\nVentilation: 18.5 m3/s (Nominal)\nMethane CH4: 0.12% (Safe threshold)\nPersonnel checked in: 120 miners\nEquipment: EX-400 Excavator operational\nRemarks: Maintenance due on Conveyor C-2 next shift.',
+          'SHIFT LOG - SHAFT 3 (2026-09-05)\nVentilation Velocity: 18.5 m3/s (Nominal)\nMethane CH4: 0.12% (Safe statutory threshold)\nPersonnel Checked In: 120 underground miners\nEquipment: EX-400 Excavator operational\nRemarks: Routine maintenance scheduled on Conveyor C-2 next shift.',
         metadata: {
           document_type: 'Shift Report & Daily Ledger',
           confidence: 0.97,
@@ -111,13 +111,11 @@ export const OcrScannerScreen = ({ currentUser }) => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Header */}
       <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Icon name="ocr" size={16} color="#2dd4bf" style={{ marginRight: 6 }} />
-          <Text style={styles.title}>OPTICAL OCR LEDGER DIGITIZER</Text>
-        </View>
+        <Text style={styles.title}>Document & Ledger Scanner</Text>
         <Text style={styles.subtitle}>
-          CAMERA DIGITIZER FOR PHYSICAL SHIFT LOGBOOKS & HANDWRITTEN LEDGERS
+          Scan physical shift logbooks, statutory ledgers, and maintenance notes with optical recognition.
         </Text>
       </View>
 
@@ -126,37 +124,40 @@ export const OcrScannerScreen = ({ currentUser }) => {
         <View style={styles.permBannerLeft}>
           <Icon
             name={cameraPermitted ? 'check-circle' : 'shield'}
-            size={14}
-            color={cameraPermitted ? '#4ade80' : '#f59e0b'}
-            style={{ marginRight: 6 }}
+            size={16}
+            color={cameraPermitted ? theme.colors.successText : theme.colors.warningText}
+            style={{ marginRight: 8 }}
           />
-          <Text style={styles.permBannerText}>
+          <Text style={[styles.permBannerText, { color: cameraPermitted ? theme.colors.successText : theme.colors.warningText }]}>
             {cameraPermitted
-              ? 'HARDWARE LINK: CAMERA ACCESS ACTIVE'
-              : 'HARDWARE LINK: CAMERA ACCESS REQUIRED'}
+              ? 'Camera Hardware: Connected & Ready'
+              : 'Camera Access Required for Scanning'}
           </Text>
         </View>
         {!cameraPermitted && (
           <TouchableOpacity style={styles.authBtn} onPress={handleAuthorizeCamera}>
-            <Text style={styles.authBtnText}>AUTHORIZE</Text>
+            <Text style={styles.authBtnText}>Enable Camera</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Document Scanning Viewport */}
+      {/* Viewport / Document Preview */}
       <View style={styles.scannerViewport}>
         {capturedImageUri ? (
           <Image source={{ uri: capturedImageUri }} style={styles.capturedDocImage} resizeMode="contain" />
         ) : (
-          <View style={styles.docSim}>
-            <View style={styles.scanReticle}>
-              <Text style={styles.scanHint}>ALIGN PHYSICAL LOG SHEET INSIDE RETICLE</Text>
-              <View style={styles.laserLine} />
+          <View style={styles.docPlaceholder}>
+            <View style={styles.reticleBox}>
+              <Icon name="ocr" size={32} color={theme.colors.primary} style={{ marginBottom: 8 }} />
+              <Text style={styles.scanHintTitle}>Align Document in Frame</Text>
+              <Text style={styles.scanHintSub}>Ensure good lighting and avoid reflections</Text>
             </View>
-            <Text style={styles.docLine}>DAILY MINING LOG: SHAFT 3</Text>
-            <Text style={styles.docLine}>DATE: 05-09-2026 • SHIFT: 1</Text>
-            <Text style={styles.docLine}>O2: 20.8% | CH4: 0.10% | CO: 0ppm</Text>
-            <Text style={styles.docLine}>WORKERS PRESENT: 120</Text>
+            <View style={styles.sampleDoc}>
+              <Text style={styles.docLine}>DAILY MINING LOG: SHAFT 3</Text>
+              <Text style={styles.docLine}>DATE: 05-09-2026 • SHIFT: 1</Text>
+              <Text style={styles.docLine}>O2: 20.8% | CH4: 0.10% | CO: 0ppm</Text>
+              <Text style={styles.docLine}>WORKERS PRESENT: 120</Text>
+            </View>
           </View>
         )}
       </View>
@@ -172,8 +173,8 @@ export const OcrScannerScreen = ({ currentUser }) => {
             <ActivityIndicator color="#ffffff" size="small" />
           ) : (
             <View style={styles.btnInner}>
-              <Icon name="camera" size={14} color="#ffffff" style={{ marginRight: 6 }} />
-              <Text style={styles.btnText}>CAPTURE VIA CAMERA</Text>
+              <Icon name="camera" size={16} color="#ffffff" style={{ marginRight: 8 }} />
+              <Text style={styles.btnText}>Scan with Camera</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -183,15 +184,15 @@ export const OcrScannerScreen = ({ currentUser }) => {
           onPress={handlePickDocument}
           disabled={scanning}
         >
-          <Icon name="file" size={14} color="#94a3b8" style={{ marginRight: 6 }} />
-          <Text style={styles.secondaryBtnText}>GALLERY</Text>
+          <Icon name="file" size={16} color={theme.colors.textSecondary} style={{ marginRight: 6 }} />
+          <Text style={styles.secondaryBtnText}>Gallery</Text>
         </TouchableOpacity>
       </View>
 
       {capturedImageUri && (
         <TouchableOpacity style={styles.resetBtn} onPress={handleReset}>
-          <Icon name="trash" size={12} color="#f87171" style={{ marginRight: 5 }} />
-          <Text style={styles.resetBtnText}>DISCARD & SCAN NEW PAGE</Text>
+          <Icon name="trash" size={14} color={theme.colors.dangerText} style={{ marginRight: 6 }} />
+          <Text style={styles.resetBtnText}>Discard & Retake Photo</Text>
         </TouchableOpacity>
       )}
 
@@ -199,29 +200,29 @@ export const OcrScannerScreen = ({ currentUser }) => {
       {ocrResult && (
         <View style={styles.resultCard}>
           <View style={styles.resultHeader}>
-            <Text style={styles.resultTitle}>DIGITIZED DOCUMENT METRICS</Text>
+            <Text style={styles.resultTitle}>Extracted Document Content</Text>
             <View style={styles.confidenceBadge}>
-              <Icon name="check" size={9} color="#4ade80" style={{ marginRight: 3 }} />
+              <Icon name="check" size={11} color={theme.colors.successText} style={{ marginRight: 4 }} />
               <Text style={styles.confidenceText}>
-                {(ocrResult.metadata?.confidence ? (ocrResult.metadata.confidence * 100).toFixed(0) : '97')}% CONFIDENCE
+                {(ocrResult.metadata?.confidence ? (ocrResult.metadata.confidence * 100).toFixed(0) : '97')}% Confidence
               </Text>
             </View>
           </View>
 
           <Text style={styles.metaInfo}>
-            TYPE: {ocrResult.metadata?.document_type?.toUpperCase() || 'SHIFT REPORT'} • TOKENS: {ocrResult.extracted_words || 452}
+            Document: {ocrResult.metadata?.document_type || 'Shift Report'} • Extracted: {ocrResult.extracted_words || 452} words
           </Text>
 
-          <View style={styles.codeBlock}>
-            <Text style={styles.codeText}>{ocrResult.raw_text}</Text>
+          <View style={styles.textContainer}>
+            <Text style={styles.extractedText}>{ocrResult.raw_text}</Text>
           </View>
 
           <TouchableOpacity
             style={styles.saveBtn}
-            onPress={() => Alert.alert('Committed', 'Digitized record written to central audit repository.')}
+            onPress={() => Alert.alert('Committed', 'Digitized document record saved to central repository.')}
           >
-            <Icon name="check" size={12} color="#ffffff" style={{ marginRight: 6 }} />
-            <Text style={styles.saveBtnText}>COMMIT RECORD TO CENTRAL LEDGER</Text>
+            <Icon name="check" size={15} color="#ffffff" style={{ marginRight: 6 }} />
+            <Text style={styles.saveBtnText}>Save to Central Mine Ledger</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -232,49 +233,45 @@ export const OcrScannerScreen = ({ currentUser }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090d16',
+    backgroundColor: theme.colors.background,
   },
   content: {
-    padding: 12,
-    paddingBottom: 28,
+    padding: 16,
+    paddingBottom: 32,
   },
   header: {
-    marginBottom: 10,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginBottom: 16,
   },
   title: {
-    color: '#ffffff',
-    fontSize: 12.5,
-    fontWeight: '900',
-    letterSpacing: 0.8,
+    fontSize: 20,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.text,
+    letterSpacing: -0.2,
   },
   subtitle: {
-    color: '#64748b',
-    fontSize: 8.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    marginTop: 2,
+    fontSize: 13,
+    fontWeight: theme.typography.regular,
+    color: theme.colors.textSecondary,
+    lineHeight: 18,
+    marginTop: 4,
   },
   permissionBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
     borderWidth: 1,
-    marginBottom: 10,
+    marginBottom: 14,
   },
   permBannerActive: {
-    backgroundColor: 'rgba(74, 222, 128, 0.08)',
-    borderColor: 'rgba(74, 222, 128, 0.3)',
+    backgroundColor: theme.colors.successBg,
+    borderColor: theme.colors.successBorder,
   },
   permBannerInactive: {
-    backgroundColor: 'rgba(245, 158, 11, 0.08)',
-    borderColor: 'rgba(245, 158, 11, 0.3)',
+    backgroundColor: theme.colors.warningBg,
+    borderColor: theme.colors.warningBorder,
   },
   permBannerLeft: {
     flexDirection: 'row',
@@ -282,29 +279,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   permBannerText: {
-    color: '#e2e8f0',
-    fontSize: 9.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    fontSize: 12,
+    fontWeight: theme.typography.medium,
   },
   authBtn: {
-    backgroundColor: '#f59e0b',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: theme.colors.warning,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 4,
   },
   authBtnText: {
-    color: '#090d16',
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 0.6,
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: theme.typography.semibold,
   },
   scannerViewport: {
     height: 220,
-    backgroundColor: '#020617',
+    backgroundColor: theme.colors.surfaceSubtle,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: theme.colors.border,
     position: 'relative',
     overflow: 'hidden',
     justifyContent: 'center',
@@ -314,68 +308,59 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  scanReticle: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderWidth: 1.5,
-    borderColor: '#2dd4bf',
+  docPlaceholder: {
+    width: '90%',
+    height: '85%',
+    backgroundColor: theme.colors.surface,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: theme.colors.borderStrong,
     borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
-  },
-  scanHint: {
-    color: '#2dd4bf',
-    fontSize: 8.5,
-    fontWeight: '900',
-    letterSpacing: 0.8,
-    backgroundColor: 'rgba(2, 6, 23, 0.85)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 3,
-  },
-  laserLine: {
-    position: 'absolute',
-    left: 10,
-    right: 10,
-    height: 2,
-    backgroundColor: '#2dd4bf',
-    shadowColor: '#2dd4bf',
-    shadowOpacity: 0.8,
-    shadowRadius: 5,
-  },
-  docSim: {
-    width: '85%',
-    height: '80%',
-    backgroundColor: '#0f172a',
-    borderRadius: 4,
     padding: 12,
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#334155',
+  },
+  reticleBox: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  scanHintTitle: {
+    fontSize: 13,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.text,
+  },
+  scanHintSub: {
+    fontSize: 11,
+    color: theme.colors.textMuted,
+    marginTop: 2,
+    fontWeight: theme.typography.regular,
+  },
+  sampleDoc: {
+    backgroundColor: theme.colors.surfaceSubtle,
+    padding: 8,
+    borderRadius: 4,
+    width: '95%',
   },
   docLine: {
-    color: '#94a3b8',
-    fontFamily: 'monospace',
-    fontSize: 9.5,
-    marginVertical: 2,
+    fontSize: 10,
+    color: theme.colors.textSecondary,
+    lineHeight: 15,
+    fontWeight: theme.typography.regular,
   },
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
-    gap: 8,
+    marginTop: 14,
+    gap: 10,
   },
   primaryBtn: {
     flex: 1,
-    backgroundColor: '#0d9488',
+    backgroundColor: theme.colors.primary,
     borderRadius: 6,
-    paddingVertical: 11,
+    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    ...theme.cardShadow,
   },
   btnInner: {
     flexDirection: 'row',
@@ -383,52 +368,53 @@ const styles = StyleSheet.create({
   },
   btnText: {
     color: '#ffffff',
-    fontSize: 10.5,
-    fontWeight: '900',
-    letterSpacing: 0.6,
+    fontSize: 13,
+    fontWeight: theme.typography.semibold,
   },
   secondaryBtn: {
-    backgroundColor: '#1e293b',
+    backgroundColor: theme.colors.surface,
     borderRadius: 6,
-    paddingVertical: 11,
-    paddingHorizontal: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: theme.colors.border,
     flexDirection: 'row',
+    ...theme.cardShadow,
   },
   secondaryBtnText: {
-    color: '#cbd5e1',
-    fontSize: 10.5,
-    fontWeight: '800',
-    letterSpacing: 0.6,
+    color: theme.colors.text,
+    fontSize: 13,
+    fontWeight: theme.typography.medium,
   },
   resetBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    backgroundColor: theme.colors.dangerBg,
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
+    borderColor: theme.colors.dangerBorder,
     borderRadius: 6,
-    paddingVertical: 7,
-    marginTop: 8,
+    paddingVertical: 9,
+    marginTop: 10,
   },
   resetBtnText: {
-    color: '#f87171',
-    fontSize: 9.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    color: theme.colors.dangerText,
+    fontSize: 12,
+    fontWeight: theme.typography.semibold,
   },
-  btnDisabled: { opacity: 0.6 },
+  btnDisabled: {
+    opacity: 0.6,
+  },
   resultCard: {
-    backgroundColor: '#0f172a',
+    backgroundColor: theme.colors.surface,
     borderRadius: 8,
-    padding: 12,
-    marginTop: 12,
+    padding: 14,
+    marginTop: 16,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: theme.colors.border,
+    ...theme.cardShadow,
   },
   resultHeader: {
     flexDirection: 'row',
@@ -437,58 +423,57 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   resultTitle: {
-    color: '#ffffff',
-    fontSize: 10.5,
-    fontWeight: '900',
-    letterSpacing: 0.6,
+    fontSize: 14,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.text,
   },
   confidenceBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(74, 222, 128, 0.1)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 3,
+    backgroundColor: theme.colors.successBg,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: theme.colors.successBorder,
   },
   confidenceText: {
-    color: '#4ade80',
-    fontSize: 8.5,
-    fontWeight: '900',
+    color: theme.colors.successText,
+    fontSize: 11,
+    fontWeight: theme.typography.semibold,
   },
   metaInfo: {
-    color: '#64748b',
-    fontSize: 8.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    marginBottom: 8,
+    fontSize: 11,
+    color: theme.colors.textSecondary,
+    marginBottom: 10,
+    fontWeight: theme.typography.regular,
   },
-  codeBlock: {
-    backgroundColor: '#020617',
-    borderRadius: 4,
-    padding: 10,
+  textContainer: {
+    backgroundColor: theme.colors.surfaceSubtle,
+    borderRadius: 6,
+    padding: 12,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: theme.colors.border,
   },
-  codeText: {
-    color: '#2dd4bf',
-    fontFamily: 'monospace',
-    fontSize: 10,
-    lineHeight: 15,
+  extractedText: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: theme.colors.text,
+    fontWeight: theme.typography.regular,
   },
   saveBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0f766e',
-    borderRadius: 4,
-    paddingVertical: 9,
-    marginTop: 10,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 6,
+    paddingVertical: 11,
+    marginTop: 12,
   },
   saveBtnText: {
     color: '#ffffff',
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 0.6,
+    fontSize: 13,
+    fontWeight: theme.typography.semibold,
   },
 });
 

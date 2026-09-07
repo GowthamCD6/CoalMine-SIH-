@@ -56,7 +56,7 @@ function AppContent() {
 function App() {
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <AppContent />
     </SafeAreaProvider>
   );
@@ -65,7 +65,7 @@ function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#f8fafc',
   },
 });
 

@@ -85,6 +85,17 @@ async function request(endpoint, options = {}, isLegacy = false) {
     broadcastLog(logEntry);
 
     if (!response.ok) {
+      if (response.status === 401 && !options._isRefreshRequest) {
+        try {
+          await api.refreshToken();
+          return await request(endpoint, { ...options, _isRefreshRequest: true }, isLegacy);
+        } catch (refreshErr) {
+          clearAuthTokens();
+          window.location.reload();
+          throw new Error('Session expired. Please log in again.');
+        }
+      }
+
       const errorObj = new Error(responseData?.message || `HTTP ${response.status}: Request failed`);
       errorObj.status = response.status;
       errorObj.data = responseData;
@@ -176,6 +187,7 @@ export const api = {
     const res = await request('/auth/refresh', {
       method: 'POST',
       body: JSON.stringify({ refresh_token: refresh }),
+      _isRefreshRequest: true
     });
     if (res?.tokens) {
       setAuthTokens(res.tokens.accessToken, res.tokens.refreshToken);
@@ -273,6 +285,17 @@ export const api = {
 
   // Audit Logs
   getAuditLogs: (params) => request(`/audit-logs${toQueryString(params)}`),
+
+  // Emergency & Safety Alerts
+  getEmergencyAlerts: (params) => request(`/emergencies/alerts${toQueryString(params)}`),
+  getEmergencySignals: () => request('/emergencies/signals'),
+  createEmergencyAlert: (data) => request('/emergencies/alerts', { method: 'POST', body: JSON.stringify(data) }),
+  resolveEmergencyAlert: (id) => request(`/emergencies/alerts/${id}/resolve`, { method: 'POST' }),
+  triggerEmergencySos: (data) => request('/emergencies/sos', { method: 'POST', body: JSON.stringify(data) }),
+  resolveEmergencySos: (id) => request(`/emergencies/sos/${id}/resolve`, { method: 'POST' }),
+  reportEvacuationSafe: (data) => request('/emergencies/evacuation/report-safe', { method: 'POST', body: JSON.stringify(data) }),
+  dispatchRescueTeam: (data) => request('/emergencies/rescue/dispatch', { method: 'POST', body: JSON.stringify(data) }),
+  respondToDistress: (id, data) => request(`/emergencies/sos/${id}/respond`, { method: 'POST', body: JSON.stringify(data) }),
 };
 
 export default api;

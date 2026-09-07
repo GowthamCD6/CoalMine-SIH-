@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Icon } from '../components/Icon';
 import { mobileApi } from '../services/api';
+import { theme } from '../theme';
 
 export const RfidPassScreen = ({ currentUser }) => {
   const [loading, setLoading] = useState(true);
@@ -27,13 +28,13 @@ export const RfidPassScreen = ({ currentUser }) => {
       setPassData(data);
     } catch {
       setPassData({
-        id: currentUser.id,
-        name: `${currentUser.first_name || currentUser.username} ${currentUser.last_name || ''}`.trim(),
-        username: currentUser.username,
-        employee_code: currentUser.employee_code || `EMP-${8000 + currentUser.id}`,
-        role: currentUser.status === 'ACTIVE' ? 'Field Technician' : 'Visitor',
-        cleared_zones: ['Zone A (Surface)', 'Zone B (Level 2)', 'Zone C (Shaft 4)'],
-        qr_payload: `PASS-${currentUser.id}-${currentUser.username}`,
+        id: currentUser?.id || 1,
+        name: `${currentUser?.first_name || currentUser?.username || 'Field'} ${currentUser?.last_name || 'Operator'}`.trim(),
+        username: currentUser?.username || 'operator',
+        employee_code: currentUser?.employee_code || `EMP-${8000 + (currentUser?.id || 1)}`,
+        role: 'Field Worker / Underground Operator',
+        cleared_zones: ['Zone A (Surface Logistics)', 'Zone B (Level 2 Deep)', 'Zone C (Shaft 4 Pit)'],
+        qr_payload: `PASS-${currentUser?.id || 1}-${currentUser?.username || 'op'}-SIG89F71A`,
         status: 'ACTIVE_CLEARED',
       });
     } finally {
@@ -43,90 +44,102 @@ export const RfidPassScreen = ({ currentUser }) => {
 
   const handleSimulateScan = () => {
     const timestamp = new Date().toLocaleTimeString();
-    setLastCheckIn(`Shaft 3 Turnstile Node #04 • ${timestamp}`);
+    setLastCheckIn(`Shaft 3 Turnstile Terminal #04 • ${timestamp}`);
     Alert.alert(
-      'Turnstile Beacon Verified',
-      'Proximity credential verified at Shaft 3 Turnstile. Personnel subterranean manifest updated.'
+      'Turnstile Proximity Verified',
+      'Digital credential verified via near-field radio. Personnel subterranean roll manifest updated.'
     );
   };
 
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#0284c7" />
-        <Text style={styles.loadingText}>Generating cryptographically signed pass...</Text>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={styles.loadingText}>Loading cryptographic pass credentials...</Text>
       </View>
     );
   }
 
+  const initial = (currentUser?.first_name || currentUser?.username || 'U').charAt(0).toUpperCase();
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Header */}
       <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Icon name="id-card" size={16} color="#38bdf8" style={{ marginRight: 6 }} />
-          <Text style={styles.title}>PROXIMITY BEACON ACCESS BADGE</Text>
-        </View>
+        <Text style={styles.title}>Digital Access Pass</Text>
         <Text style={styles.subtitle}>
-          CRYPTOGRAPHIC HARD-TOKEN & SUBTERRANEAN TURNSTILE CREDENTIAL
+          Statutory electronic identity token and subterranean turnstile credential.
         </Text>
       </View>
 
-      {/* Digital ID Badge Card */}
+      {/* Corporate Digital ID Card */}
       <View style={styles.idCard}>
+        {/* Card Top Strip */}
         <View style={styles.cardHeader}>
-          <Text style={styles.companyTitle}>MINISTRY OF COAL / NEXUSMINE</Text>
-          <View style={styles.chipRow}>
-            <Icon name="rfid" size={12} color="#0284c7" style={{ marginRight: 4 }} />
-            <Text style={styles.chipIcon}>RFID SECURED</Text>
+          <View>
+            <Text style={styles.authorityName}>MINISTRY OF COAL / DGMS</Text>
+            <Text style={styles.passType}>Statutory Miner Identity Card</Text>
+          </View>
+          <View style={styles.rfidTag}>
+            <Icon name="rfid" size={13} color={theme.colors.primary} style={{ marginRight: 4 }} />
+            <Text style={styles.rfidTagText}>RFID SECURE</Text>
           </View>
         </View>
 
-        <View style={styles.avatarSection}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarText}>
-              {(currentUser.first_name || currentUser.username).charAt(0).toUpperCase()}
-            </Text>
+        {/* Worker Info */}
+        <View style={styles.workerSection}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initial}</Text>
           </View>
-          <Text style={styles.workerName}>{passData?.name?.toUpperCase() || currentUser.username.toUpperCase()}</Text>
-          <Text style={styles.workerRole}>{passData?.role?.toUpperCase() || 'FIELD PERSONNEL'}</Text>
-          <Text style={styles.empId}>OPERATOR ID: {passData?.employee_code || 'EMP-8492'}</Text>
+          <Text style={styles.workerName}>{passData?.name || currentUser?.username}</Text>
+          <Text style={styles.workerRole}>{passData?.role || 'Field Personnel'}</Text>
+          <Text style={styles.empId}>Employee ID: {passData?.employee_code || 'EMP-8492'}</Text>
         </View>
 
-        {/* Simulated QR Pattern */}
-        <View style={styles.qrBox}>
-          <View style={styles.qrSimulatedPattern}>
-            <Icon name="crosshair" size={36} color="#475569" style={{ marginBottom: 4 }} />
-            <Text style={styles.qrCodeText}>TURNSTILE SENSOR TARGET</Text>
+        {/* QR Simulation Box */}
+        <View style={styles.qrContainer}>
+          <View style={styles.qrFrame}>
+            <Icon name="crosshair" size={32} color={theme.colors.textMuted} style={{ marginBottom: 4 }} />
+            <Text style={styles.qrHint}>Turnstile Proximity Sensor Target</Text>
           </View>
-          <Text style={styles.qrTokenText}>
-            HASH: {passData?.qr_payload?.substring(0, 26)}...
+          <Text style={styles.qrHash}>
+            Token Hash: {passData?.qr_payload?.substring(0, 24)}...
           </Text>
         </View>
 
-        {/* Cleared Zones */}
+        {/* Safety Clearance Details */}
         <View style={styles.clearanceCard}>
           <View style={styles.clearanceHeader}>
-            <Icon name="check" size={11} color="#16a34a" style={{ marginRight: 4 }} />
-            <Text style={styles.clearanceTitle}>STATUTORY SAFETY CLEARANCE</Text>
+            <Icon name="check-circle" size={14} color={theme.colors.success} style={{ marginRight: 6 }} />
+            <Text style={styles.clearanceTitle}>Authorized Zone Clearance</Text>
           </View>
-          <Text style={styles.clearanceSub}>
-            Authorized Zones: {passData?.cleared_zones?.join(' • ')}
+          <Text style={styles.clearanceList}>
+            {passData?.cleared_zones?.join('  •  ') || 'Zone A  •  Zone B  •  Zone C'}
           </Text>
         </View>
       </View>
 
-      {/* Turnstile Proximity Tap Action */}
-      <TouchableOpacity style={styles.tapBtn} onPress={handleSimulateScan}>
-        <Icon name="wifi" size={14} color="#ffffff" style={{ marginRight: 6 }} />
-        <Text style={styles.tapBtnText}>
-          SIMULATE PROXIMITY BEACON TURNSTILE CHECK-IN
-        </Text>
+      {/* Scan Trigger Button */}
+      <TouchableOpacity style={styles.tapBtn} onPress={handleSimulateScan} activeOpacity={0.8}>
+        <Icon name="wifi" size={16} color="#ffffff" style={{ marginRight: 8 }} />
+        <Text style={styles.tapBtnText}>Simulate Turnstile Beacon Tap</Text>
       </TouchableOpacity>
 
-      {lastCheckIn && (
+      {/* Recent Proximity Event */}
+      {lastCheckIn ? (
         <View style={styles.logCard}>
-          <Text style={styles.logTitle}>LAST PROXIMITY EVENT:</Text>
+          <View style={styles.logHeader}>
+            <Icon name="check" size={13} color={theme.colors.success} style={{ marginRight: 5 }} />
+            <Text style={styles.logTitle}>Last Proximity Event Verified</Text>
+          </View>
           <Text style={styles.logVal}>{lastCheckIn}</Text>
+        </View>
+      ) : (
+        <View style={styles.infoNotice}>
+          <Icon name="shield" size={14} color={theme.colors.textSecondary} style={{ marginRight: 6 }} />
+          <Text style={styles.infoNoticeText}>
+            Hold phone near NFC turnstile antenna at shaft entry to log entry into shift manifest.
+          </Text>
         </View>
       )}
     </ScrollView>
@@ -136,198 +149,226 @@ export const RfidPassScreen = ({ currentUser }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090d16',
+    backgroundColor: theme.colors.background,
   },
   content: {
-    padding: 12,
-    paddingBottom: 24,
+    padding: 16,
+    paddingBottom: 32,
   },
   center: {
     flex: 1,
-    backgroundColor: '#090d16',
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   loadingText: {
-    color: '#64748b',
-    fontSize: 11,
-    fontWeight: '700',
-    marginTop: 8,
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    marginTop: 10,
+    fontWeight: theme.typography.medium,
   },
   header: {
-    marginBottom: 12,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginBottom: 16,
   },
   title: {
-    color: '#ffffff',
-    fontSize: 12.5,
-    fontWeight: '900',
-    letterSpacing: 0.8,
+    fontSize: 20,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.text,
+    letterSpacing: -0.2,
   },
   subtitle: {
-    color: '#64748b',
-    fontSize: 8.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    marginTop: 2,
+    fontSize: 13,
+    fontWeight: theme.typography.regular,
+    color: theme.colors.textSecondary,
+    lineHeight: 18,
+    marginTop: 4,
   },
   idCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
+    backgroundColor: theme.colors.surface,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     padding: 16,
-    elevation: 8,
+    ...theme.cardShadow,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    paddingBottom: 8,
-    marginBottom: 12,
+    borderBottomColor: theme.colors.border,
+    paddingBottom: 12,
+    marginBottom: 16,
   },
-  companyTitle: {
-    color: '#0f172a',
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 0.8,
+  authorityName: {
+    fontSize: 10,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.textMuted,
+    letterSpacing: 0.5,
   },
-  chipRow: {
+  passType: {
+    fontSize: 14,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.text,
+    marginTop: 2,
+  },
+  rfidTag: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: theme.colors.primaryLight,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  chipIcon: {
-    color: '#0284c7',
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+  rfidTagText: {
+    fontSize: 10,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.primaryText,
+    letterSpacing: 0.3,
   },
-  avatarSection: {
+  workerSection: {
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  avatarCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#0f172a',
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
+    borderWidth: 2,
+    borderColor: '#bae6fd',
   },
   avatarText: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: '900',
+    fontSize: 22,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.primary,
   },
   workerName: {
-    color: '#0f172a',
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+    fontSize: 17,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.text,
   },
   workerRole: {
-    color: '#64748b',
-    fontSize: 9.5,
-    fontWeight: '800',
+    fontSize: 13,
+    color: theme.colors.textSecondary,
     marginTop: 2,
-    letterSpacing: 0.5,
+    fontWeight: theme.typography.regular,
   },
   empId: {
-    color: '#0284c7',
-    fontSize: 10,
-    fontWeight: '800',
-    fontFamily: 'monospace',
-    marginTop: 2,
+    fontSize: 12,
+    color: theme.colors.primary,
+    marginTop: 3,
+    fontWeight: theme.typography.medium,
   },
-  qrBox: {
+  qrContainer: {
     alignItems: 'center',
-    marginVertical: 8,
+    marginVertical: 12,
   },
-  qrSimulatedPattern: {
-    width: 120,
-    height: 120,
-    backgroundColor: '#f8fafc',
+  qrFrame: {
+    width: 130,
+    height: 130,
+    backgroundColor: theme.colors.surfaceSubtle,
     borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: '#cbd5e1',
+    borderWidth: 1,
+    borderColor: theme.colors.borderStrong,
     borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 8,
   },
-  qrCodeText: {
-    color: '#475569',
-    fontSize: 8,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  qrTokenText: {
-    color: '#94a3b8',
-    fontSize: 8.5,
+  qrHint: {
+    fontSize: 9,
+    fontWeight: theme.typography.medium,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
     marginTop: 4,
-    fontFamily: 'monospace',
+  },
+  qrHash: {
+    fontSize: 10,
+    color: theme.colors.textMuted,
+    marginTop: 6,
+    fontWeight: theme.typography.regular,
   },
   clearanceCard: {
-    backgroundColor: '#f0fdf4',
+    backgroundColor: theme.colors.successBg,
     borderRadius: 6,
-    padding: 8,
     borderWidth: 1,
-    borderColor: '#bbf7d0',
-    marginTop: 6,
+    borderColor: theme.colors.successBorder,
+    padding: 12,
+    marginTop: 8,
   },
   clearanceHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 4,
   },
   clearanceTitle: {
-    color: '#16a34a',
-    fontSize: 9.5,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+    fontSize: 12,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.successText,
   },
-  clearanceSub: {
-    color: '#15803d',
-    fontSize: 9.5,
-    marginTop: 2,
+  clearanceList: {
+    fontSize: 11,
+    color: theme.colors.successText,
+    lineHeight: 16,
+    fontWeight: theme.typography.regular,
   },
   tapBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0284c7',
+    backgroundColor: theme.colors.primary,
     borderRadius: 6,
     paddingVertical: 12,
-    marginTop: 12,
+    marginTop: 16,
+    ...theme.cardShadow,
   },
   tapBtnText: {
     color: '#ffffff',
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 0.8,
+    fontSize: 13,
+    fontWeight: theme.typography.semibold,
   },
   logCard: {
-    backgroundColor: '#0f172a',
+    backgroundColor: theme.colors.surface,
     borderRadius: 6,
-    padding: 10,
-    marginTop: 8,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: theme.colors.border,
+    padding: 12,
+    marginTop: 12,
+    ...theme.cardShadow,
+  },
+  logHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
   },
   logTitle: {
-    color: '#64748b',
-    fontSize: 8.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    fontSize: 11,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.textSecondary,
   },
   logVal: {
-    color: '#4ade80',
-    fontSize: 11,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    marginTop: 2,
+    fontSize: 12,
+    fontWeight: theme.typography.medium,
+    color: theme.colors.text,
+  },
+  infoNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 14,
+    paddingHorizontal: 8,
+  },
+  infoNoticeText: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    flex: 1,
+    lineHeight: 16,
+    fontWeight: theme.typography.regular,
   },
 });
 

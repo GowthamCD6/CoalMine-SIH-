@@ -73,6 +73,7 @@ export const Icon = ({ name, size = 18, color = '#94a3b8', style }) => {
 
     case 'emergency':
     case 'siren':
+    case 'broadcast':
       return (
         <View style={[{ width: s, height: s, alignItems: 'center', justifyContent: 'center' }, style]}>
           <View style={{ width: s * 0.65, height: s * 0.55, borderTopLeftRadius: s * 0.35, borderTopRightRadius: s * 0.35, borderWidth: 1.8, borderColor: color, borderBottomWidth: 0 }} />
@@ -233,6 +234,100 @@ export const Icon = ({ name, size = 18, color = '#94a3b8', style }) => {
             <View style={{ position: 'absolute', width: s * 0.95, height: 1, backgroundColor: color }} />
             <View style={{ position: 'absolute', width: 1, height: s * 0.95, backgroundColor: color }} />
             <View style={{ width: s * 0.25, height: s * 0.25, borderRadius: s * 0.125, borderWidth: 1, borderColor: color }} />
+          </View>
+        </View>
+      );
+
+    case 'lamp':
+    case 'flashlight':
+      return (
+        <View style={[{ width: s, height: s, alignItems: 'center', justifyContent: 'center' }, style]}>
+          <View style={{ width: s * 0.45, height: s * 0.2, backgroundColor: color, borderTopLeftRadius: 2, borderTopRightRadius: 2 }} />
+          <View style={{ width: s * 0.7, height: s * 0.35, backgroundColor: color, borderTopLeftRadius: 4, borderTopRightRadius: 4, marginTop: 1 }} />
+          <View style={{ width: s * 0.35, height: s * 0.4, backgroundColor: color, borderBottomLeftRadius: 2, borderBottomRightRadius: 2, marginTop: 1 }} />
+        </View>
+      );
+
+    case 'wind':
+    case 'gas':
+      return (
+        <View style={[{ width: s, height: s, justifyContent: 'space-around', paddingVertical: s * 0.1 }, style]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ width: s * 0.65, height: 2, backgroundColor: color, borderRadius: 1 }} />
+            <View style={{ width: s * 0.2, height: 2, backgroundColor: color, borderRadius: 1, borderTopRightRadius: 4, transform: [{ rotate: '-45deg' }] }} />
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'center' }}>
+            <View style={{ width: s * 0.75, height: 2, backgroundColor: color, borderRadius: 1 }} />
+            <View style={{ width: s * 0.15, height: 2, backgroundColor: color, borderRadius: 1, borderTopRightRadius: 4, transform: [{ rotate: '45deg' }] }} />
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start' }}>
+            <View style={{ width: s * 0.5, height: 2, backgroundColor: color, borderRadius: 1 }} />
+            <View style={{ width: s * 0.18, height: 2, backgroundColor: color, borderRadius: 1, borderBottomRightRadius: 4, transform: [{ rotate: '-45deg' }] }} />
+          </View>
+        </View>
+      );
+
+    case 'truck':
+    case 'machinery':
+      return (
+        <View style={[{ width: s, height: s, alignItems: 'center', justifyContent: 'center' }, style]}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 2 }}>
+            <View style={{ width: s * 0.5, height: s * 0.45, backgroundColor: color, borderTopLeftRadius: 2 }} />
+            <View style={{ width: s * 0.35, height: s * 0.35, backgroundColor: color, borderTopRightRadius: 3, borderLeftWidth: 1, borderLeftColor: '#ffffff' }} />
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: s * 0.75 }}>
+            <View style={{ width: s * 0.22, height: s * 0.22, borderRadius: s * 0.11, borderWidth: 1.5, borderColor: color, backgroundColor: '#ffffff' }} />
+            <View style={{ width: s * 0.22, height: s * 0.22, borderRadius: s * 0.11, borderWidth: 1.5, borderColor: color, backgroundColor: '#ffffff' }} />
+          </View>
+        </View>
+      );
+
+    case 'flame':
+    case 'explosives':
+      return (
+        <View style={[{ width: s, height: s, alignItems: 'center', justifyContent: 'center' }, style]}>
+          <View style={{ width: s * 0.55, height: s * 0.75, borderTopLeftRadius: s * 0.25, borderBottomLeftRadius: s * 0.3, borderBottomRightRadius: s * 0.3, backgroundColor: color, transform: [{ rotate: '-10deg' }], alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: s * 0.25, height: s * 0.4, borderTopLeftRadius: s * 0.12, borderBottomLeftRadius: s * 0.15, borderBottomRightRadius: s * 0.15, backgroundColor: '#ffffff' }} />
+          </View>
+        </View>
+      );
+
+    case 'heart':
+    case 'medical':
+      return (
+        <View style={[{ width: s, height: s, alignItems: 'center', justifyContent: 'center' }, style]}>
+          <View style={{ width: s * 0.75, height: s * 0.75, borderRadius: 2, borderWidth: 1.8, borderColor: color, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ position: 'absolute', width: s * 0.45, height: 2.2, backgroundColor: color }} />
+            <View style={{ position: 'absolute', width: 2.2, height: s * 0.45, backgroundColor: color }} />
+          </View>
+        </View>
+      );
+
+    case 'wallet':
+    case 'cash':
+      return (
+        <View style={[{ width: s, height: s, alignItems: 'center', justifyContent: 'center' }, style]}>
+          <View style={{ width: s * 0.85, height: s * 0.65, borderWidth: 1.8, borderColor: color, borderRadius: 3, justifyContent: 'center', alignItems: 'flex-end', paddingRight: 2 }}>
+            <View style={{ width: s * 0.22, height: s * 0.2, backgroundColor: color, borderRadius: 2 }} />
+          </View>
+        </View>
+      );
+
+    case 'back':
+    case 'arrow-left':
+      return (
+        <View style={[{ width: s, height: s, alignItems: 'center', justifyContent: 'center' }, style]}>
+          <View style={{ width: s * 0.5, height: 2, backgroundColor: color }} />
+          <View style={{ position: 'absolute', left: s * 0.15, width: s * 0.3, height: s * 0.3, borderLeftWidth: 2, borderTopWidth: 2, borderColor: color, transform: [{ rotate: '-45deg' }] }} />
+        </View>
+      );
+
+    case 'compass':
+    case 'location':
+      return (
+        <View style={[{ width: s, height: s, alignItems: 'center', justifyContent: 'center' }, style]}>
+          <View style={{ width: s * 0.85, height: s * 0.85, borderRadius: s * 0.425, borderWidth: 1.8, borderColor: color, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 0, height: 0, borderLeftWidth: s * 0.15, borderRightWidth: s * 0.15, borderBottomWidth: s * 0.35, borderStyle: 'solid', backgroundColor: 'transparent', borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: color, transform: [{ rotate: '45deg' }] }} />
           </View>
         </View>
       );

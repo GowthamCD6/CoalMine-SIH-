@@ -47,8 +47,13 @@ export const getUserEffectivePermissions = async (userId) => {
       AND (usr.expires_at IS NULL OR usr.expires_at > NOW())
   `;
 
-  const [rows] = await db.query(sql, [userId, userId]);
-  return rows;
+  try {
+    const [rows] = await db.query(sql, [userId, userId]);
+    return rows || [];
+  } catch (err) {
+    console.error('⚠️ [RBAC] Failed to fetch user effective permissions:', err.message);
+    return [];
+  }
 };
 
 export const requirePermission = (permissionCode, options = {}) => {
