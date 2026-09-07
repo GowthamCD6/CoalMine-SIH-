@@ -1,0 +1,407 @@
+import { Platform } from 'react-native';
+
+export const CANDIDATE_ENDPOINTS = [
+  {
+    id: 'usb',
+    label: 'USB ADB (localhost)',
+    url: 'http://localhost:5000/api/v1',
+    desc: 'For physical phone connected via USB cable with adb reverse',
+  },
+  {
+    id: 'wifi',
+    label: 'Wi-Fi LAN (10.150.255.156)',
+    url: 'http://10.150.255.156:5000/api/v1',
+    desc: 'For wireless phone connected to same Wi-Fi network',
+  },
+  {
+    id: 'emulator',
+    label: 'Android Emulator (10.0.2.2)',
+    url: 'http://10.0.2.2:5000/api/v1',
+    desc: 'For Android Studio virtual emulator',
+  },
+  {
+    id: 'ethernet',
+    label: 'LAN Ethernet (10.251.188.198)',
+    url: 'http://10.251.188.198:5000/api/v1',
+    desc: 'Secondary local network interface',
+  },
+];
+
+// Default to localhost:5000 (works over USB via adb reverse, iOS, and desktop)
+let currentBaseUrl = 'http://localhost:5000/api/v1';
+let activeAccessToken = null;
+let activeRefreshToken = null;
+let cachedCurrentUser = null;
+
+export const setApiBaseUrl = (url) => {
+  if (!url) return;
+  // Strip trailing slashes
+  currentBaseUrl = url.replace(/\/+$/, '');
+};
+
+export const getApiBaseUrl = () => currentBaseUrl;
+
+export const setAuthToken = (access, refresh) => {
+  activeAccessToken = access;
+  if (refresh !== undefined) activeRefreshToken = refresh;
+};
+
+export const getAuthToken = () => activeAccessToken;
+
+export const clearAuth = () => {
+  activeAccessToken = null;
+  activeRefreshToken = null;
+  cachedCurrentUser = null;
+};
+
+export const setCurrentCachedUser = (user) => {
+  cachedCurrentUser = user;
+};
+
+export const getCurrentCachedUser = () => cachedCurrentUser;
+
+/**
+ * Ping an endpoint with a quick timeout to check if it is reachable
+ */
+export const testEndpointHealth = async (endpointUrl, timeoutMs = 2500) => {
+  const cleanUrl = endpointUrl.replace(/\/+$/, '');
+  const startTime = Date.now();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(`${cleanUrl}/health`, {
+      method: 'GET',
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    const latency = Date.now() - startTime;
+    if (res.ok) {
+      const data = await res.json();
+      return { ok: true, latency, data, url: cleanUrl };
+    }
+    return { ok: false, error: `HTTP ${res.status}`, latency, url: cleanUrl };
+  } catch (err) {
+    clearTimeout(timer);
+    const isTimeout = err.name === 'AbortError';
+    return {
+      ok: false,
+      error: isTimeout ? 'Connection timed out' : (err.message || 'Network unreachable'),
+      url: cleanUrl,
+    };
+  }
+};
+
+/**
+ * Automatically probe candidate endpoints and pick the first responsive one
+ */
+export const autoDetectWorkingEndpoint = async () => {
+  // Check current URL first
+  const currentCheck = await testEndpointHealth(currentBaseUrl, 1500);
+  if (currentCheck.ok) {
+    return { found: true, url: currentBaseUrl, latency: currentCheck.latency };
+  }
+
+  // Probe other candidates in parallel
+  const probes = CANDIDATE_ENDPOINTS.map(async (candidate) => {
+    const check = await testEndpointHealth(candidate.url, 2500);
+    return { ...candidate, ...check };
+  });
+
+  const results = await Promise.all(probes);
+  const working = results.find((r) => r.ok);
+
+  if (working) {
+    setApiBaseUrl(working.url);
+    return { found: true, url: working.url, latency: working.latency, label: working.label };
+  }
+
+  return { found: false, tried: results };
+};
+
+/**
+ * Core HTTP Request Wrapper with Auto-Fallback on Network Error
+ */
+async function request(endpoint, options = {}, retryOnNetworkError = true) {
+  const url = `${currentBaseUrl}${endpoint}`;
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(activeAccessToken ? { Authorization: `Bearer ${activeAccessToken}` } : {}),
+    ...(options.headers || {}),
+  };
+
+  try {
+    const res = await fetch(url, {
+      ...options,
+      headers,
+    });
+
+    let responseData = null;
+    try {
+      responseData = await res.json();
+    } catch {
+      responseData = null;
+    }
+
+    if (!res.ok) {
+      const errorMsg = responseData?.message || `HTTP ${res.status}: Request failed`;
+      const err = new Error(errorMsg);
+      err.status = res.status;
+      err.data = responseData;
+      throw err;
+    }
+
+    return responseData?.data !== undefined ? responseData.data : responseData;
+  } catch (err) {
+    // If it's an HTTP error with a status code (e.g. 401, 403, 404), throw directly
+    if (err.status) {
+      throw err;
+    }
+
+    // Network level error (cannot connect to server IP/port)
+    const isNetworkError =
+      err.message?.includes('Network') ||
+      err.message?.includes('Failed to fetch') ||
+      err.message?.includes('network') ||
+      err.name === 'TypeError';
+
+    if (isNetworkError && retryOnNetworkError) {
+      // Attempt auto-detection of a responsive host
+      const detectResult = await autoDetectWorkingEndpoint();
+      if (detectResult.found && detectResult.url !== currentBaseUrl) {
+        // Retry once on the newly discovered working endpoint
+        return request(endpoint, options, false);
+      }
+    }
+
+    // Provide friendly diagnostic message
+    const friendlyError = new Error(
+      `Network Error: Cannot reach server at ${currentBaseUrl}. Check that backend is running and select your connection mode (USB localhost or Wi-Fi).`
+    );
+    friendlyError.originalError = err;
+    throw friendlyError;
+  }
+}
+
+/**
+ * Classify a user into a mobile-app role based on their subroles/permissions.
+ * Returns: 'SUPERADMIN' | 'WORKER' | 'RESTRICTED'
+ */
+export function getUserMobileRole(userProfile) {
+  if (!userProfile) return 'WORKER';
+
+  const permissions = userProfile.permissions || [];
+  const subroles = userProfile.subroles || [];
+
+  // Check for global super admin (wildcard permission or SUPER_ADMIN role code)
+  const isSuperAdmin =
+    permissions.some((p) => p.permission_code === '*' || p.permission_code === 'ALL_PERMISSIONS') ||
+    subroles.some((sr) => sr.role_code === 'SUPER_ADMIN');
+
+  if (isSuperAdmin) return 'SUPERADMIN';
+
+  // Check for intermediate admins (org admins, mine admins, site advisors, etc.)
+  const isIntermediateAdmin = subroles.some((sr) => {
+    const code = (sr.role_code || '').toUpperCase();
+    return (
+      code.includes('ORG_ADMIN') ||
+      code.includes('MINE_ADMIN') ||
+      code.includes('SITE_ADVISOR') ||
+      code.includes('EXECUTIVE') ||
+      code.includes('DIRECTOR')
+    );
+  });
+
+  if (isIntermediateAdmin) return 'RESTRICTED';
+
+  // Everyone else is a worker / field user
+  return 'WORKER';
+}
+
+export const mobileApi = {
+  // Diagnostic
+  testHealth: (url) => testEndpointHealth(url || currentBaseUrl),
+  autoDetectHost: autoDetectWorkingEndpoint,
+
+  // Auth
+  async login(login, password = 'Admin@12345') {
+    const res = await request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ login, password, device_id: 'coalmin-mobile-app' }),
+    });
+    if (res?.tokens?.accessToken) {
+      setAuthToken(res.tokens.accessToken, res.tokens.refreshToken);
+    }
+    if (res?.user) {
+      setCurrentCachedUser(res.user);
+    }
+
+    // Fetch full profile with subroles/permissions to classify role
+    try {
+      const profile = await request('/auth/me');
+      const mobileRole = getUserMobileRole(profile);
+
+      if (mobileRole === 'RESTRICTED') {
+        // Clear auth since this user isn't allowed on mobile
+        clearAuth();
+        throw new Error(
+          'Access Denied: Organization Admins, Mine Admins, and Site Advisors must use the NexusMine Web Portal. Only Super Admins and Field Workers can use this mobile app.'
+        );
+      }
+
+      // Attach the mobile role and enriched profile to the response
+      res.user = { ...res.user, ...profile, mobileRole };
+      setCurrentCachedUser(res.user);
+    } catch (err) {
+      if (err.message?.includes('Access Denied')) {
+        throw err;
+      }
+      // If /auth/me fails, allow login with basic info (offline/fallback)
+      if (res?.user) {
+        res.user.mobileRole = 'WORKER';
+      }
+    }
+
+    return res;
+  },
+
+  async getMe() {
+    const res = await request('/auth/me');
+    const mobileRole = getUserMobileRole(res);
+    const enriched = { ...res, mobileRole };
+    setCurrentCachedUser(enriched);
+    return enriched;
+  },
+
+  logout() {
+    clearAuth();
+  },
+
+  // Delegation Workflow
+  async getDelegationScope() {
+    return request('/delegation/scope');
+  },
+
+  async assignUserSubrole(userId, subroleId, status = 'ACTIVE') {
+    return request(`/users/${userId}/subroles`, {
+      method: 'POST',
+      body: JSON.stringify({ subrole_id: subroleId, status }),
+    });
+  },
+
+  async revokeUserSubrole(userId, subroleId) {
+    return request(`/users/${userId}/subroles/${subroleId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Inspections
+  async getInspections() {
+    return request('/inspections');
+  },
+
+  async createInspection(data) {
+    return request('/inspections', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateInspectionStatus(id, status) {
+    return request(`/inspections/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  },
+
+  // Hazards (Camera)
+  async getHazards() {
+    return request('/hazards');
+  },
+
+  async createHazard(data) {
+    return request('/hazards', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Emergency & SOS
+  async getEmergencyAlerts(zone = null) {
+    const query = zone ? `?zone=${encodeURIComponent(zone)}` : '';
+    return request(`/emergencies/alerts${query}`);
+  },
+
+  async getEmergencySignals() {
+    return request('/emergencies/signals');
+  },
+
+  async createEmergencyAlert(data) {
+    return request('/emergencies/alerts', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async resolveEmergencyAlert(id) {
+    return request(`/emergencies/alerts/${id}/resolve`, {
+      method: 'POST',
+    });
+  },
+
+  async triggerSos(zone = 'Zone B (Level 4 Deep)', depth = -150, notes = '') {
+    return request('/emergencies/sos', {
+      method: 'POST',
+      body: JSON.stringify({ zone, depth, notes }),
+    });
+  },
+
+  async resolveSos(id = 'ACTIVE') {
+    return request(`/emergencies/sos/${id}/resolve`, {
+      method: 'POST',
+    });
+  },
+
+  async triggerBroadcast(type = 'EVACUATION', message, target_zone = 'ALL') {
+    return request('/emergencies/broadcast', {
+      method: 'POST',
+      body: JSON.stringify({ type, message, target_zone }),
+    });
+  },
+
+  async reportEvacuationSafe(data) {
+    return request('/emergencies/evacuation/report-safe', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async dispatchRescueTeam(data) {
+    return request('/emergencies/rescue/dispatch', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async respondToDistress(id, data) {
+    return request(`/emergencies/sos/${id}/respond`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // RFID Beacon Pass
+  async getRfidPass() {
+    return request('/rfid-pass');
+  },
+
+  // OCR Extraction
+  async runOcr() {
+    return request('/ocr/extract', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+  },
+};
+
+export default mobileApi;
