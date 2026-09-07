@@ -275,9 +275,7 @@ function App() {
           )}
 
           {activeTab === 'command-map' && (
-            <div style={{ padding: '2rem' }}>
-              <CommandMapView onShowToast={showToast} />
-            </div>
+            <CommandMapView onShowToast={showToast} />
           )}
 
           {activeTab === 'analytics' && (
