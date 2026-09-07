@@ -3,32 +3,32 @@ import { Platform } from 'react-native';
 export const CANDIDATE_ENDPOINTS = [
   {
     id: 'usb',
-    label: 'USB ADB (localhost)',
-    url: 'http://localhost:5000/api/v1',
+    label: 'USB ADB (localhost:5001)',
+    url: 'http://localhost:5001/api/v1',
     desc: 'For physical phone connected via USB cable with adb reverse',
   },
   {
     id: 'wifi',
-    label: 'Wi-Fi LAN (10.150.255.156)',
-    url: 'http://10.150.255.156:5000/api/v1',
+    label: 'Wi-Fi LAN (10.232.78.180:5001)',
+    url: 'http://10.232.78.180:5001/api/v1',
     desc: 'For wireless phone connected to same Wi-Fi network',
   },
   {
-    id: 'emulator',
-    label: 'Android Emulator (10.0.2.2)',
-    url: 'http://10.0.2.2:5000/api/v1',
-    desc: 'For Android Studio virtual emulator',
+    id: 'usb_legacy',
+    label: 'USB ADB (localhost:5000)',
+    url: 'http://localhost:5000/api/v1',
+    desc: 'Legacy ADB reverse port forwarding to 5001',
   },
   {
-    id: 'ethernet',
-    label: 'LAN Ethernet (10.251.188.198)',
-    url: 'http://10.251.188.198:5000/api/v1',
-    desc: 'Secondary local network interface',
+    id: 'emulator',
+    label: 'Android Emulator (10.0.2.2:5001)',
+    url: 'http://10.0.2.2:5001/api/v1',
+    desc: 'For Android Studio virtual emulator',
   },
 ];
 
-// Default to localhost:5000 (works over USB via adb reverse, iOS, and desktop)
-let currentBaseUrl = 'http://localhost:5000/api/v1';
+// Default to localhost:5001 (server port)
+let currentBaseUrl = 'http://localhost:5001/api/v1';
 let activeAccessToken = null;
 let activeRefreshToken = null;
 let cachedCurrentUser = null;

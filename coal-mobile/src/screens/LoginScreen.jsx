@@ -76,7 +76,7 @@ export const LoginScreen = ({ onLoginSuccess }) => {
       setHealthStatus({
         checking: false,
         ok: false,
-        message: 'No responsive backend found on port 5000.',
+        message: 'No responsive backend found on port 5001.',
       });
     }
   };
@@ -287,7 +287,7 @@ export const LoginScreen = ({ onLoginSuccess }) => {
                 setServerHost(text);
                 setApiBaseUrl(text);
               }}
-              placeholder="http://localhost:5000/api/v1"
+              placeholder="http://localhost:5001/api/v1"
               placeholderTextColor="#94a3b8"
               autoCapitalize="none"
             />
@@ -299,7 +299,7 @@ export const LoginScreen = ({ onLoginSuccess }) => {
               <Text style={styles.scanAllBtnText}>Auto-Detect Working Server</Text>
             </TouchableOpacity>
             <Text style={styles.configNote}>
-              USB: localhost:5000 • Wi-Fi: 10.150.255.156:5000 • Emulator: 10.0.2.2:5000
+              USB: localhost:5001 • Wi-Fi: 10.232.78.180:5001 • Emulator: 10.0.2.2:5001
             </Text>
           </View>
         )}
