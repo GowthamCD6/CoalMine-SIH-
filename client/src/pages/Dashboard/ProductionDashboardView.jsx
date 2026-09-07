@@ -32,8 +32,6 @@ const ShiftBadge = ({ shift }) => {
     </span>
   );
 };
-  );
-};
 
 export default function ProductionDashboardView({ onShowToast }) {
   const [activeTab, setActiveTab] = useState('reports'); // 'reports' | 'targets' | 'issues'
