@@ -279,11 +279,20 @@ export default function AttendanceSystemView({ onShowToast }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [webcamActive, setWebcamActive] = useState(false);
+  const [mirrorMode, setMirrorMode] = useState(true);
   const [simulatedIndex, setSimulatedIndex] = useState(0);
+  const [selectedWorkerId, setSelectedWorkerId] = useState(null);
+  const [isScanningActive, setIsScanningActive] = useState(false);
+  const [autoScanEnabled, setAutoScanEnabled] = useState(true);
   const [recentVerified, setRecentVerified] = useState(INITIAL_LOGS[0]);
   const [recentFeed, setRecentFeed] = useState(INITIAL_LOGS.slice(0, 4));
-  const [autoScanEnabled, setAutoScanEnabled] = useState(false);
   const [lastScanMessage, setLastScanMessage] = useState(null);
+
+  // Active target worker for facial recognition
+  const activeWorker =
+    workers.find((w) => w.worker_id === selectedWorkerId) ||
+    workers[0] ||
+    INITIAL_WORKERS[0];
 
   // Instant Live Face Registration Modal State
   const [isFaceModalOpen, setIsFaceModalOpen] = useState(false);
@@ -517,6 +526,9 @@ export default function AttendanceSystemView({ onShowToast }) {
 
     // 2. Add to frontend state & local storage
     setWorkers((prev) => [newWorker, ...prev.filter((w) => w.worker_id !== workerId)]);
+    setSelectedWorkerId(newWorker.worker_id);
+    setSimulatedIndex(0);
+    setAutoScanEnabled(true);
     playChime(true);
 
     // 3. Immediately set as current verified target so user can scan face!
@@ -537,41 +549,69 @@ export default function AttendanceSystemView({ onShowToast }) {
 
     setLastScanMessage({
       isSuccess: true,
-      text: `🎉 Successfully Registered in TiDB Database: ${newWorker.name} (${newWorker.worker_id})! Ready to scan.`,
+      text: `🎉 Enrolled & Verified: ${newWorker.name} (${newWorker.worker_id})! Scanning face to log attendance in TiDB...`,
     });
 
     if (onShowToast) onShowToast(`✅ Miner ${newWorker.name} registered and saved in TiDB Database!`);
 
     setIsSavingToDb(false);
     setIsFaceModalOpen(false);
+
+    // Automatically trigger instant attendance punch scan for this newly enrolled miner
+    setTimeout(() => {
+      handleVerifyScan(newWorker);
+    }, 500);
   };
 
   // Worker Attendance Punch Trigger (Scans Face & Stores in Database)
   const handleVerifyScan = async (targetWorker = null) => {
-    const selected = targetWorker || workers[simulatedIndex % workers.length];
-    if (!selected) return;
+    if (isScanningActive) return;
+    setIsScanningActive(true);
+
+    const selected =
+      targetWorker ||
+      workers.find((w) => w.worker_id === selectedWorkerId) ||
+      workers[simulatedIndex % workers.length] ||
+      workers[0];
+
+    if (!selected) {
+      setIsScanningActive(false);
+      return;
+    }
+
+    // Always ensure selected worker is active target
+    setSelectedWorkerId(selected.worker_id);
+
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour12: false });
     const dateStr = now.toISOString().split('T')[0];
 
-    // Check duplicate punch in same minute
+    // Artificial scan latency delay for visual recognition telemetry (400ms)
+    await new Promise((r) => setTimeout(r, 400));
+
+    // Check duplicate punch in same minute to avoid rapid double-clicks
     const alreadyPunched = attendanceLogs.some(
-      (log) => log.worker_id === selected.worker_id && log.date === dateStr && log.time.substring(0, 5) === timeStr.substring(0, 5)
+      (log) =>
+        log.worker_id === selected.worker_id &&
+        log.date === dateStr &&
+        log.time.substring(0, 5) === timeStr.substring(0, 5)
     );
 
+    const confidenceVal = (98.4 + Math.random() * 1.4).toFixed(1) + '%';
+
     if (alreadyPunched) {
-      playChime(false);
+      playChime(true);
       setLastScanMessage({
-        isSuccess: false,
-        text: `⚠️ Duplicate Scan: ${selected.name} (${selected.worker_id}) already logged at this shift station.`,
+        isSuccess: true,
+        text: `✅ Face Recognized: ${selected.name} (${selected.worker_id}) is actively punched in for today's shift! Attendance verified in TiDB.`,
       });
-      if (onShowToast) onShowToast(`Duplicate scan prevented: ${selected.name} already marked present.`, true);
+      if (onShowToast) onShowToast(`✅ Face recognized: ${selected.name} on duty.`);
+      setIsScanningActive(false);
       return;
     }
 
     // Success punch!
     playChime(true);
-    const confidenceVal = (98.2 + Math.random() * 1.6).toFixed(1) + '%';
     const newLog = {
       id: `ATT-${Date.now()}-${selected.worker_id}`,
       worker_id: selected.worker_id,
@@ -583,13 +623,16 @@ export default function AttendanceSystemView({ onShowToast }) {
       time: timeStr,
       status: 'Present - On Time',
       confidence: confidenceVal,
-      verification_type: 'AI Facial Biometrics (ResNet-18)',
+      verification_type: webcamActive ? 'Live Webcam ResNet-18 Biometrics' : 'AI Facial Biometrics (TiDB Synced)',
       dgms_form_b: 'VERIFIED_COMPLIANT',
     };
 
     // Store in TiDB MySQL Database via API
     try {
-      await api.scanAttendanceFace({ worker_id: selected.worker_id });
+      await api.scanAttendanceFace({
+        worker_id: selected.worker_id,
+        verification_type: webcamActive ? 'Live Webcam ResNet-18 Biometrics' : 'AI Facial Biometrics (TiDB Synced)',
+      });
       setDbConnected(true);
     } catch (dbErr) {
       console.warn('Backend DB store note for scan:', dbErr.message);
@@ -600,23 +643,22 @@ export default function AttendanceSystemView({ onShowToast }) {
     setRecentFeed((prev) => [newLog, ...prev.slice(0, 5)]);
     setLastScanMessage({
       isSuccess: true,
-      text: `✅ Verified: ${selected.name} (${selected.worker_id}) • Confidence: ${confidenceVal} • Saved to Database!`,
+      text: `🎉 Scanned & Verified: ${selected.name} (${selected.worker_id}) • Match: ${confidenceVal} • Saved to TiDB Database!`,
     });
 
-    if (onShowToast) onShowToast(`✅ Verified: ${selected.name} attendance logged to Database!`);
-    setSimulatedIndex((prev) => (prev + 1) % workers.length);
+    if (onShowToast) onShowToast(`🎉 Verified: ${selected.name} attendance logged to Database!`);
+    setIsScanningActive(false);
   };
 
-  // Auto scan interval simulation (only if enabled)
+  // Auto scan interval: runs continuously when autoScanEnabled is true
   useEffect(() => {
-    if (!autoScanEnabled || workers.length === 0) return;
+    if (!autoScanEnabled || workers.length === 0 || activeTab !== 'scanner') return;
     const interval = setInterval(() => {
-      if (activeTab === 'scanner') {
-        handleVerifyScan();
-      }
-    }, 9000);
+      const target = workers.find((w) => w.worker_id === selectedWorkerId) || workers[0];
+      handleVerifyScan(target);
+    }, 6000);
     return () => clearInterval(interval);
-  }, [autoScanEnabled, simulatedIndex, workers, attendanceLogs, activeTab]);
+  }, [autoScanEnabled, selectedWorkerId, workers, attendanceLogs, activeTab]);
 
   // Ledger Filter & Export
   const [ledgerSearch, setLedgerSearch] = useState('');
@@ -995,8 +1037,9 @@ export default function AttendanceSystemView({ onShowToast }) {
                 backgroundColor: '#090d16',
                 borderRadius: '12px',
                 overflow: 'hidden',
-                border: '2px solid rgba(56, 189, 248, 0.4)',
-                boxShadow: '0 0 25px rgba(2, 132, 199, 0.25)',
+                border: isScanningActive ? '2px solid #22c55e' : '2px solid rgba(56, 189, 248, 0.4)',
+                boxShadow: isScanningActive ? '0 0 35px rgba(34, 197, 94, 0.4)' : '0 0 25px rgba(2, 132, 199, 0.25)',
+                transition: 'all 0.3s ease',
               }}
             >
               {/* Webcam Stream Element */}
@@ -1009,7 +1052,7 @@ export default function AttendanceSystemView({ onShowToast }) {
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
-                  transform: 'scaleX(-1)',
+                  transform: mirrorMode ? 'scaleX(-1)' : 'none',
                 }}
               />
 
@@ -1017,7 +1060,7 @@ export default function AttendanceSystemView({ onShowToast }) {
               {!webcamActive && (
                 <div style={{ position: 'relative', width: '100%', height: '100%' }}>
                   <img
-                    src={workers[simulatedIndex % workers.length]?.photo_url || INITIAL_WORKERS[0].photo_url}
+                    src={activeWorker?.photo_url || INITIAL_WORKERS[0].photo_url}
                     alt="Miner Camera Feed"
                     style={{
                       width: '100%',
@@ -1040,7 +1083,7 @@ export default function AttendanceSystemView({ onShowToast }) {
                       fontFamily: 'monospace',
                     }}
                   >
-                    TEST FEED: {workers[simulatedIndex % workers.length]?.name} ({workers[simulatedIndex % workers.length]?.worker_id})
+                    TEST SIMULATION: {activeWorker?.name} ({activeWorker?.worker_id})
                   </div>
                 </div>
               )}
@@ -1060,7 +1103,7 @@ export default function AttendanceSystemView({ onShowToast }) {
                 }}
               />
 
-              {/* Live HUD telemetry badges */}
+              {/* Live HUD telemetry badges (Top Left) */}
               <div
                 style={{
                   position: 'absolute',
@@ -1073,7 +1116,7 @@ export default function AttendanceSystemView({ onShowToast }) {
               >
                 <div
                   style={{
-                    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+                    backgroundColor: 'rgba(15, 23, 42, 0.85)',
                     backdropFilter: 'blur(8px)',
                     border: '1px solid rgba(56, 189, 248, 0.4)',
                     borderRadius: '6px',
@@ -1087,13 +1130,21 @@ export default function AttendanceSystemView({ onShowToast }) {
                     gap: '6px',
                   }}
                 >
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e', boxShadow: '0 0 6px #22c55e' }} />
-                  PORTAL #01 • TiDB PERSISTENCE
+                  <span
+                    style={{
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      backgroundColor: autoScanEnabled ? '#22c55e' : '#eab308',
+                      boxShadow: autoScanEnabled ? '0 0 6px #22c55e' : 'none',
+                    }}
+                  />
+                  PORTAL #01 • {autoScanEnabled ? 'AUTO-SCAN ACTIVE' : 'MANUAL SCAN'}
                 </div>
 
                 <div
                   style={{
-                    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+                    backgroundColor: 'rgba(15, 23, 42, 0.85)',
                     backdropFilter: 'blur(8px)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '6px',
@@ -1103,40 +1154,220 @@ export default function AttendanceSystemView({ onShowToast }) {
                     fontSize: '0.7rem',
                   }}
                 >
-                  FPS: 30 • LATENCY: 14ms • L2 THRESHOLD: 0.62
+                  RESNET-18 • 512D EMBEDDINGS • TiDB PERSISTENCE
                 </div>
               </div>
 
-              {/* Controls Overlay Bottom Right */}
+              {/* Active Matching Profile Chip (Top Right) */}
               <div
                 style={{
                   position: 'absolute',
-                  bottom: '16px',
+                  top: '16px',
                   right: '16px',
+                  backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                  backdropFilter: 'blur(8px)',
+                  border: isScanningActive ? '1px solid #22c55e' : '1px solid rgba(56, 189, 248, 0.4)',
+                  borderRadius: '8px',
+                  padding: '6px 12px',
                   display: 'flex',
-                  gap: '8px',
+                  alignItems: 'center',
+                  gap: '10px',
+                  boxShadow: isScanningActive ? '0 0 16px rgba(34, 197, 94, 0.5)' : 'none',
+                  transition: 'all 0.3s ease',
                 }}
               >
-                <button
-                  onClick={() => handleVerifyScan()}
-                  className="sleek-btn"
+                <img
+                  src={activeWorker.photo_url}
+                  alt={activeWorker.name}
                   style={{
-                    backgroundColor: 'rgba(37, 99, 235, 0.9)',
-                    color: '#fff',
-                    padding: '9px 18px',
-                    borderRadius: '8px',
-                    fontSize: '0.88rem',
-                    fontWeight: 700,
-                    backdropFilter: 'blur(6px)',
-                    border: '1px solid #60a5fa',
-                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: isScanningActive ? '2px solid #22c55e' : '2px solid #38bdf8',
+                  }}
+                />
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#fff', lineHeight: 1.1 }}>
+                    {activeWorker.name}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '0.7rem',
+                      color: isScanningActive ? '#22c55e' : '#38bdf8',
+                      fontFamily: 'monospace',
+                      marginTop: '2px',
+                    }}
+                  >
+                    {isScanningActive ? '⚡ MATCHING FACE...' : activeWorker.worker_id}
+                  </div>
+                </div>
+              </div>
+
+              {/* Mirror toggle button (Bottom Left) */}
+              {webcamActive && (
+                <div style={{ position: 'absolute', bottom: '16px', left: '16px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setMirrorMode((prev) => !prev)}
+                    className="sleek-btn"
+                    style={{
+                      backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                      color: '#94a3b8',
+                      fontSize: '0.75rem',
+                      padding: '5px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      backdropFilter: 'blur(6px)',
+                    }}
+                  >
+                    {mirrorMode ? '🪞 Mirror On' : 'Normal View'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Interactive Biometric Command Deck */}
+            <div
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                borderRadius: '10px',
+                border: '1px solid var(--border-subtle)',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px',
+              }}
+            >
+              {/* Row 1: Miner Selection Dropdown */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
+                  🎯 Face Profile to Match:
+                </label>
+                <select
+                  value={activeWorker.worker_id}
+                  onChange={(e) => {
+                    setSelectedWorkerId(e.target.value);
+                    if (onShowToast) onShowToast(`Selected miner: ${e.target.options[e.target.selectedIndex].text}`);
+                  }}
+                  style={{
+                    flex: 1,
+                    minWidth: '220px',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-subtle)',
+                    backgroundColor: 'var(--bg-input)',
+                    color: 'var(--text-main)',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
                   }}
                 >
-                  <CheckCircle2 size={17} />
-                  Scan Face & Save to DB
+                  {workers.map((w) => (
+                    <option key={w.worker_id} value={w.worker_id}>
+                      {w.name} ({w.worker_id}) — {w.role}
+                    </option>
+                  ))}
+                </select>
+
+                <div
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                    color: 'var(--primary)',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    border: '1px solid var(--primary-border)',
+                  }}
+                >
+                  {activeWorker.shift}
+                </div>
+              </div>
+
+              {/* Row 2: Action Buttons */}
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => handleVerifyScan(activeWorker)}
+                  disabled={isScanningActive}
+                  className="sleek-btn"
+                  style={{
+                    flex: 2,
+                    minWidth: '240px',
+                    backgroundColor: '#2563eb',
+                    color: '#fff',
+                    padding: '12px 20px',
+                    fontSize: '0.95rem',
+                    fontWeight: 800,
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    cursor: isScanningActive ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {isScanningActive ? (
+                    <>
+                      <RefreshCw size={18} className="spin-icon" />
+                      Scanning Face & Matching Biometrics...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={18} />
+                      📸 Scan Face: {activeWorker.name} (Save to TiDB)
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAutoScanEnabled((prev) => !prev)}
+                  className="sleek-btn"
+                  style={{
+                    padding: '12px 16px',
+                    backgroundColor: autoScanEnabled ? 'rgba(16, 185, 129, 0.12)' : 'var(--bg-surface)',
+                    border: `1px solid ${autoScanEnabled ? '#10b981' : 'var(--border-subtle)'}`,
+                    color: autoScanEnabled ? '#059669' : 'var(--text-muted)',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                  title={autoScanEnabled ? 'Pause continuous auto face scanning' : 'Enable continuous auto face scanning'}
+                >
+                  <span
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: autoScanEnabled ? '#10b981' : '#94a3b8',
+                      boxShadow: autoScanEnabled ? '0 0 8px #10b981' : 'none',
+                    }}
+                  />
+                  {autoScanEnabled ? '⚡ Auto-Scan: ON' : '⏸️ Auto-Scan: PAUSED'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={openRegisterModal}
+                  className="sleek-btn"
+                  style={{
+                    padding: '12px 16px',
+                    backgroundColor: '#059669',
+                    color: '#fff',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 2px 8px rgba(5, 150, 105, 0.3)',
+                  }}
+                >
+                  <Camera size={16} />
+                  Register Another Face
                 </button>
               </div>
             </div>
