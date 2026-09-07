@@ -27,7 +27,7 @@
 .sidebar-header {
   height: 64px;
   max-height: 64px;
-  padding: 0 20px;
+  padding: 0 16px;
   border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
@@ -45,7 +45,6 @@
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 14px;
   flex: 1;
   min-width: 0;
 }
@@ -72,9 +71,12 @@
 }
 
 .company-name {
+  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
 }
@@ -85,6 +87,7 @@
   color: #0f172a;
   letter-spacing: -0.035em;
   line-height: 1.1;
+  text-align: center;
 }
 
 /* ===== TOGGLE BUTTON & CLOSE ===== */
