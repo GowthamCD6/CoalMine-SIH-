@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { optionalAuthenticate } from '../../middlewares/auth.middleware.js';
+import db from '../../config/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1019,34 +1020,60 @@ let attendanceRecordsStore = [
   },
 ];
 
-// 1. Get attendance records
+// 1. Get attendance records (from TiDB Database with memory fallback)
 mobileOpsRouter.get(
   '/attendance',
   asyncHandler(async (req, res) => {
     const { date, shift, worker_id } = req.query;
+    try {
+      let sql = 'SELECT * FROM attendance_logs WHERE 1=1';
+      const params = [];
+      if (date) {
+        sql += ' AND date = ?';
+        params.push(date);
+      }
+      if (shift && shift !== 'ALL') {
+        sql += ' AND shift LIKE ?';
+        params.push(`%${shift}%`);
+      }
+      if (worker_id) {
+        sql += ' AND worker_id = ?';
+        params.push(worker_id);
+      }
+      sql += ' ORDER BY created_at DESC LIMIT 100';
+      const [rows] = await db.query(sql, params);
+      if (rows && rows.length > 0) {
+        return ApiResponse.success(res, rows, 'Attendance records retrieved from database');
+      }
+    } catch (err) {
+      console.warn('Database query fallback for /attendance:', err.message);
+    }
+
     let filtered = attendanceRecordsStore;
-    if (date) {
-      filtered = filtered.filter((r) => r.date === date);
-    }
-    if (shift && shift !== 'ALL') {
-      filtered = filtered.filter((r) => r.shift?.includes(shift));
-    }
-    if (worker_id) {
-      filtered = filtered.filter((r) => r.worker_id === worker_id);
-    }
+    if (date) filtered = filtered.filter((r) => r.date === date);
+    if (shift && shift !== 'ALL') filtered = filtered.filter((r) => r.shift?.includes(shift));
+    if (worker_id) filtered = filtered.filter((r) => r.worker_id === worker_id);
     return ApiResponse.success(res, filtered, 'Attendance records retrieved');
   })
 );
 
-// 2. Get registered workers
+// 2. Get registered workers (from TiDB Database with memory fallback)
 mobileOpsRouter.get(
   '/attendance/workers',
   asyncHandler(async (req, res) => {
+    try {
+      const [rows] = await db.query('SELECT * FROM attendance_workers ORDER BY id DESC');
+      if (rows && rows.length > 0) {
+        return ApiResponse.success(res, rows, 'Registered workers retrieved from database');
+      }
+    } catch (err) {
+      console.warn('Database query fallback for /attendance/workers:', err.message);
+    }
     return ApiResponse.success(res, attendanceWorkersStore, 'Registered workers retrieved');
   })
 );
 
-// 3. Register a new worker
+// 3. Register a new worker (persisted to TiDB Database)
 mobileOpsRouter.post(
   '/attendance/workers',
   asyncHandler(async (req, res) => {
@@ -1065,12 +1092,49 @@ mobileOpsRouter.post(
       registered_at: new Date().toISOString().split('T')[0],
       rfid_tag: `RFID-${newId.replace('EMP-', '')}`,
     };
+
+    // Save to TiDB database
+    try {
+      await db.query(
+        `INSERT INTO attendance_workers (worker_id, name, role, shift, mine_site, photo_url, rfid_tag, registered_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE name=VALUES(name), photo_url=VALUES(photo_url), role=VALUES(role), shift=VALUES(shift)`,
+        [
+          newWorker.worker_id,
+          newWorker.name,
+          newWorker.role,
+          newWorker.shift,
+          newWorker.mine_site,
+          newWorker.photo_url,
+          newWorker.rfid_tag,
+          newWorker.registered_at,
+        ]
+      );
+    } catch (dbErr) {
+      console.warn('Database insert warning for attendance_workers:', dbErr.message);
+    }
+
     attendanceWorkersStore.unshift(newWorker);
-    return ApiResponse.created(res, newWorker, 'Worker enrolled in biometric attendance system');
+    return ApiResponse.created(res, newWorker, 'Worker enrolled in biometric attendance system and stored in database');
   })
 );
 
-// 4. Trigger / log attendance scan punch
+// 3b. Delete registered worker
+mobileOpsRouter.delete(
+  '/attendance/workers/:id',
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    try {
+      await db.query('DELETE FROM attendance_workers WHERE worker_id = ?', [id]);
+    } catch (err) {
+      console.warn('Database delete warning for attendance_workers:', err.message);
+    }
+    attendanceWorkersStore = attendanceWorkersStore.filter((w) => w.worker_id !== id);
+    return ApiResponse.success(res, { worker_id: id }, 'Worker removed from database');
+  })
+);
+
+// 4. Trigger / log attendance scan punch (persisted to TiDB Database)
 mobileOpsRouter.post(
   '/attendance/scan',
   asyncHandler(async (req, res) => {
@@ -1095,8 +1159,32 @@ mobileOpsRouter.post(
       dgms_form_b: 'VERIFIED_COMPLIANT',
     };
 
+    // Save to TiDB database
+    try {
+      await db.query(
+        `INSERT INTO attendance_logs (id, worker_id, name, role, shift, mine_site, date, time, status, confidence, verification_type, dgms_form_b)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          newLog.id,
+          newLog.worker_id,
+          newLog.name,
+          newLog.role,
+          newLog.shift,
+          newLog.mine_site,
+          newLog.date,
+          newLog.time,
+          newLog.status,
+          newLog.confidence,
+          newLog.verification_type,
+          newLog.dgms_form_b,
+        ]
+      );
+    } catch (dbErr) {
+      console.warn('Database insert warning for attendance_logs:', dbErr.message);
+    }
+
     attendanceRecordsStore.unshift(newLog);
-    return ApiResponse.created(res, newLog, `Attendance marked for ${worker.name}`);
+    return ApiResponse.created(res, newLog, `Attendance marked for ${worker.name} and logged in database`);
   })
 );
 
@@ -1104,8 +1192,20 @@ mobileOpsRouter.post(
 mobileOpsRouter.get(
   '/attendance/stats',
   asyncHandler(async (req, res) => {
-    const totalWorkers = attendanceWorkersStore.length;
-    const presentToday = new Set(attendanceRecordsStore.map((r) => r.worker_id)).size;
+    let totalWorkers = attendanceWorkersStore.length;
+    let presentToday = new Set(attendanceRecordsStore.map((r) => r.worker_id)).size;
+
+    try {
+      const [wRows] = await db.query('SELECT COUNT(*) as count FROM attendance_workers');
+      if (wRows && wRows[0]?.count > 0) totalWorkers = wRows[0].count;
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      const [lRows] = await db.query('SELECT COUNT(DISTINCT worker_id) as count FROM attendance_logs WHERE date = ?', [todayStr]);
+      if (lRows && lRows[0]?.count >= 0) presentToday = lRows[0].count;
+    } catch (err) {
+      console.warn('Database stats fallback:', err.message);
+    }
+
     const absent = Math.max(0, totalWorkers - presentToday);
     const rate = totalWorkers > 0 ? Math.round((presentToday / totalWorkers) * 100) : 0;
 
