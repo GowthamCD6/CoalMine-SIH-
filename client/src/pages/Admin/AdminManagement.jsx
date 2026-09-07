@@ -19,9 +19,11 @@ import {
   Lock,
   ArrowRight,
   Shield,
+  FolderTree,
   AlertTriangle
 } from 'lucide-react';
 import { api } from '../../services/api.js';
+import PagesManagement from './PagesManagement.jsx';
 
 // ─── Administration Tabs & Descriptions (Reference UI Pattern) ─────────────
 const TABS = [
@@ -29,6 +31,7 @@ const TABS = [
   { key: 'mines', label: 'Mines Directory', icon: Layers, color: 'blue' },
   { key: 'users', label: 'User Directory', icon: Users, color: 'blue' },
   { key: 'rbac', label: 'Roles & Subroles (RBAC)', icon: ShieldCheck, color: 'purple' },
+  { key: 'pages', label: 'Pages & Hierarchy', icon: FolderTree, color: 'amber' },
   { key: 'evaluator', label: 'Policy Resolution Tester', icon: Terminal, color: 'emerald' },
 ];
 
@@ -37,6 +40,7 @@ const TAB_DESCRIPTIONS = {
   mines: 'Configure mining concessions, open-cast and underground sites, and assign operational leadership',
   users: 'Provision administrative personnel, manage active field accounts, and configure RBAC clearances',
   rbac: 'Configure multi-tier role hierarchy, subrole scopes, and granular permission boundaries',
+  pages: 'Configure dynamic portal pages, navigation routes, icons, and page permission bindings',
   evaluator: 'Simulate policy resolution and verify real-time scope clearances against active user credentials',
 };
 
@@ -1399,7 +1403,12 @@ export default function AdminManagement({ currentUser, onShowToast, initialTab }
         </div>
       )}
 
-      {/* TAB 5: SCOPED RBAC RESOLUTION TESTER */}
+      {/* TAB: PAGES & HIERARCHY */}
+      {adminTab === 'pages' && (
+        <PagesManagement onShowToast={onShowToast} />
+      )}
+
+      {/* TAB: SCOPED RBAC RESOLUTION TESTER */}
       {adminTab === 'evaluator' && (
         <div style={{
           backgroundColor: '#ffffff',

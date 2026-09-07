@@ -21,15 +21,7 @@ const ICON_MAP = {
 
 // Fallback static nav for Super Admin (always visible)
 const ADMIN_STATIC_NAV = [
-  {
-    label: 'Administration', section: true,
-    children: [
-      { id: 'organizations', label: 'Organizations & Mines', icon: Building2 },
-      { id: 'users', label: 'User Directory', icon: Users },
-      { id: 'rbac', label: 'Roles & Subroles (RBAC)', icon: Shield },
-      { id: 'pages', label: 'Pages & Hierarchy', icon: FolderTree },
-    ],
-  },
+  { id: 'admin', label: 'Administration', icon: Building2 },
   { id: 'dashboard', label: 'System Overview & Health', icon: LayoutDashboard },
   { id: 'command-map', label: 'GIS Command Map', icon: Map },
   { id: 'analytics', label: 'AI Risk Analytics', icon: BrainCircuit },
@@ -67,6 +59,8 @@ const ROUTE_TO_TAB = {
   '/mine-dashboard': 'mine-dashboard',
   '/corporate-dashboard': 'corporate-dashboard',
   '/regulatory-dashboard': 'regulatory-dashboard',
+  '/admin': 'admin',
+  '/administration': 'admin',
   '/organizations': 'organizations',
   '/admin/organizations': 'organizations',
   '/mines': 'mines',
@@ -98,6 +92,7 @@ const ROUTE_TO_TAB = {
   '/command-map': 'command-map',
   '/mobile-app': 'mobile-app',
   // Page code mappings
+  'page-admin': 'admin',
   'page-dashboard': 'dashboard',
   'page-orgs': 'organizations',
   'page-mines': 'mines',
@@ -108,7 +103,20 @@ const ROUTE_TO_TAB = {
   'page-materials': 'resources',
 };
 
+const ADMIN_SUB_TABS = new Set([
+  'admin',
+  'administration',
+  'organizations',
+  'mines',
+  'users',
+  'rbac',
+  'pages',
+  'evaluator',
+]);
+
 function buildNavFromTree(tree) {
+  let hasAdmin = false;
+
   const mapNode = (node) => {
     const rawCode = (node.code || '').toLowerCase().replace(/_/g, '-');
     const tabId =
@@ -121,21 +129,38 @@ function buildNavFromTree(tree) {
 
     const IconComp = ICON_MAP[node.icon] || LayoutDashboard;
 
+    // Consolidate any administration group, page, or nested item into the single top-level Administration button
+    if (
+      node.name?.toLowerCase().includes('admin') ||
+      ADMIN_SUB_TABS.has(tabId) ||
+      ADMIN_SUB_TABS.has(rawCode)
+    ) {
+      hasAdmin = true;
+      return null;
+    }
+
     if (node.type === 'GROUP' || (node.children && node.children.length > 0)) {
+      const filteredChildren = (node.children || []).map(mapNode).filter(Boolean);
+      if (filteredChildren.length === 0) return null;
       return {
         label: node.name,
         section: true,
-        children: (node.children || []).map(mapNode).filter(Boolean),
+        children: filteredChildren,
       };
     }
     return { id: tabId, label: node.name, icon: IconComp };
   };
 
   const items = tree.map(mapNode).filter(Boolean);
-  // Ensure Administration section appears at the top
+
+  if (hasAdmin) {
+    items.unshift({ id: 'admin', label: 'Administration', icon: Building2 });
+  }
+
+  // Ensure Administration appears first
   items.sort((a, b) => {
-    const aIsAdmin = a.label?.toLowerCase().includes('admin');
-    const bIsAdmin = b.label?.toLowerCase().includes('admin');
+    const aIsAdmin = a.id === 'admin' || a.label?.toLowerCase() === 'administration';
+    const bIsAdmin = b.id === 'admin' || b.label?.toLowerCase() === 'administration';
     if (aIsAdmin && !bIsAdmin) return -1;
     if (!aIsAdmin && bIsAdmin) return 1;
     return 0;
@@ -154,7 +179,7 @@ export default function Sidebar({
   onClose,
 }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [openSections, setOpenSections] = useState({ Administration: true });
+  const [openSections, setOpenSections] = useState({});
   const [dynamicNav, setDynamicNav] = useState(null);
   const [navLoading, setNavLoading] = useState(true);
 
@@ -274,7 +299,10 @@ export default function Sidebar({
 
       // Regular nav item
       const Icon = item.icon;
-      const isActive = activeTab === item.id;
+      const isActive =
+        activeTab === item.id ||
+        (item.id === 'admin' &&
+          ['admin', 'administration', 'organizations', 'mines', 'users', 'rbac', 'pages', 'evaluator'].includes(activeTab));
       return (
         <button
           type="button"

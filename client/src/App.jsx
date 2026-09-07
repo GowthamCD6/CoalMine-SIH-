@@ -15,7 +15,6 @@ import ProductionDashboardView from './pages/Dashboard/ProductionDashboardView.j
 
 // Admin
 import AdminManagement from './pages/Admin/AdminManagement.jsx';
-import PagesManagement from './pages/Admin/PagesManagement.jsx';
 import AuditLogsView from './pages/Admin/AuditLogsView.jsx';
 import CommandMapView from './pages/Admin/CommandMapView.jsx';
 import AnalyticsView from './pages/Admin/AnalyticsView.jsx';
@@ -229,19 +228,31 @@ function App() {
             </div>
           )}
 
-          {/* ── Admin ── */}
-          {(activeTab === 'organizations' || activeTab === 'mines' || activeTab === 'users' || activeTab === 'rbac') && (
+          {/* ── Administration (Unified module with horizontal selector) ── */}
+          {(
+            activeTab === 'admin' ||
+            activeTab === 'administration' ||
+            activeTab === 'organizations' ||
+            activeTab === 'mines' ||
+            activeTab === 'users' ||
+            activeTab === 'rbac' ||
+            activeTab === 'pages' ||
+            activeTab === 'evaluator'
+          ) && (
             <div style={{ padding: '2rem' }}>
               <AdminManagement
                 currentUser={currentUser}
                 onShowToast={showToast}
-                initialTab={activeTab === 'organizations' ? 'orgs' : activeTab === 'mines' ? 'mines' : activeTab === 'users' ? 'users' : 'rbac'}
+                initialTab={
+                  activeTab === 'mines' ? 'mines' :
+                  activeTab === 'users' ? 'users' :
+                  activeTab === 'rbac' ? 'rbac' :
+                  activeTab === 'pages' ? 'pages' :
+                  activeTab === 'evaluator' ? 'evaluator' :
+                  'orgs'
+                }
               />
             </div>
-          )}
-
-          {activeTab === 'pages' && (
-            <PagesManagement onShowToast={showToast} />
           )}
 
           {activeTab === 'mobile-app' && (
