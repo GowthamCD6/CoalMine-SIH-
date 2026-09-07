@@ -282,6 +282,7 @@ mobileOpsRouter.get(
     let filteredBroadcasts = broadcastsStore;
     if (zone && zone !== 'ALL') {
       const zLower = zone.toLowerCase();
+      filteredBroadcasts = broadcastsStore.filter((b) => {
         // In life-safety operations, any Evacuation order or Critical alert must be delivered to all workers
         if (b.target_zone === 'ALL' || b.type === 'EVACUATION' || b.severity === 'CRITICAL') return true;
         const tzLower = String(b.target_zone || '').toLowerCase();
