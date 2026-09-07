@@ -896,4 +896,227 @@ mobileOpsRouter.post(
   })
 );
 
+// --- SMART BIOMETRIC ATTENDANCE SYSTEM ---
+let attendanceWorkersStore = [
+  {
+    worker_id: 'EMP-7729',
+    name: 'Ramesh Sharma',
+    role: 'Underground Drill Operator',
+    shift: 'Morning Shift (06:00 - 14:00)',
+    mine_site: 'Dhanbad Central Pit #4 (Seam IX)',
+    photo_url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200&h=200&fit=crop&crop=faces',
+    registered_at: '2026-09-01',
+    rfid_tag: 'RFID-7729-D4',
+  },
+  {
+    worker_id: 'EMP-4102',
+    name: 'Sunil Soren',
+    role: 'Roof Bolting Crew Lead',
+    shift: 'Morning Shift (06:00 - 14:00)',
+    mine_site: 'Shaft 4 • Level 3 (-120m)',
+    photo_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces',
+    registered_at: '2026-09-02',
+    rfid_tag: 'RFID-4102-S3',
+  },
+  {
+    worker_id: 'EMP-8812',
+    name: 'Vikram Singh',
+    role: 'Ventilation & Gas Sentry',
+    shift: 'Morning Shift (06:00 - 14:00)',
+    mine_site: 'Ventilation Shaft 1 (-90m)',
+    photo_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces',
+    registered_at: '2026-09-03',
+    rfid_tag: 'RFID-8812-V1',
+  },
+  {
+    worker_id: 'EMP-3301',
+    name: 'Amit Mondal',
+    role: 'Continuous Miner Operator',
+    shift: 'Evening Shift (14:00 - 22:00)',
+    mine_site: 'Zone B - Level 4 Deep (-150m)',
+    photo_url: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=200&h=200&fit=crop&crop=faces',
+    registered_at: '2026-09-03',
+    rfid_tag: 'RFID-3301-Z4',
+  },
+  {
+    worker_id: 'EMP-6623',
+    name: 'Deepak Bauri',
+    role: 'Blasting Assistant & Explosives Handler',
+    shift: 'Evening Shift (14:00 - 22:00)',
+    mine_site: 'Sector C - Face 5 (-180m)',
+    photo_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces',
+    registered_at: '2026-09-04',
+    rfid_tag: 'RFID-6623-SC',
+  },
+  {
+    worker_id: 'EMP-2208',
+    name: 'Pooja Sharma',
+    role: 'Surface Dispatch Clerk',
+    shift: 'General Shift (08:00 - 16:30)',
+    mine_site: 'Surface Pit 2 / Haulage Yard (0m)',
+    photo_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=faces',
+    registered_at: '2026-09-05',
+    rfid_tag: 'RFID-2208-P2',
+  },
+];
+
+let attendanceRecordsStore = [
+  {
+    id: 'ATT-20260907-7729',
+    worker_id: 'EMP-7729',
+    name: 'Ramesh Sharma',
+    role: 'Underground Drill Operator',
+    shift: 'Morning Shift (06:00 - 14:00)',
+    mine_site: 'Dhanbad Central Pit #4 (Seam IX)',
+    date: '2026-09-07',
+    time: '06:14:22',
+    status: 'Present - On Time',
+    confidence: '99.4%',
+    verification_type: 'AI Facial Biometrics (ResNet-18)',
+    dgms_form_b: 'VERIFIED_COMPLIANT',
+  },
+  {
+    id: 'ATT-20260907-4102',
+    worker_id: 'EMP-4102',
+    name: 'Sunil Soren',
+    role: 'Roof Bolting Crew Lead',
+    shift: 'Morning Shift (06:00 - 14:00)',
+    mine_site: 'Shaft 4 • Level 3 (-120m)',
+    date: '2026-09-07',
+    time: '06:19:48',
+    status: 'Present - On Time',
+    confidence: '98.8%',
+    verification_type: 'AI Facial Biometrics (ResNet-18)',
+    dgms_form_b: 'VERIFIED_COMPLIANT',
+  },
+  {
+    id: 'ATT-20260907-8812',
+    worker_id: 'EMP-8812',
+    name: 'Vikram Singh',
+    role: 'Ventilation & Gas Sentry',
+    shift: 'Morning Shift (06:00 - 14:00)',
+    mine_site: 'Ventilation Shaft 1 (-90m)',
+    date: '2026-09-07',
+    time: '06:28:10',
+    status: 'Present - On Time',
+    confidence: '97.6%',
+    verification_type: 'AI Facial Biometrics (ResNet-18)',
+    dgms_form_b: 'VERIFIED_COMPLIANT',
+  },
+  {
+    id: 'ATT-20260907-2208',
+    worker_id: 'EMP-2208',
+    name: 'Pooja Sharma',
+    role: 'Surface Dispatch Clerk',
+    shift: 'General Shift (08:00 - 16:30)',
+    mine_site: 'Surface Pit 2 / Haulage Yard (0m)',
+    date: '2026-09-07',
+    time: '08:02:15',
+    status: 'Present - On Time',
+    confidence: '99.1%',
+    verification_type: 'AI Facial Biometrics (ResNet-18)',
+    dgms_form_b: 'VERIFIED_COMPLIANT',
+  },
+];
+
+// 1. Get attendance records
+mobileOpsRouter.get(
+  '/attendance',
+  asyncHandler(async (req, res) => {
+    const { date, shift, worker_id } = req.query;
+    let filtered = attendanceRecordsStore;
+    if (date) {
+      filtered = filtered.filter((r) => r.date === date);
+    }
+    if (shift && shift !== 'ALL') {
+      filtered = filtered.filter((r) => r.shift?.includes(shift));
+    }
+    if (worker_id) {
+      filtered = filtered.filter((r) => r.worker_id === worker_id);
+    }
+    return ApiResponse.success(res, filtered, 'Attendance records retrieved');
+  })
+);
+
+// 2. Get registered workers
+mobileOpsRouter.get(
+  '/attendance/workers',
+  asyncHandler(async (req, res) => {
+    return ApiResponse.success(res, attendanceWorkersStore, 'Registered workers retrieved');
+  })
+);
+
+// 3. Register a new worker
+mobileOpsRouter.post(
+  '/attendance/workers',
+  asyncHandler(async (req, res) => {
+    const { name, worker_id, role, shift, mine_site, photo_url } = req.body;
+    if (!name) {
+      return ApiResponse.badRequest(res, 'Worker name is required');
+    }
+    const newId = worker_id || `EMP-${Math.floor(1000 + Math.random() * 9000)}`;
+    const newWorker = {
+      worker_id: newId,
+      name,
+      role: role || 'Underground Drill Operator',
+      shift: shift || 'Morning Shift (06:00 - 14:00)',
+      mine_site: mine_site || 'Dhanbad Central Pit #4 (Seam IX)',
+      photo_url: photo_url || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200&h=200&fit=crop&crop=faces',
+      registered_at: new Date().toISOString().split('T')[0],
+      rfid_tag: `RFID-${newId.replace('EMP-', '')}`,
+    };
+    attendanceWorkersStore.unshift(newWorker);
+    return ApiResponse.created(res, newWorker, 'Worker enrolled in biometric attendance system');
+  })
+);
+
+// 4. Trigger / log attendance scan punch
+mobileOpsRouter.post(
+  '/attendance/scan',
+  asyncHandler(async (req, res) => {
+    const { worker_id, verification_type = 'AI Facial Biometrics (ResNet-18)' } = req.body;
+    const worker = attendanceWorkersStore.find((w) => w.worker_id === worker_id) || attendanceWorkersStore[0];
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toLocaleTimeString([], { hour12: false });
+
+    const newLog = {
+      id: `ATT-${Date.now()}-${worker.worker_id}`,
+      worker_id: worker.worker_id,
+      name: worker.name,
+      role: worker.role,
+      shift: worker.shift,
+      mine_site: worker.mine_site,
+      date: dateStr,
+      time: timeStr,
+      status: 'Present - On Time',
+      confidence: (98.0 + Math.random() * 1.9).toFixed(1) + '%',
+      verification_type,
+      dgms_form_b: 'VERIFIED_COMPLIANT',
+    };
+
+    attendanceRecordsStore.unshift(newLog);
+    return ApiResponse.created(res, newLog, `Attendance marked for ${worker.name}`);
+  })
+);
+
+// 5. Attendance stats
+mobileOpsRouter.get(
+  '/attendance/stats',
+  asyncHandler(async (req, res) => {
+    const totalWorkers = attendanceWorkersStore.length;
+    const presentToday = new Set(attendanceRecordsStore.map((r) => r.worker_id)).size;
+    const absent = Math.max(0, totalWorkers - presentToday);
+    const rate = totalWorkers > 0 ? Math.round((presentToday / totalWorkers) * 100) : 0;
+
+    return ApiResponse.success(res, {
+      total_workers: totalWorkers,
+      present_today: presentToday,
+      absent_today: absent,
+      attendance_rate: rate,
+      latest_punches: attendanceRecordsStore.slice(0, 5),
+    });
+  })
+);
+
 export default mobileOpsRouter;

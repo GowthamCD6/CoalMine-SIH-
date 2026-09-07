@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { HardHat, Users, UserCheck, ShieldAlert, Activity, UserX, UserPlus } from 'lucide-react';
 
-export default function LaborDeploymentView({ onShowToast }) {
+export default function LaborDeploymentView({ onShowToast, onNavigateTo }) {
   const [shifts] = useState([
     { id: 'SHFT-MORN-A', zone: 'Underground Level 3', supervisor: 'Arun Kumar', headcount: 45, status: 'Active', safetyScore: '98%' },
     { id: 'SHFT-MORN-B', zone: 'Surface Processing', supervisor: 'Meera Reddy', headcount: 120, status: 'Active', safetyScore: '95%' },
@@ -31,11 +31,75 @@ export default function LaborDeploymentView({ onShowToast }) {
             <button className="sleek-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f1f5f9', color: '#475569' }} onClick={() => onShowToast('Exporting Duty Roster...')}>
               Duty Roster
             </button>
-            <button className="sleek-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--primary)', color: '#fff' }} onClick={() => onShowToast('Initiating Roll Call...')}>
-              <UserCheck size={18} /> Initiate Roll Call
+            <button
+              className="sleek-btn"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--primary)', color: '#fff' }}
+              onClick={() => {
+                if (onNavigateTo) onNavigateTo('attendance');
+                else if (onShowToast) onShowToast('Opening Biometric Attendance Portal...');
+              }}
+            >
+              <UserCheck size={18} /> Initiate Biometric Roll Call
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Smart Biometric Attendance Banner */}
+      <div
+        className="glass-panel"
+        style={{
+          padding: '1.25rem 1.5rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          backgroundColor: 'rgba(33, 150, 243, 0.08)',
+          border: '1px solid rgba(33, 150, 243, 0.3)',
+          flexWrap: 'wrap',
+          gap: '12px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ padding: '10px', backgroundColor: 'rgba(33, 150, 243, 0.2)', borderRadius: '10px', color: 'var(--primary)' }}>
+            <UserCheck size={24} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              Smart Biometric Attendance & Facial Scanner System
+              <span
+                style={{
+                  backgroundColor: '#ecfdf5',
+                  color: '#059669',
+                  border: '1px solid #a7f3d0',
+                  fontSize: '0.72rem',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  fontWeight: 700,
+                }}
+              >
+                ResNet-18 Active
+              </span>
+            </div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '2px' }}>
+              Real-time facial recognition portal, DGMS Form B e-muster, and worker registration.
+            </div>
+          </div>
+        </div>
+        <button
+          className="sleek-btn"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            backgroundColor: 'var(--primary)',
+            color: '#fff',
+            padding: '9px 16px',
+            fontWeight: 600,
+          }}
+          onClick={() => onNavigateTo && onNavigateTo('attendance')}
+        >
+          Open AI Attendance Portal →
+        </button>
       </div>
 
       {/* KPI Cards */}

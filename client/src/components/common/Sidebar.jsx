@@ -20,6 +20,7 @@ import {
   Cloud,
   HardHat,
   Camera,
+  UserCheck,
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onSelectTab }) {
@@ -37,6 +38,7 @@ export default function Sidebar({ activeTab, onSelectTab }) {
       items: [
         { id: 'compliance', label: 'AI Statutory Hub', icon: FileCheck },
         { id: 'smoke-detection', label: 'AI Smoke CCTV', icon: Camera },
+        { id: 'attendance', label: 'AI Facial Attendance', icon: UserCheck },
         { id: 'environment', label: 'Environmental Control', icon: Cloud },
         { id: 'labor', label: 'Labor & Safety Tracking', icon: HardHat },
         { id: 'audit-logs', label: 'Blockchain Audit Log', icon: FileText },

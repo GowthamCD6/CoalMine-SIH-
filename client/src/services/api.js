@@ -301,6 +301,13 @@ export const api = {
   reportEvacuationSafe: (data) => request('/emergencies/evacuation/report-safe', { method: 'POST', body: JSON.stringify(data) }),
   dispatchRescueTeam: (data) => request('/emergencies/rescue/dispatch', { method: 'POST', body: JSON.stringify(data) }),
   respondToDistress: (id, data) => request(`/emergencies/sos/${id}/respond`, { method: 'POST', body: JSON.stringify(data) }),
+
+  // Smart Biometric Attendance System
+  getAttendanceLogs: (params) => request(`/attendance${toQueryString(params)}`),
+  getAttendanceWorkers: () => request('/attendance/workers'),
+  registerAttendanceWorker: (data) => request('/attendance/workers', { method: 'POST', body: JSON.stringify(data) }),
+  scanAttendanceFace: (data) => request('/attendance/scan', { method: 'POST', body: JSON.stringify(data) }),
+  getAttendanceStats: () => request('/attendance/stats'),
 };
 
 export default api;

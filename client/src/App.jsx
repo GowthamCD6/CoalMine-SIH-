@@ -20,6 +20,7 @@ import ResourceAllocationView from './components/views/ResourceAllocationView.js
 import EnvironmentMonitoringView from './components/views/EnvironmentMonitoringView.jsx';
 import LaborDeploymentView from './components/views/LaborDeploymentView.jsx';
 import SmokeDetectionView from './components/views/SmokeDetectionView.jsx';
+import AttendanceSystemView from './components/views/AttendanceSystemView.jsx';
 import { api, subscribeToApiLogs, getAccessToken } from './services/api.js';
 import './App.css';
 
@@ -218,13 +219,19 @@ function App() {
 
           {activeTab === 'labor' && (
             <div style={{ padding: '2rem' }}>
-              <LaborDeploymentView onShowToast={showToast} />
+              <LaborDeploymentView onShowToast={showToast} onNavigateTo={(tab) => setActiveTab(tab)} />
             </div>
           )}
 
           {activeTab === 'smoke-detection' && (
             <div style={{ padding: '2rem' }}>
               <SmokeDetectionView />
+            </div>
+          )}
+
+          {activeTab === 'attendance' && (
+            <div style={{ padding: '2rem' }}>
+              <AttendanceSystemView onShowToast={showToast} />
             </div>
           )}
 
