@@ -31,18 +31,18 @@ export default function EnvironmentMonitoringView({ onShowToast }) {
       </div>
 
       {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
         <div className="sleek-card" style={{ padding: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>Average AQI</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)' }}>124</div>
             </div>
-            <div style={{ padding: '8px', backgroundColor: '#fff3cd', color: '#856404', borderRadius: '10px' }}>
+            <div style={{ padding: '8px', backgroundColor: 'var(--warning-light)', color: 'var(--warning)', borderRadius: '10px' }}>
               <Wind size={20} />
             </div>
           </div>
-          <div style={{ marginTop: '12px', fontSize: '0.8rem', color: '#856404', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
             <AlertTriangle size={14} /> Moderate Pollution
           </div>
         </div>
@@ -53,11 +53,11 @@ export default function EnvironmentMonitoringView({ onShowToast }) {
               <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>Water Discharge pH</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)' }}>6.8</div>
             </div>
-            <div style={{ padding: '8px', backgroundColor: '#d1ecf1', color: '#0c5460', borderRadius: '10px' }}>
+            <div style={{ padding: '8px', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', borderRadius: '10px' }}>
               <Droplets size={20} />
             </div>
           </div>
-          <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
             <CheckCircle size={14} /> Within limits
           </div>
         </div>
@@ -68,11 +68,11 @@ export default function EnvironmentMonitoringView({ onShowToast }) {
               <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>Active Violations</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)' }}>2</div>
             </div>
-            <div style={{ padding: '8px', backgroundColor: '#f8d7da', color: '#721c24', borderRadius: '10px' }}>
+            <div style={{ padding: '8px', backgroundColor: 'var(--danger-light)', color: 'var(--danger)', borderRadius: '10px' }}>
               <AlertTriangle size={20} />
             </div>
           </div>
-          <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
             <Activity size={14} /> Requires immediate action
           </div>
         </div>

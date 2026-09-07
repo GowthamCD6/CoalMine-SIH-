@@ -25,6 +25,8 @@ import {
   AlertCircle,
   BatteryCharging,
   Navigation,
+  Siren,
+  Ambulance,
 } from 'lucide-react';
 import api from '../../services/api.js';
 
@@ -93,19 +95,19 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
     setAlertType(presetType);
     if (presetType === 'EVACUATION') {
       setSeverity('CRITICAL');
-      setTitle('🚨 IMMEDIATE SECTOR EVACUATION ORDER');
+      setTitle('IMMEDIATE SECTOR EVACUATION ORDER');
       setMessage(`All personnel in ${selectedZoneObj.name} must cease work, secure equipment, and proceed immediately to ${exitRoute}.`);
     } else if (presetType === 'GAS_SURGE') {
       setSeverity('CRITICAL');
-      setTitle('⚠️ CRITICAL METHANE (CH₄) SPIKE DETECTED');
+      setTitle('CRITICAL METHANE (CH₄) SPIKE DETECTED');
       setMessage(`Continuous atmospheric sensors detected Methane surge above 1.40% statutory threshold at ${selectedZoneObj.name}. Don self-rescuers and evacuate.`);
     } else if (presetType === 'STRATA_WARNING') {
       setSeverity('WARNING');
-      setTitle('🪨 STRATA / ROOF INSTABILITY HAZARD');
+      setTitle('STRATA / ROOF INSTABILITY HAZARD');
       setMessage(`Micro-seismic activity and displacement detected near ${selectedZoneObj.name}. Hold advance, inspect roof support bolts.`);
     } else if (presetType === 'BLASTING_CLEAR') {
       setSeverity('WARNING');
-      setTitle('💥 CONTROLLED BLASTING ZONE CLEARANCE');
+      setTitle('CONTROLLED BLASTING ZONE CLEARANCE');
       setMessage(`Certified blasting scheduled in 15 minutes. Clear all extraction pathways in ${selectedZoneObj.name}.`);
     }
   };
@@ -115,7 +117,7 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
     setSubmitting(true);
     try {
       const payload = {
-        title: title || (alertType === 'EVACUATION' ? '🚨 IMMEDIATE SECTOR EVACUATION ORDER' : '⚠️ SAFETY DIRECTIVE'),
+        title: title || (alertType === 'EVACUATION' ? 'IMMEDIATE SECTOR EVACUATION ORDER' : 'SAFETY DIRECTIVE'),
         message: message || `Directive for ${selectedZoneObj.name}. Follow statutory escape protocols.`,
         type: alertType,
         severity,
@@ -127,7 +129,7 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
       };
 
       await api.createEmergencyAlert(payload);
-      onShowToast(`🚨 Emergency Alert dispatched to ${selectedZoneObj.name} (${selectedZoneObj.workers_online} workers notified)!`);
+      onShowToast(`Emergency Alert dispatched to ${selectedZoneObj.name} (${selectedZoneObj.workers_online} workers notified)!`);
       setTitle('');
       setMessage('');
       await fetchAlerts(true);
@@ -162,7 +164,7 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
         depth: worker.depth,
         rescue_team_name: 'Alpha Subterranean Rescue Brigade',
       });
-      onShowToast(`🚑 Emergency Rescue Brigade dispatched to ${worker.name} at coordinates!`);
+      onShowToast(`Emergency Rescue Brigade dispatched to ${worker.name} at coordinates!`);
       await fetchAlerts(true);
     } catch (err) {
       onShowToast('Failed to dispatch rescue team: ' + err.message, true);
@@ -412,12 +414,15 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                     border: '1px solid #fca5a5',
                     padding: '6px 11px',
                     borderRadius: '6px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
                     fontSize: '0.75rem',
                     fontWeight: 700,
                     cursor: 'pointer',
                   }}
                 >
-                  🚨 Evacuation Order
+                  <Siren size={13} /> Evacuation Order
                 </button>
                 <button
                   type="button"
@@ -428,12 +433,15 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                     border: '1px solid #fde68a',
                     padding: '6px 11px',
                     borderRadius: '6px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
                     fontSize: '0.75rem',
                     fontWeight: 700,
                     cursor: 'pointer',
                   }}
                 >
-                  ⚠️ Methane Gas Spike
+                  <AlertTriangle size={13} /> Methane Gas Spike
                 </button>
                 <button
                   type="button"
@@ -444,12 +452,15 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                     border: '1px solid #bfdbfe',
                     padding: '6px 11px',
                     borderRadius: '6px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
                     fontSize: '0.75rem',
                     fontWeight: 700,
                     cursor: 'pointer',
                   }}
                 >
-                  🪨 Strata Support Threat
+                  <Layers size={13} /> Strata Support Threat
                 </button>
                 <button
                   type="button"
@@ -460,12 +471,15 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                     border: '1px solid #ddd6fe',
                     padding: '6px 11px',
                     borderRadius: '6px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
                     fontSize: '0.75rem',
                     fontWeight: 700,
                     cursor: 'pointer',
                   }}
                 >
-                  💥 Blasting Clearance
+                  <Flame size={13} /> Blasting Clearance
                 </button>
               </div>
             </div>
@@ -518,14 +532,14 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                       backgroundColor: '#ffffff',
                     }}
                   >
-                    <option value="CRITICAL">🔴 CRITICAL (Siren & Flashlight Strobe)</option>
-                    <option value="WARNING">🟡 WARNING (Subterranean Advisory)</option>
-                    <option value="ADVISORY">🔵 ADVISORY (Operational Notice)</option>
+                    <option value="CRITICAL">CRITICAL (Siren & Flashlight Strobe)</option>
+                    <option value="WARNING">WARNING (Subterranean Advisory)</option>
+                    <option value="ADVISORY">ADVISORY (Operational Notice)</option>
                   </select>
                 </div>
               </div>
 
-              {/* Signal Filtering Preview Card (Explaining the Signal Filter) */}
+              {/* Signal Filtering Preview Card */}
               <div style={{
                 backgroundColor: '#f8fafc',
                 border: '1px dashed #94a3b8',
@@ -543,7 +557,7 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                   </div>
                 </div>
                 <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0284c7' }}>
-                  📢 {selectedZoneObj.workers_online} Devices Will Alert Specially
+                  Targeted Broadcast: {selectedZoneObj.workers_online} Devices Armed
                 </div>
               </div>
 
@@ -635,7 +649,7 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                 <Send size={16} />
                 {submitting
                   ? 'Broadcasting to Subterranean Nodes...'
-                  : `🚨 Broadcast Targeted Alert to ${selectedZoneObj.name}`}
+                  : `Broadcast Targeted Alert to ${selectedZoneObj.name}`}
               </button>
             </form>
           </div>
@@ -789,7 +803,7 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                             backgroundColor: (alert.muster?.unaccounted_count || alert.affected_workers_count) > 0 ? '#fee2e2' : '#f1f5f9',
                             color: (alert.muster?.unaccounted_count || alert.affected_workers_count) > 0 ? '#b91c1c' : '#64748b',
                           }}>
-                            🔴 Unaccounted: {alert.muster?.unaccounted_count ?? (alert.affected_workers_count || 0)}
+                            Unaccounted: {alert.muster?.unaccounted_count ?? (alert.affected_workers_count || 0)}
                           </span>
                         </div>
                       </div>
@@ -806,7 +820,7 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                             <AlertCircle size={14} color="#dc2626" />
                             <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#991b1b' }}>
-                              ⚠️ {alert.muster.unaccounted_workers.length} Personnel Pending Safe Evacuation Check-In:
+                              {alert.muster.unaccounted_workers.length} Personnel Pending Safe Evacuation Check-In:
                             </span>
                           </div>
 
@@ -852,7 +866,7 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                                       alignItems: 'center',
                                       gap: '4px',
                                     }}>
-                                      🚑 RESCUE EN ROUTE
+                                      <Ambulance size={13} /> RESCUE EN ROUTE
                                     </span>
                                   ) : (
                                     <button
@@ -872,7 +886,7 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                                         gap: '4px',
                                       }}
                                     >
-                                      🚑 Dispatch Rescue Brigade
+                                      <Ambulance size={13} /> Dispatch Rescue Brigade
                                     </button>
                                   )}
                                 </div>
@@ -938,8 +952,8 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                           padding: '8px 10px',
                           marginTop: '6px',
                         }}>
-                          <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#92400e', marginBottom: '4px' }}>
-                            🚑 Active Mine Rescue Missions:
+                          <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#92400e', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <Ambulance size={14} /> Active Mine Rescue Missions:
                           </div>
                           {alert.muster.rescue_dispatches.map((mission, idx) => (
                             <div key={idx} style={{ fontSize: '0.7rem', color: '#78350f', display: 'flex', justifyContent: 'space-between' }}>
@@ -1019,8 +1033,8 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#c2410c' }}>
-                        🚨 {sos.worker_name}
+                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#c2410c', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Siren size={15} color="#c2410c" /> {sos.worker_name}
                       </span>
                       <span style={{ fontSize: '0.7rem', color: '#9a3412', fontWeight: 600 }}>
                         {new Date(sos.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -1073,9 +1087,12 @@ export default function EmergencyAlertsView({ currentUser, onShowToast }) {
                           fontSize: '0.72rem',
                           fontWeight: 700,
                           cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
                         }}
                       >
-                        🚑 Dispatch Rescue Team
+                        <Ambulance size={13} /> Dispatch Rescue Team
                       </button>
                       <button
                         type="button"

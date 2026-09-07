@@ -104,7 +104,7 @@ export default function SmokeDetectionView() {
               <div style={{
                 position: 'absolute',
                 top: 0, left: 0, right: 0, bottom: 0,
-                background: 'linear-gradient(180deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0) 100%)',
+                background: 'linear-gradient(180deg, rgba(37, 99, 235, 0.12) 0%, rgba(37, 99, 235, 0) 100%)',
                 borderTop: '2px solid var(--primary)',
                 animation: 'scan 2s ease-in-out infinite alternate',
                 pointerEvents: 'none'

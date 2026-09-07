@@ -53,14 +53,14 @@ export default function LaborDeploymentView({ onShowToast, onNavigateTo }) {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          backgroundColor: 'rgba(33, 150, 243, 0.08)',
-          border: '1px solid rgba(33, 150, 243, 0.3)',
+          backgroundColor: '#eff6ff',
+          border: '1px solid #bfdbfe',
           flexWrap: 'wrap',
           gap: '12px',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ padding: '10px', backgroundColor: 'rgba(33, 150, 243, 0.2)', borderRadius: '10px', color: 'var(--primary)' }}>
+          <div style={{ padding: '10px', backgroundColor: '#dbeafe', borderRadius: '10px', color: 'var(--primary)' }}>
             <UserCheck size={24} />
           </div>
           <div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pickaxe, Lock, Mail, ArrowRight, AlertCircle, ShieldCheck, Database, Eye, EyeOff } from 'lucide-react';
+import { Pickaxe, Lock, Mail, ArrowRight, AlertCircle, ShieldCheck, Database, Eye, EyeOff, Crown, Building2, Briefcase } from 'lucide-react';
 import { api } from '../../services/api.js';
 
 export default function LoginPage({ onLoginSuccess }) {
@@ -244,7 +244,9 @@ export default function LoginPage({ onLoginSuccess }) {
                   textAlign: 'left',
                 }}
               >
-                <div>👑 Super Admin</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+                  <Crown size={14} color="#d97706" /> Super Admin
+                </div>
                 <div style={{ fontSize: '0.7rem', color: '#b45309' }}>superadmin (Global)</div>
               </button>
 
@@ -260,7 +262,9 @@ export default function LoginPage({ onLoginSuccess }) {
                   textAlign: 'left',
                 }}
               >
-                <div>🏢 ECL Org Admin</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+                  <Building2 size={14} color="#2563eb" /> ECL Org Admin
+                </div>
                 <div style={{ fontSize: '0.7rem', color: '#3b82f6' }}>ecl_admin (Org Tier)</div>
               </button>
 
@@ -276,7 +280,9 @@ export default function LoginPage({ onLoginSuccess }) {
                   textAlign: 'left',
                 }}
               >
-                <div>👔 ECL Site Advisor</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+                  <Briefcase size={14} color="#475569" /> ECL Site Advisor
+                </div>
                 <div style={{ fontSize: '0.7rem', color: '#64748b' }}>ecl_advisor (Org Scope)</div>
               </button>
 
@@ -292,7 +298,9 @@ export default function LoginPage({ onLoginSuccess }) {
                   textAlign: 'left',
                 }}
               >
-                <div>⛏️ Rajmahal Mine Admin</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+                  <Pickaxe size={14} color="#059669" /> Rajmahal Mine Admin
+                </div>
                 <div style={{ fontSize: '0.7rem', color: '#059669' }}>rj_mine_admin (Mine Scope)</div>
               </button>
             </div>

@@ -811,7 +811,7 @@ export default function MobileSimulatorView({ onShowToast }) {
                               }),
                             });
                             setHazardCaptured(false);
-                            if (onShowToast) onShowToast('📸 Photo saved to /uploads folder and logged to Audit Trail!');
+                            if (onShowToast) onShowToast('Photo saved to /uploads folder and logged to Audit Trail!');
                           } catch (err) {
                             setHazardCaptured(false);
                             if (onShowToast) onShowToast('Offline queue mode active: ' + err.message, true);

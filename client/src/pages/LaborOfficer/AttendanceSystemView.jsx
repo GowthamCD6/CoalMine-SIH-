@@ -724,13 +724,13 @@ export default function AttendanceSystemView({ onShowToast }) {
         setCapturedEmbedding(emb);
 
         playChime(true);
-        if (onShowToast) onShowToast('📸 Live face snapshot captured & biometrics extracted!');
+        if (onShowToast) onShowToast('Live face snapshot captured & biometrics extracted!');
       } else {
         const currentPhoto = 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200&h=200&fit=crop&crop=faces';
         setCapturedSnapshot(currentPhoto);
         computeEmbeddingFromUrl(currentPhoto).then((emb) => setCapturedEmbedding(emb));
         playChime(true);
-        if (onShowToast) onShowToast('📸 Frame captured! Complete miner profile to save.');
+        if (onShowToast) onShowToast('Frame captured! Complete miner profile to save.');
       }
     } catch (err) {
       console.error('Snapshot capture error:', err);
@@ -803,7 +803,7 @@ export default function AttendanceSystemView({ onShowToast }) {
     if (!webcamActive || !videoRef.current || videoRef.current.readyState < 2 || videoRef.current.videoWidth === 0) {
       setLastScanMessage({
         isSuccess: false,
-        text: '⚠️ Live camera is paused! Click "Turn On Live Camera Feed" below to scan your live face.',
+        text: 'Live camera is paused! Click "Turn On Live Camera Feed" below to scan your live face.',
       });
       if (onShowToast) onShowToast('Live camera is paused. Turn on camera to scan your live face.', true);
       return;
@@ -911,7 +911,7 @@ export default function AttendanceSystemView({ onShowToast }) {
         playChime(false);
         setLastScanMessage({
           isSuccess: false,
-          text: '⚠️ Face not recognized in registered database! Stand closer inside the scanner box or click "Register Face from Camera" to enroll.',
+          text: 'Face not recognized in registered database! Stand closer inside the scanner box or click "Register Face from Camera" to enroll.',
         });
         if (onShowToast) onShowToast('Face not recognized in database. Register face first.', true);
         setIsScanningActive(false);
@@ -1130,7 +1130,7 @@ export default function AttendanceSystemView({ onShowToast }) {
             <span
               className="badge-pill"
               style={{
-                backgroundColor: 'rgba(33, 150, 243, 0.15)',
+                backgroundColor: 'rgba(37, 99, 235, 0.12)',
                 color: 'var(--primary)',
                 border: '1px solid var(--primary-border)',
                 fontWeight: 700,
@@ -1188,7 +1188,7 @@ export default function AttendanceSystemView({ onShowToast }) {
             className="sleek-btn"
             style={{
               padding: '8px 12px',
-              backgroundColor: soundEnabled ? 'rgba(33, 150, 243, 0.1)' : 'var(--bg-surface)',
+              backgroundColor: soundEnabled ? 'rgba(37, 99, 235, 0.1)' : 'var(--bg-surface)',
               color: soundEnabled ? 'var(--primary)' : 'var(--text-muted)',
               border: '1px solid var(--border-subtle)',
             }}
@@ -1235,7 +1235,7 @@ export default function AttendanceSystemView({ onShowToast }) {
           }}
         >
           <Camera size={18} />
-          📸 Register Face from Camera (Instant)
+          Register Face from Camera (Instant)
         </button>
 
         <button
@@ -1336,7 +1336,7 @@ export default function AttendanceSystemView({ onShowToast }) {
               </div>
               <div style={{ fontSize: '1.9rem', fontWeight: 800, color: 'var(--primary)' }}>{attendanceRate}%</div>
             </div>
-            <div style={{ padding: '10px', backgroundColor: 'rgba(33, 150, 243, 0.1)', color: 'var(--primary)', borderRadius: '12px' }}>
+            <div style={{ padding: '10px', backgroundColor: 'rgba(37, 99, 235, 0.1)', color: 'var(--primary)', borderRadius: '12px' }}>
               <Cpu size={22} />
             </div>
           </div>
@@ -1465,7 +1465,7 @@ export default function AttendanceSystemView({ onShowToast }) {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      boxShadow: '0 4px 14px rgba(33, 150, 243, 0.35)',
+                      boxShadow: '0 4px 14px rgba(37, 99, 235, 0.3)',
                     }}
                   >
                     <Video size={18} />
@@ -1591,7 +1591,7 @@ export default function AttendanceSystemView({ onShowToast }) {
                           marginTop: '2px',
                         }}
                       >
-                        {isScanningActive ? '⚡ MATCHING FACE...' : 'Matches Whoever Looks in Camera'}
+                        {isScanningActive ? 'MATCHING FACE...' : 'Matches Whoever Looks in Camera'}
                       </div>
                     </div>
                   </>
@@ -1621,9 +1621,9 @@ export default function AttendanceSystemView({ onShowToast }) {
                         }}
                       >
                         {isScanningActive
-                          ? '⚡ MATCHING FACE...'
+                          ? 'MATCHING FACE...'
                           : selectedWorkerId === 'AUTO'
-                          ? `⚡ AUTO-MATCHED: ${activeWorker.worker_id}`
+                          ? `AUTO-MATCHED: ${activeWorker.worker_id}`
                           : activeWorker.worker_id}
                       </div>
                     </div>
@@ -1648,7 +1648,7 @@ export default function AttendanceSystemView({ onShowToast }) {
                       backdropFilter: 'blur(6px)',
                     }}
                   >
-                    {mirrorMode ? '🪞 Mirror On' : 'Normal View'}
+                    {mirrorMode ? 'Mirror Mode: On' : 'Normal View'}
                   </button>
                 </div>
               )}
@@ -1669,14 +1669,14 @@ export default function AttendanceSystemView({ onShowToast }) {
               {/* Row 1: Miner Selection Dropdown */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                 <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
-                  🎯 Face Profile to Match:
+                  Face Profile to Match:
                 </label>
                 <select
                   value={selectedWorkerId || 'AUTO'}
                   onChange={(e) => {
                     setSelectedWorkerId(e.target.value);
                     if (e.target.value === 'AUTO') {
-                      if (onShowToast) onShowToast('⚡ Auto-Detect Face mode: Camera automatically matches whoever looks into it!');
+                      if (onShowToast) onShowToast('Auto-Detect Face mode: Camera automatically matches whoever looks into it!');
                     } else {
                       const w = workers.find((item) => item.worker_id === e.target.value);
                       if (onShowToast) onShowToast(`Manual target set to: ${w ? w.name : e.target.value}`);
@@ -1694,7 +1694,7 @@ export default function AttendanceSystemView({ onShowToast }) {
                     fontWeight: 600,
                   }}
                 >
-                  <option value="AUTO">⚡ Auto-Detect Face (Matches Whoever Looks in Camera)</option>
+                  <option value="AUTO">Auto-Detect Face (Matches Whoever Looks in Camera)</option>
                   {workers.map((w) => (
                     <option key={w.worker_id} value={w.worker_id}>
                       {w.name} ({w.worker_id}) — {w.role}
@@ -1706,7 +1706,7 @@ export default function AttendanceSystemView({ onShowToast }) {
                   style={{
                     padding: '4px 10px',
                     borderRadius: '6px',
-                    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
                     color: 'var(--primary)',
                     fontSize: '0.78rem',
                     fontWeight: 700,
@@ -1757,12 +1757,12 @@ export default function AttendanceSystemView({ onShowToast }) {
                   ) : selectedWorkerId === 'AUTO' || !selectedWorkerId ? (
                     <>
                       <CheckCircle2 size={18} />
-                      📸 Scan Face & Auto-Identify Miner (TiDB Save)
+                      Scan Face & Auto-Identify Miner (TiDB Save)
                     </>
                   ) : (
                     <>
                       <CheckCircle2 size={18} />
-                      📸 Scan Face: {activeWorker.name} (Save to TiDB)
+                      Scan Face: {activeWorker.name} (Save to TiDB)
                     </>
                   )}
                 </button>
@@ -1793,7 +1793,7 @@ export default function AttendanceSystemView({ onShowToast }) {
                       boxShadow: autoScanEnabled ? '0 0 8px #10b981' : 'none',
                     }}
                   />
-                  {autoScanEnabled ? '⚡ Auto-Scan: ON' : '⏸️ Auto-Scan: PAUSED'}
+                  {autoScanEnabled ? 'Auto-Scan: ON' : 'Auto-Scan: PAUSED'}
                 </button>
 
                 <button
@@ -2098,7 +2098,7 @@ export default function AttendanceSystemView({ onShowToast }) {
           <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
               <thead>
-                <tr style={{ backgroundColor: 'rgba(33, 150, 243, 0.06)', borderBottom: '1px solid var(--border-subtle)' }}>
+                <tr style={{ backgroundColor: 'rgba(37, 99, 235, 0.04)', borderBottom: '1px solid var(--border-subtle)' }}>
                   <th style={{ padding: '12px 16px', color: 'var(--text-main)', fontWeight: 700 }}>Worker Name & ID</th>
                   <th style={{ padding: '12px 16px', color: 'var(--text-main)', fontWeight: 700 }}>Role & Shift</th>
                   <th style={{ padding: '12px 16px', color: 'var(--text-main)', fontWeight: 700 }}>Mine Sector</th>
@@ -2174,7 +2174,7 @@ export default function AttendanceSystemView({ onShowToast }) {
                             borderRadius: '4px',
                             fontSize: '0.72rem',
                             fontWeight: 700,
-                            backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
                             color: 'var(--primary)',
                             border: '1px solid var(--primary-border)',
                           }}
@@ -2236,7 +2236,7 @@ export default function AttendanceSystemView({ onShowToast }) {
               }}
             >
               <Camera size={16} />
-              📸 Register Face from Camera
+              Register Face from Camera
             </button>
           </div>
 
@@ -2269,7 +2269,7 @@ export default function AttendanceSystemView({ onShowToast }) {
                         fontWeight: 600,
                         padding: '2px 6px',
                         borderRadius: '4px',
-                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
                         color: 'var(--primary)',
                       }}
                     >
@@ -2699,7 +2699,7 @@ export default function AttendanceSystemView({ onShowToast }) {
                       padding: '10px',
                       fontWeight: 700,
                       fontSize: '0.85rem',
-                      boxShadow: '0 4px 12px rgba(33, 150, 243, 0.3)',
+                      boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',

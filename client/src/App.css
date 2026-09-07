@@ -11,6 +11,9 @@
   min-width: 0;
   height: 100vh;
   overflow: hidden;
+  margin-left: var(--sidebar-width, 260px);
+  width: calc(100% - var(--sidebar-width, 260px));
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .view-viewport {
@@ -19,6 +22,17 @@
   padding: 2rem 2.5rem;
   display: flex;
   flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .view-viewport {
+    padding: 1.25rem 1rem;
+  }
 }
 
 /* Animations */

@@ -31,9 +31,9 @@ export default function ResourceAllocationView({ onShowToast }) {
       </div>
 
       {/* Kanban-style Lists */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
         {/* Column 1: Active */}
-        <div className="glass-panel" style={{ padding: '1.5rem', backgroundColor: 'rgba(255, 255, 255, 0.4)' }}>
+        <div className="glass-panel" style={{ padding: '1.5rem', backgroundColor: '#ffffff', border: '1px solid var(--border-subtle)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--success)' }}>Active Deployed</h3>
             <span className="badge-pill badge-success">{resources.filter(r => r.status === 'Active').length}</span>
@@ -52,7 +52,7 @@ export default function ResourceAllocationView({ onShowToast }) {
         </div>
 
         {/* Column 2: Idle */}
-        <div className="glass-panel" style={{ padding: '1.5rem', backgroundColor: 'rgba(255, 255, 255, 0.4)' }}>
+        <div className="glass-panel" style={{ padding: '1.5rem', backgroundColor: '#ffffff', border: '1px solid var(--border-subtle)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--warning)' }}>Idle / Standby</h3>
             <span className="badge-pill badge-warning">{resources.filter(r => r.status === 'Idle').length}</span>
@@ -78,7 +78,7 @@ export default function ResourceAllocationView({ onShowToast }) {
         </div>
 
         {/* Column 3: Maintenance */}
-        <div className="glass-panel" style={{ padding: '1.5rem', backgroundColor: 'rgba(255, 255, 255, 0.4)' }}>
+        <div className="glass-panel" style={{ padding: '1.5rem', backgroundColor: '#ffffff', border: '1px solid var(--border-subtle)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--danger)' }}>In Maintenance</h3>
             <span className="badge-pill badge-danger">{resources.filter(r => r.status === 'Maintenance').length}</span>

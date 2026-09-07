@@ -1,189 +1,159 @@
-import React, { useState } from 'react';
-import { 
-  Search, 
-  Activity, 
-  Terminal, 
-  User, 
-  LogOut, 
-  ShieldCheck, 
+import React from 'react';
+import {
+  Menu,
+  BookOpen,
+  Terminal,
   RefreshCw,
-  BookOpen
+  LogOut,
+  ShieldCheck,
+  Activity,
+  Map,
+  BrainCircuit,
+  FileCheck,
+  Camera,
+  UserCheck,
+  Cloud,
+  HardHat,
+  FileText,
+  ClipboardList,
+  Ambulance,
+  Tractor,
+  ShieldAlert,
+  Smartphone,
+  Building2,
+  Users,
+  FolderTree,
 } from 'lucide-react';
+import './Header.css';
+
+const TAB_METADATA = {
+  dashboard: { category: 'Platform Overview', title: 'System Overview & Health', icon: Activity },
+  'command-map': { category: 'Platform Overview', title: 'National GIS Command Map', icon: Map },
+  analytics: { category: 'Platform Overview', title: 'AI Risk Analytics', icon: BrainCircuit },
+  compliance: { category: 'Smart Governance', title: 'AI Statutory Hub', icon: FileCheck },
+  'smoke-detection': { category: 'Smart Governance', title: 'AI Smoke CCTV', icon: Camera },
+  attendance: { category: 'Smart Governance', title: 'AI Facial Attendance', icon: UserCheck },
+  environment: { category: 'Smart Governance', title: 'Environmental Control', icon: Cloud },
+  labor: { category: 'Smart Governance', title: 'Labor & Safety Tracking', icon: HardHat },
+  'audit-logs': { category: 'Smart Governance', title: 'Blockchain Audit Log', icon: FileText },
+  inspections: { category: 'Core Operations', title: 'Inspections & Violations', icon: ClipboardList },
+  emergency: { category: 'Core Operations', title: 'Emergency & SOS Console', icon: Ambulance },
+  resources: { category: 'Core Operations', title: 'Resource Allocation', icon: Tractor },
+  alerts: { category: 'Field Dispatch', title: 'Emergency Alerts & Dispatch', icon: ShieldAlert },
+  'mobile-app': { category: 'Field Dispatch', title: 'Mobile App & Delegation', icon: Smartphone },
+  organizations: { category: 'Administration', title: 'Organizations & Mines', icon: Building2 },
+  users: { category: 'Administration', title: 'User Directory & Provisioning', icon: Users },
+  rbac: { category: 'Administration', title: 'Roles & Subroles (RBAC)', icon: ShieldCheck },
+  pages: { category: 'Administration', title: 'Pages & Hierarchy Tree', icon: FolderTree },
+};
 
 export default function Header({
-  serverStatus,
+  serverStatus = { online: false },
   onRefreshStatus,
-  isRefreshing,
+  isRefreshing = false,
   onToggleDiagnostics,
-  diagnosticsCount,
+  diagnosticsCount = 0,
   currentUser,
-  onOpenAuth,
+  activeTab = 'dashboard',
+  onOpenMobileSidebar,
   onLogout,
 }) {
+  const currentMeta = TAB_METADATA[activeTab] || {
+    category: 'CoalMin Console',
+    title: 'Management View',
+    icon: Activity,
+  };
+
+  const TabIcon = currentMeta.icon;
+
+  const displayName = currentUser?.first_name
+    ? `${currentUser.first_name} ${currentUser.last_name || ''}`.trim()
+    : currentUser?.username || 'Officer';
+
+  const userInitial = displayName.charAt(0).toUpperCase() || 'U';
+
   return (
-    <header className="glass-header" style={{
-      height: '70px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '0 2rem',
-      position: 'sticky',
-      top: 0,
-      zIndex: 40,
-    }}>
-      {/* Title / Scope info */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#0f172a' }}>
-          CoalMin REST API Management
-        </span>
-        <span style={{
-          fontSize: '0.72rem',
-          padding: '2px 8px',
-          borderRadius: '12px',
-          backgroundColor: '#eff6ff',
-          color: '#2563eb',
-          fontWeight: '600',
-        }}>
-          Express 4.21 + TiDB
-        </span>
+    <header className="topbar-header">
+      {/* Left: Mobile Menu Toggle & Breadcrumbs */}
+      <div className="topbar-left">
+        {onOpenMobileSidebar && (
+          <button
+            type="button"
+            className="topbar-mobile-btn"
+            onClick={onOpenMobileSidebar}
+            aria-label="Open sidebar menu"
+          >
+            <Menu size={20} />
+          </button>
+        )}
+
+        <div className="topbar-title-group">
+          <div className="topbar-breadcrumb">
+            <span>CoalMin Platform</span>
+            <span className="topbar-breadcrumb-dot" />
+            <span>{currentMeta.category}</span>
+          </div>
+          <div className="topbar-heading">
+            <TabIcon size={18} color="#2563eb" />
+            <span>{currentMeta.title}</span>
+          </div>
+        </div>
       </div>
 
-      {/* Right Actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      {/* Right: Status Pill & Quick Actions */}
+      <div className="topbar-right">
         {/* Backend Status Pill */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '6px 12px',
-          backgroundColor: serverStatus.online ? '#ecfdf5' : '#fef2f2',
-          border: `1px solid ${serverStatus.online ? '#a7f3d0' : '#fecaca'}`,
-          borderRadius: '20px',
-          fontSize: '0.8rem',
-          fontWeight: 600,
-          color: serverStatus.online ? '#065f46' : '#991b1b',
-        }}>
-          <span style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            backgroundColor: serverStatus.online ? '#10b981' : '#ef4444',
-          }} />
-          <span>{serverStatus.online ? 'TiDB Cloud API Online' : 'Backend Offline'}</span>
-          <button 
-            onClick={onRefreshStatus}
-            title="Recheck Server Health"
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              color: 'inherit',
-              padding: '2px',
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            <RefreshCw size={13} className={isRefreshing ? 'animate-spin' : ''} />
-          </button>
+        <div
+          className={`topbar-status-pill ${serverStatus.online ? 'online' : 'offline'}`}
+          title={serverStatus.online ? 'TiDB Cloud Cluster Online' : 'Backend Server Offline'}
+        >
+          <span className="topbar-status-dot" />
+          <span className="topbar-status-text">
+            {serverStatus.online ? 'TiDB Cloud Online' : 'Backend Offline'}
+          </span>
+          {onRefreshStatus && (
+            <button
+              type="button"
+              onClick={onRefreshStatus}
+              title="Refresh server status"
+              className="topbar-reload-btn"
+            >
+              <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} />
+            </button>
+          )}
         </div>
 
-        {/* Swagger Docs Link */}
+        {/* Swagger API Docs */}
         <a
           href="http://localhost:5001/api/docs"
           target="_blank"
           rel="noreferrer"
-          className="sleek-btn"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            textDecoration: 'none',
-          }}
+          className="topbar-btn"
+          title="Open Swagger REST API Documentation"
         >
-          <BookOpen size={15} color="#2563eb" />
+          <BookOpen size={14} color="#2563eb" />
           <span>Swagger Docs</span>
         </a>
 
-        {/* API Diagnostics Drawer Toggle */}
+        {/* API Diagnostics Inspector */}
         <button
+          type="button"
           onClick={onToggleDiagnostics}
           title="Open API & Diagnostics Inspector"
-          className="sleek-btn"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            cursor: 'pointer',
-          }}
+          className="topbar-btn"
         >
-          <Terminal size={15} color="#2563eb" />
+          <Terminal size={14} color="#2563eb" />
           <span>API Inspector</span>
           {diagnosticsCount > 0 && (
-            <span style={{
-              backgroundColor: '#dbeafe',
-              color: '#1e40af',
-              fontSize: '0.7rem',
-              padding: '1px 6px',
-              borderRadius: '10px',
-              fontWeight: 700,
-            }}>
-              {diagnosticsCount}
-            </span>
+            <span className="btn-badge">{diagnosticsCount}</span>
           )}
         </button>
 
-        {/* User Profile / Auth */}
+        {/* Compact User Chip */}
         {currentUser && (
-          <div className="sleek-card" style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '4px 10px 4px 6px',
-            borderRadius: '20px',
-          }}>
-            <div style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              backgroundColor: '#2563eb',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 700,
-              fontSize: '0.85rem',
-            }}>
-              {currentUser.first_name ? currentUser.first_name[0] : (currentUser.username ? currentUser.username[0].toUpperCase() : 'U')}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0f172a' }}>
-                {currentUser.first_name || currentUser.username} {currentUser.last_name || ''}
-              </span>
-              <span style={{ fontSize: '0.7rem', color: '#2563eb', fontWeight: 600 }}>
-                {currentUser.email || 'Super Administrator'}
-              </span>
-            </div>
-            <button
-              onClick={onLogout}
-              title="Logout session"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '4px 8px',
-                color: '#ef4444',
-                backgroundColor: '#fee2e2',
-                border: '1px solid #fecaca',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '0.75rem',
-                fontWeight: '600',
-                marginLeft: '4px',
-              }}
-            >
-              <LogOut size={13} />
-              Logout
-            </button>
+          <div className="topbar-user-chip">
+            <div className="topbar-user-avatar">{userInitial}</div>
+            <span className="topbar-user-name">{displayName}</span>
           </div>
         )}
       </div>

@@ -1,41 +1,89 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  Pickaxe,
-  Activity,
-  Building2,
-  Users,
-  ShieldCheck,
-  FolderTree,
-  FileText,
-  Database,
-  Smartphone,
-  ShieldAlert,
-  ChevronRight,
-  ClipboardCheck,
-  Ambulance,
+  LayoutDashboard,
   Map,
   BrainCircuit,
   FileCheck,
-  Tractor,
-  Cloud,
-  HardHat,
   Camera,
   UserCheck,
+  Cloud,
+  HardHat,
+  FileText,
+  ClipboardCheck,
+  ClipboardList,
+  Ambulance,
+  Tractor,
+  ShieldAlert,
+  Smartphone,
+  Building2,
+  Users,
+  Shield,
+  FolderTree,
+  UserCog,
+  User,
+  LogOut,
+  ChevronDown,
+  X,
+  Pickaxe,
+  Database,
 } from 'lucide-react';
+import './Sidebar.css';
 
-export default function Sidebar({ activeTab, onSelectTab }) {
-  const navSections = [
+export default function Sidebar({
+  activeTab = 'dashboard',
+  onSelectTab,
+  userRole,
+  userData,
+  onLogout,
+  isOpen = false,
+  onClose,
+}) {
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [governanceOpen, setGovernanceOpen] = useState(true);
+  const [operationsOpen, setOperationsOpen] = useState(true);
+  const [adminOpen, setAdminOpen] = useState(true);
+
+  const handleItemClick = (id) => {
+    if (onSelectTab) {
+      onSelectTab(id);
+    }
+    if (onClose) {
+      onClose();
+    }
+  };
+
+  // Nav structure organized by sections and collapsible dropdown groups
+  const menuConfig = [
     {
-      title: 'Platform Overview',
-      items: [
-        { id: 'dashboard', label: 'System Overview & Health', icon: Activity },
-        { id: 'command-map', label: 'National GIS Command Map', icon: Map },
-        { id: 'analytics', label: 'AI Risk Analytics', icon: BrainCircuit },
-      ],
+      label: 'Platform Overview',
+      section: true,
     },
     {
-      title: 'Smart Governance & Compliance',
-      items: [
+      id: 'dashboard',
+      label: 'System Overview & Health',
+      icon: LayoutDashboard,
+    },
+    {
+      id: 'command-map',
+      label: 'National GIS Command Map',
+      icon: Map,
+    },
+    {
+      id: 'analytics',
+      label: 'AI Risk Analytics',
+      icon: BrainCircuit,
+    },
+    {
+      label: 'Smart Governance',
+      section: true,
+    },
+    {
+      label: 'AI Statutory & Compliance',
+      icon: Shield,
+      isDropdown: true,
+      isOpen: governanceOpen,
+      toggle: () => setGovernanceOpen(!governanceOpen),
+      children: [
         { id: 'compliance', label: 'AI Statutory Hub', icon: FileCheck },
         { id: 'smoke-detection', label: 'AI Smoke CCTV', icon: Camera },
         { id: 'attendance', label: 'AI Facial Attendance', icon: UserCheck },
@@ -45,151 +93,232 @@ export default function Sidebar({ activeTab, onSelectTab }) {
       ],
     },
     {
-      title: 'Core Operations',
-      items: [
-        { id: 'inspections', label: 'Inspections & Violations', icon: ClipboardCheck },
+      label: 'Core Operations',
+      section: true,
+    },
+    {
+      label: 'Operations & Emergency',
+      icon: ClipboardCheck,
+      isDropdown: true,
+      isOpen: operationsOpen,
+      toggle: () => setOperationsOpen(!operationsOpen),
+      children: [
+        { id: 'inspections', label: 'Inspections & Violations', icon: ClipboardList },
         { id: 'emergency', label: 'Emergency & SOS Console', icon: Ambulance },
         { id: 'resources', label: 'Resource Allocation', icon: Tractor },
-      ]
-    },
-    {
-      title: 'Mobile & Field Unit',
-      items: [
-        { id: 'alerts', label: 'Emergency Alerts & Dispatch', icon: ShieldAlert },
-        { id: 'mobile-app', label: 'Mobile App & Delegation', icon: Smartphone },
       ],
     },
     {
-      title: 'System Administration',
-      items: [
+      label: 'Field Dispatch',
+      section: true,
+    },
+    {
+      id: 'alerts',
+      label: 'Emergency Alerts Dispatch',
+      icon: ShieldAlert,
+      badge: 'LIVE',
+    },
+    {
+      id: 'mobile-app',
+      label: 'Mobile App Simulator',
+      icon: Smartphone,
+    },
+    {
+      label: 'Administration',
+      section: true,
+    },
+    {
+      label: 'System Administration',
+      icon: UserCog,
+      isDropdown: true,
+      isOpen: adminOpen,
+      toggle: () => setAdminOpen(!adminOpen),
+      children: [
         { id: 'organizations', label: 'Organizations & Mines', icon: Building2 },
-        { id: 'users', label: 'User Directory & Provisioning', icon: Users },
-        { id: 'rbac', label: 'Roles & Subroles (RBAC)', icon: ShieldCheck },
+        { id: 'users', label: 'User Directory & Staff', icon: Users },
+        { id: 'rbac', label: 'Roles & Subroles (RBAC)', icon: Shield },
         { id: 'pages', label: 'Pages & Hierarchy Tree', icon: FolderTree },
       ],
-    }
+    },
   ];
 
+  const displayName = userData?.first_name
+    ? `${userData.first_name} ${userData.last_name || ''}`.trim()
+    : userData?.username || 'Authorized Officer';
+
+  const roleLabel = userData?.roleName || userData?.role_name || userRole || 'System Administrator';
+
+  const userInitial = displayName.charAt(0).toUpperCase() || 'U';
+
   return (
-    <aside className="sidebar-container" style={{
-      width: '280px',
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
-      position: 'sticky',
-      top: 0,
-      zIndex: 50,
-      flexShrink: 0,
-      backgroundColor: 'var(--bg-surface)',
-      borderRight: '1px solid var(--border-subtle)',
-      boxShadow: 'var(--shadow-sm)',
-    }}>
-      {/* Brand Header */}
-      <div style={{
-        height: '70px',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 1.5rem',
-        gap: '12px',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-      }}>
-        <div style={{
-          width: '38px',
-          height: '38px',
-          display: 'flex',
-          alignItems: 'center',
-          color: '#60a5fa',
-          backgroundColor: 'rgba(37, 99, 235, 0.2)',
-          borderRadius: '12px',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-          boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)'
-        }}>
-          <Pickaxe size={20} />
-        </div>
-        <div>
-          <div style={{
-            fontSize: '1.15rem',
-            fontWeight: 800,
-            color: '#0f172a',
-            letterSpacing: '-0.02em',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-          }}>
-            CoalMin
-            <span style={{
-              fontSize: '0.65rem',
-              backgroundColor: '#eff6ff',
-              color: '#2563eb',
-              border: '1px solid #bfdbfe',
-              padding: '1px 5px',
-              borderRadius: '4px',
-              fontWeight: 700,
-            }}>
-              SIH26024
-            </span>
-          </div>
-          <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>
-            TiDB Cloud Management API
-          </div>
-        </div>
-      </div>
+    <>
+      {isOpen && <div className="sidebar-backdrop" onClick={onClose} />}
 
-      {/* Nav List */}
-      <div style={{
-        flex: 1,
-        overflowY: 'auto',
-        padding: '1.25rem 0.75rem',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1.5rem',
-      }}>
-        {navSections.map((sec, idx) => (
-          <div key={idx}>
-            <div style={{
-              fontSize: '0.7rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              fontWeight: 700,
-              color: '#94a3b8',
-              padding: '0 0.75rem 0.5rem',
-            }}>
-              {sec.title}
+      <aside className={`sidebar ${isOpen ? 'mobile-open' : ''}`}>
+        {/* Sidebar Header */}
+        <div className="sidebar-header">
+          {onClose && (
+            <button
+              type="button"
+              className="sidebar-close-btn"
+              onClick={onClose}
+              aria-label="Close sidebar"
+            >
+              <X size={18} />
+            </button>
+          )}
+
+          <div className="header-content">
+            <div className="logo-section">
+              <div className="logo-icon">
+                <Pickaxe size={22} />
+              </div>
+              <div className="company-name">
+                <div className="company-title">
+                  CoalMin
+                  <span className="title-badge">SIH26024</span>
+                </div>
+                <div className="company-subtitle">Smart Mining & Governance</div>
+              </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-              {sec.items.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
-                return (
+          </div>
+        </div>
+
+        {/* Sidebar Navigation Items */}
+        <nav className="sidebar-nav">
+          {menuConfig.map((item, index) => {
+            if (item.section) {
+              return (
+                <div key={index} className="nav-section">
+                  <span className="section-label">{item.label}</span>
+                </div>
+              );
+            }
+
+            const Icon = item.icon;
+
+            if (item.isDropdown) {
+              const isAnyChildActive = item.children.some((child) => activeTab === child.id);
+
+              return (
+                <div key={index} className="nav-dropdown">
                   <button
-                    key={item.id}
-                    onClick={() => onSelectTab(item.id)}
-                    className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
+                    type="button"
+                    className={`nav-item dropdown-trigger ${isAnyChildActive ? 'active' : ''}`}
+                    onClick={item.toggle}
+                    title={item.label}
                   >
-                    <div className="nav-icon-wrapper">
-                      <Icon size={18} />
-                    </div>
+                    {isAnyChildActive && <div className="active-indicator" />}
+                    <Icon className="nav-icon" size={18} />
                     <span className="nav-label">{item.label}</span>
-                    {isActive && <ChevronRight size={14} className="nav-chevron" />}
+                    <ChevronDown
+                      className={`dropdown-arrow ${item.isOpen ? 'open' : ''}`}
+                      size={15}
+                    />
                   </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
 
-      {/* DB Connection Status Widget Footer */}
-      <div className="sidebar-footer">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Database size={16} color="#059669" />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#0f172a' }}>TiDB MySQL 8.0+</div>
-            <div style={{ fontSize: '0.7rem', color: '#16a34a' }}>SSL Pool Connected</div>
+                  {item.isOpen && (
+                    <div className="dropdown-content">
+                      {item.children.map((child) => {
+                        const ChildIcon = child.icon;
+                        const isActive = activeTab === child.id;
+
+                        return (
+                          <button
+                            type="button"
+                            key={child.id}
+                            className={`nav-item sub-item ${isActive ? 'active' : ''}`}
+                            title={child.label}
+                            onClick={() => handleItemClick(child.id)}
+                          >
+                            {isActive && <div className="active-indicator" />}
+                            <ChildIcon className="nav-icon" size={16} />
+                            <span className="nav-label">{child.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            const isActive = activeTab === item.id;
+
+            return (
+              <button
+                type="button"
+                key={item.id || index}
+                className={`nav-item ${isActive ? 'active' : ''}`}
+                title={item.label}
+                onClick={() => handleItemClick(item.id)}
+              >
+                {isActive && <div className="active-indicator" />}
+                <Icon className="nav-icon" size={18} />
+                <span className="nav-label">{item.label}</span>
+                {item.badge && (
+                  <span className={`nav-badge ${item.badge.toLowerCase()}`}>
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Database Status Strip */}
+        <div className="sidebar-db-strip">
+          <div className="db-dot" />
+          <div className="db-info">
+            <div className="db-title">TiDB MySQL 8.0+</div>
+            <div className="db-sub">SSL Pool Connected</div>
           </div>
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
+          <Database size={15} color="#16a34a" />
         </div>
-      </div>
-    </aside>
+
+        {/* User Profile & Logout in Footer */}
+        <div className="sidebar-footer">
+          <div
+            className="user-profile"
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            title="User settings"
+          >
+            <div className="user-avatar">{userInitial}</div>
+            <div className="user-info">
+              <div className="user-name">{displayName}</div>
+              <div className="user-role">{roleLabel}</div>
+            </div>
+            <ChevronDown
+              size={16}
+              className={`user-menu-icon ${userMenuOpen ? 'open' : ''}`}
+            />
+          </div>
+
+          {userMenuOpen && (
+            <div className="user-dropdown">
+              <div className="user-dropdown-meta">
+                <div style={{ fontSize: '12px', fontWeight: 600, color: '#0f172a' }}>
+                  {displayName}
+                </div>
+                <div className="user-dropdown-email">
+                  {userData?.email || `${userData?.username || 'user'}@coalmin.org`}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="logout-btn"
+                onClick={() => {
+                  setUserMenuOpen(false);
+                  if (onLogout) onLogout();
+                }}
+              >
+                <LogOut size={16} />
+                <span>Logout Session</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </aside>
+    </>
   );
 }

@@ -25,7 +25,7 @@ export default function EmergencyConsoleView({ onShowToast }) {
   // Evacuation Modal State
   const [showEvacModal, setShowEvacModal] = useState(false);
   const [evacTargetZone, setEvacTargetZone] = useState('ALL');
-  const [evacTitle, setEvacTitle] = useState('🚨 IMMEDIATE MINE EVACUATION ORDER');
+  const [evacTitle, setEvacTitle] = useState('IMMEDIATE MINE EVACUATION ORDER');
   const [evacMessage, setEvacMessage] = useState(
     'Critical life-safety hazard detected. All subterranean and surface personnel must drop tools and proceed immediately to emergency egress.'
   );
@@ -69,7 +69,7 @@ export default function EmergencyConsoleView({ onShowToast }) {
 
       await api.createEmergencyAlert(payload);
       if (onShowToast) {
-        onShowToast('🚨 Mass Evacuation Broadcast Dispatched to all mobile terminals!', false);
+        onShowToast('Mass Evacuation Broadcast Dispatched to all mobile terminals!', false);
       }
       setShowEvacModal(false);
       await fetchEmergencyData();
@@ -118,7 +118,7 @@ export default function EmergencyConsoleView({ onShowToast }) {
         rescue_team_name: 'Rapid Response Team Alpha',
       });
       if (onShowToast) {
-        onShowToast(`🚑 Rescue Brigade dispatched to ${sosId}!`);
+        onShowToast(`Rescue Brigade dispatched to ${sosId}!`);
       }
       await fetchEmergencyData();
     } catch (err) {

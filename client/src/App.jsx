@@ -4,23 +4,27 @@ import Sidebar from './components/common/Sidebar.jsx';
 import DiagnosticsDrawer from './components/common/DiagnosticsDrawer.jsx';
 import Toast from './components/common/Toast.jsx';
 
-import LoginPage from './components/views/LoginPage.jsx';
-import DashboardOverview from './components/views/DashboardOverview.jsx';
-import AdminManagement from './components/views/AdminManagement.jsx';
-import PagesManagement from './components/views/PagesManagement.jsx';
-import AuditLogsView from './components/views/AuditLogsView.jsx';
-import MobileSimulatorView from './components/views/MobileSimulatorView.jsx';
-import EmergencyAlertsView from './components/views/EmergencyAlertsView.jsx';
-import InspectionsView from './components/views/InspectionsView.jsx';
-import EmergencyConsoleView from './components/views/EmergencyConsoleView.jsx';
-import CommandMapView from './components/views/CommandMapView.jsx';
-import AnalyticsView from './components/views/AnalyticsView.jsx';
-import ComplianceView from './components/views/ComplianceView.jsx';
-import ResourceAllocationView from './components/views/ResourceAllocationView.jsx';
-import EnvironmentMonitoringView from './components/views/EnvironmentMonitoringView.jsx';
-import LaborDeploymentView from './components/views/LaborDeploymentView.jsx';
-import SmokeDetectionView from './components/views/SmokeDetectionView.jsx';
-import AttendanceSystemView from './components/views/AttendanceSystemView.jsx';
+import LoginPage from './pages/Auth/LoginPage.jsx';
+import DashboardOverview from './pages/Admin/DashboardOverview.jsx';
+import AdminManagement from './pages/Admin/AdminManagement.jsx';
+import PagesManagement from './pages/Admin/PagesManagement.jsx';
+import AuditLogsView from './pages/Admin/AuditLogsView.jsx';
+import CommandMapView from './pages/Admin/CommandMapView.jsx';
+import AnalyticsView from './pages/Admin/AnalyticsView.jsx';
+
+import ComplianceView from './pages/SafetyOfficer/ComplianceView.jsx';
+import SmokeDetectionView from './pages/SafetyOfficer/SmokeDetectionView.jsx';
+import EnvironmentMonitoringView from './pages/SafetyOfficer/EnvironmentMonitoringView.jsx';
+import InspectionsView from './pages/SafetyOfficer/InspectionsView.jsx';
+import EmergencyAlertsView from './pages/SafetyOfficer/EmergencyAlertsView.jsx';
+import EmergencyConsoleView from './pages/SafetyOfficer/EmergencyConsoleView.jsx';
+
+import AttendanceSystemView from './pages/LaborOfficer/AttendanceSystemView.jsx';
+import LaborDeploymentView from './pages/LaborOfficer/LaborDeploymentView.jsx';
+
+import ResourceAllocationView from './pages/StoreOfficer/ResourceAllocationView.jsx';
+
+import MobileSimulatorView from './pages/FieldUnit/MobileSimulatorView.jsx';
 import { api, subscribeToApiLogs, getAccessToken } from './services/api.js';
 import './App.css';
 
@@ -33,6 +37,7 @@ function App() {
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [diagnosticsLogs, setDiagnosticsLogs] = useState([]);
   const [toast, setToast] = useState(null);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const showToast = (message, isDanger = false) => {
     setToast({ message, isDanger });
@@ -121,17 +126,35 @@ function App() {
     );
   }
 
+  const handleLogout = async () => {
+    try {
+      await api.logout();
+    } catch {
+      // ignore
+    }
+    setCurrentUser(null);
+    showToast('Logged out of session.');
+  };
+
   return (
-    <div className="app-layout" style={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Sidebar Navigation */}
+    <div className="app-layout">
+      {/* Enhanced Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
-        onSelectTab={(tabId) => setActiveTab(tabId)}
+        onSelectTab={(tabId) => {
+          setActiveTab(tabId);
+          setIsMobileSidebarOpen(false);
+        }}
+        userRole={currentUser?.role_name || currentUser?.role || 'admin'}
+        userData={currentUser}
+        onLogout={handleLogout}
+        isOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
       />
 
       {/* Main Content Area */}
-      <div className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowX: 'hidden' }}>
-        {/* Global Header */}
+      <div className="main-content">
+        {/* Sleek Top Bar / Header */}
         <Header
           serverStatus={serverStatus}
           onRefreshStatus={checkStatus}
@@ -139,11 +162,9 @@ function App() {
           onToggleDiagnostics={() => setActiveTab('audit-logs')}
           diagnosticsCount={diagnosticsLogs.length}
           currentUser={currentUser}
-          onLogout={async () => {
-            await api.logout();
-            setCurrentUser(null);
-            showToast('Logged out of session.');
-          }}
+          activeTab={activeTab}
+          onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+          onLogout={handleLogout}
         />
 
         {/* Viewport Views */}
