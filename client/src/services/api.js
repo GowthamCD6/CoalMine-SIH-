@@ -1,5 +1,5 @@
-const API_BASE_URL = 'http://localhost:5000/api/v1';
-const LEGACY_API_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:5001/api/v1';
+const LEGACY_API_URL = 'http://localhost:5001/api';
 
 // In-Memory Diagnostics Log Bus for Diagnostics Drawer
 const diagnosticListeners = new Set();
@@ -85,6 +85,17 @@ async function request(endpoint, options = {}, isLegacy = false) {
     broadcastLog(logEntry);
 
     if (!response.ok) {
+      if (response.status === 401 && !options._isRefreshRequest) {
+        try {
+          await api.refreshToken();
+          return await request(endpoint, { ...options, _isRefreshRequest: true }, isLegacy);
+        } catch (refreshErr) {
+          clearAuthTokens();
+          window.location.reload();
+          throw new Error('Session expired. Please log in again.');
+        }
+      }
+
       const errorObj = new Error(responseData?.message || `HTTP ${response.status}: Request failed`);
       errorObj.status = response.status;
       errorObj.data = responseData;
@@ -176,6 +187,7 @@ export const api = {
     const res = await request('/auth/refresh', {
       method: 'POST',
       body: JSON.stringify({ refresh_token: refresh }),
+      _isRefreshRequest: true
     });
     if (res?.tokens) {
       setAuthTokens(res.tokens.accessToken, res.tokens.refreshToken);
@@ -186,10 +198,14 @@ export const api = {
   logout: async () => {
     try {
       const refresh = getRefreshToken();
-      await request('/auth/logout', {
-        method: 'POST',
-        body: JSON.stringify({ refresh_token: refresh }),
-      });
+      if (refresh) {
+        await request('/auth/logout', {
+          method: 'POST',
+          body: JSON.stringify({ refresh_token: refresh }),
+        });
+      }
+    } catch (err) {
+      console.warn('Backend logout failed, forcing local logout:', err.message);
     } finally {
       clearAuthTokens();
     }
@@ -270,6 +286,11 @@ export const api = {
   // Audit Logs
   getAuditLogs: (params) => request(`/audit-logs${toQueryString(params)}`),
 
+  // Hazards & Photo Upload Logs
+  getHazards: () => request('/hazards'),
+  createHazard: (data) => request('/hazards', { method: 'POST', body: JSON.stringify(data) }),
+  getUploadLogs: () => request('/uploads/logs'),
+
   // Emergency & Safety Alerts
   getEmergencyAlerts: (params) => request(`/emergencies/alerts${toQueryString(params)}`),
   getEmergencySignals: () => request('/emergencies/signals'),
@@ -280,6 +301,13 @@ export const api = {
   reportEvacuationSafe: (data) => request('/emergencies/evacuation/report-safe', { method: 'POST', body: JSON.stringify(data) }),
   dispatchRescueTeam: (data) => request('/emergencies/rescue/dispatch', { method: 'POST', body: JSON.stringify(data) }),
   respondToDistress: (id, data) => request(`/emergencies/sos/${id}/respond`, { method: 'POST', body: JSON.stringify(data) }),
+
+  // Smart Biometric Attendance System
+  getAttendanceLogs: (params) => request(`/attendance${toQueryString(params)}`),
+  getAttendanceWorkers: () => request('/attendance/workers'),
+  registerAttendanceWorker: (data) => request('/attendance/workers', { method: 'POST', body: JSON.stringify(data) }),
+  scanAttendanceFace: (data) => request('/attendance/scan', { method: 'POST', body: JSON.stringify(data) }),
+  getAttendanceStats: () => request('/attendance/stats'),
 };
 
 export default api;

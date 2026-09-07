@@ -103,7 +103,6 @@ export const AppNavigator = ({
     }
   };
 
-  const isSuperAdmin = currentUser?.mobileRole === 'SUPERADMIN';
 
   return (
     <View style={styles.container}>
@@ -183,36 +182,20 @@ export const AppNavigator = ({
           </Text>
         </TouchableOpacity>
 
-        {/* Tab 2: Super Admin: Workers | Worker: My Pass */}
-        {isSuperAdmin ? (
-          <TouchableOpacity
-            style={[styles.tabItem, activeScreen === 'delegation' && styles.tabActive]}
-            onPress={() => navigateTo('delegation')}
-          >
-            <Icon
-              name="users"
-              size={18}
-              color={activeScreen === 'delegation' ? '#0284c7' : '#64748b'}
-            />
-            <Text style={[styles.tabLabel, activeScreen === 'delegation' && styles.tabLabelActive]}>
-              Workers
-            </Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={[styles.tabItem, activeScreen === 'rfid-pass' && styles.tabActive]}
-            onPress={() => navigateTo('rfid-pass')}
-          >
-            <Icon
-              name="id-card"
-              size={18}
-              color={activeScreen === 'rfid-pass' ? '#0284c7' : '#64748b'}
-            />
-            <Text style={[styles.tabLabel, activeScreen === 'rfid-pass' && styles.tabLabelActive]}>
-              My Pass
-            </Text>
-          </TouchableOpacity>
-        )}
+        {/* Tab 2: Worker My Pass */}
+        <TouchableOpacity
+          style={[styles.tabItem, activeScreen === 'rfid-pass' && styles.tabActive]}
+          onPress={() => navigateTo('rfid-pass')}
+        >
+          <Icon
+            name="id-card"
+            size={18}
+            color={activeScreen === 'rfid-pass' ? '#0284c7' : '#64748b'}
+          />
+          <Text style={[styles.tabLabel, activeScreen === 'rfid-pass' && styles.tabLabelActive]}>
+            My Pass
+          </Text>
+        </TouchableOpacity>
 
         {/* Tab 3: Camera (Explicitly replaces inspections) */}
         <TouchableOpacity
@@ -298,29 +281,10 @@ export const AppNavigator = ({
                 </View>
               </TouchableOpacity>
 
-              {/* Super Admin Special Modules */}
-              {isSuperAdmin && (
-                <>
-                  <Text style={styles.menuGroupHeader}>SUPER ADMIN CONSOLE</Text>
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={() => navigateTo('delegation')}
-                  >
-                    <View style={[styles.menuIconContainer, { backgroundColor: '#e0f2fe' }]}>
-                      <Icon name="users" size={17} color="#0369a1" />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.menuItemTitle}>Worker Management & Delegation</Text>
-                      <Text style={styles.menuItemDesc}>System-wide worker assignment & control</Text>
-                    </View>
-                  </TouchableOpacity>
-                </>
-              )}
-
               {/* Sign Out Button */}
               <TouchableOpacity style={styles.logoutBtn} onPress={onLogout}>
                 <Text style={styles.logoutBtnText}>
-                  Sign Out ({isSuperAdmin ? 'Super Admin' : 'Field Worker'}: {currentUser?.username || 'Session'})
+                  Sign Out (Worker: {currentUser?.first_name || currentUser?.username || 'Session'})
                 </Text>
               </TouchableOpacity>
             </ScrollView>

@@ -75,15 +75,11 @@ export default function DashboardOverview({ serverStatus, onNavigateTo }) {
   return (
     <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       {/* Header Banner */}
-      <div style={{
-        background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-        borderRadius: '16px',
+      <div className="glass-panel" style={{
         padding: '2rem',
-        color: '#ffffff',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.3)',
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
@@ -115,25 +111,19 @@ export default function DashboardOverview({ serverStatus, onNavigateTo }) {
         </div>
 
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <div style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '12px',
+          <div className="sleek-card" style={{
             padding: '1rem 1.5rem',
             textAlign: 'center',
           }}>
-            <div style={{ color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>TiDB SSL</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#38bdf8', marginTop: '4px' }}>TLSv1.2</div>
+            <div style={{ color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>TiDB SSL</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0284c7', marginTop: '4px' }}>TLSv1.2</div>
           </div>
-          <div style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '12px',
+          <div className="sleek-card" style={{
             padding: '1rem 1.5rem',
             textAlign: 'center',
           }}>
-            <div style={{ color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>API Prefix</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#4ade80', marginTop: '4px' }}>/api/v1</div>
+            <div style={{ color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>API Prefix</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#16a34a', marginTop: '4px' }}>/api/v1</div>
           </div>
         </div>
       </div>
@@ -149,23 +139,11 @@ export default function DashboardOverview({ serverStatus, onNavigateTo }) {
           return (
             <div
               key={idx}
+              className="sleek-card"
               onClick={() => onNavigateTo && onNavigateTo(card.tab)}
               style={{
-                backgroundColor: '#ffffff',
-                border: '1px solid #e2e8f0',
-                borderRadius: '14px',
                 padding: '1.5rem',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.08)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -199,10 +177,7 @@ export default function DashboardOverview({ serverStatus, onNavigateTo }) {
       {/* Recent Audit Logs & System Status */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
         {/* Recent Audit Activity */}
-        <div style={{
-          backgroundColor: '#ffffff',
-          border: '1px solid #e2e8f0',
-          borderRadius: '14px',
+        <div className="glass-panel" style={{
           padding: '1.5rem',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
@@ -269,10 +244,7 @@ export default function DashboardOverview({ serverStatus, onNavigateTo }) {
         </div>
 
         {/* System & Architecture Info */}
-        <div style={{
-          backgroundColor: '#ffffff',
-          border: '1px solid #e2e8f0',
-          borderRadius: '14px',
+        <div className="glass-panel" style={{
           padding: '1.5rem',
           display: 'flex',
           flexDirection: 'column',
@@ -298,7 +270,7 @@ export default function DashboardOverview({ serverStatus, onNavigateTo }) {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
               <span style={{ color: '#64748b' }}>Swagger Spec</span>
-              <a href="http://localhost:5000/api/docs" target="_blank" rel="noreferrer" style={{ fontWeight: '600', color: '#2563eb', textDecoration: 'none' }}>
+              <a href="http://localhost:5001/api/docs" target="_blank" rel="noreferrer" style={{ fontWeight: '600', color: '#2563eb', textDecoration: 'none' }}>
                 /api/docs
               </a>
             </div>

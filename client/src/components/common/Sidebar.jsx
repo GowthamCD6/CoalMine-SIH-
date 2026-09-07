@@ -11,6 +11,16 @@ import {
   Smartphone,
   ShieldAlert,
   ChevronRight,
+  ClipboardCheck,
+  Ambulance,
+  Map,
+  BrainCircuit,
+  FileCheck,
+  Tractor,
+  Cloud,
+  HardHat,
+  Camera,
+  UserCheck,
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onSelectTab }) {
@@ -19,7 +29,28 @@ export default function Sidebar({ activeTab, onSelectTab }) {
       title: 'Platform Overview',
       items: [
         { id: 'dashboard', label: 'System Overview & Health', icon: Activity },
+        { id: 'command-map', label: 'National GIS Command Map', icon: Map },
+        { id: 'analytics', label: 'AI Risk Analytics', icon: BrainCircuit },
       ],
+    },
+    {
+      title: 'Smart Governance & Compliance',
+      items: [
+        { id: 'compliance', label: 'AI Statutory Hub', icon: FileCheck },
+        { id: 'smoke-detection', label: 'AI Smoke CCTV', icon: Camera },
+        { id: 'attendance', label: 'AI Facial Attendance', icon: UserCheck },
+        { id: 'environment', label: 'Environmental Control', icon: Cloud },
+        { id: 'labor', label: 'Labor & Safety Tracking', icon: HardHat },
+        { id: 'audit-logs', label: 'Blockchain Audit Log', icon: FileText },
+      ],
+    },
+    {
+      title: 'Core Operations',
+      items: [
+        { id: 'inspections', label: 'Inspections & Violations', icon: ClipboardCheck },
+        { id: 'emergency', label: 'Emergency & SOS Console', icon: Ambulance },
+        { id: 'resources', label: 'Resource Allocation', icon: Tractor },
+      ]
     },
     {
       title: 'Mobile & Field Unit',
@@ -29,32 +60,19 @@ export default function Sidebar({ activeTab, onSelectTab }) {
       ],
     },
     {
-      title: 'Core Enterprise Entities',
+      title: 'System Administration',
       items: [
         { id: 'organizations', label: 'Organizations & Mines', icon: Building2 },
         { id: 'users', label: 'User Directory & Provisioning', icon: Users },
-      ],
-    },
-    {
-      title: 'Access Control & Navigation',
-      items: [
         { id: 'rbac', label: 'Roles & Subroles (RBAC)', icon: ShieldCheck },
         { id: 'pages', label: 'Pages & Hierarchy Tree', icon: FolderTree },
       ],
-    },
-    {
-      title: 'Compliance & Audit',
-      items: [
-        { id: 'audit-logs', label: 'Audit Logs & Payloads', icon: FileText },
-      ],
-    },
+    }
   ];
 
   return (
-    <aside style={{
+    <aside className="sidebar-container" style={{
       width: '280px',
-      backgroundColor: '#ffffff',
-      borderRight: '1px solid var(--border-subtle, #e2e8f0)',
       display: 'flex',
       flexDirection: 'column',
       height: '100vh',
@@ -62,7 +80,9 @@ export default function Sidebar({ activeTab, onSelectTab }) {
       top: 0,
       zIndex: 50,
       flexShrink: 0,
-      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+      backgroundColor: 'var(--bg-surface)',
+      borderRight: '1px solid var(--border-subtle)',
+      boxShadow: 'var(--shadow-sm)',
     }}>
       {/* Brand Header */}
       <div style={{
@@ -71,18 +91,18 @@ export default function Sidebar({ activeTab, onSelectTab }) {
         alignItems: 'center',
         padding: '0 1.5rem',
         gap: '12px',
-        borderBottom: '1px solid var(--border-subtle, #e2e8f0)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
       }}>
         <div style={{
           width: '38px',
           height: '38px',
-          borderRadius: '10px',
-          background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          color: '#ffffff',
-          boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
+          color: '#60a5fa',
+          backgroundColor: 'rgba(37, 99, 235, 0.2)',
+          borderRadius: '12px',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
+          boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)'
         }}>
           <Pickaxe size={20} />
         </div>
@@ -144,32 +164,13 @@ export default function Sidebar({ activeTab, onSelectTab }) {
                   <button
                     key={item.id}
                     onClick={() => onSelectTab(item.id)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      backgroundColor: isActive ? '#eff6ff' : 'transparent',
-                      color: isActive ? '#2563eb' : '#475569',
-                      fontWeight: isActive ? 700 : 500,
-                      fontSize: '0.85rem',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.15s ease',
-                      width: '100%',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) e.currentTarget.style.backgroundColor = '#f8fafc';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
+                    className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
                   >
-                    <Icon size={18} color={isActive ? '#2563eb' : '#64748b'} />
-                    <span style={{ flex: 1 }}>{item.label}</span>
-                    {isActive && <ChevronRight size={14} color="#2563eb" />}
+                    <div className="nav-icon-wrapper">
+                      <Icon size={18} />
+                    </div>
+                    <span className="nav-label">{item.label}</span>
+                    {isActive && <ChevronRight size={14} className="nav-chevron" />}
                   </button>
                 );
               })}
@@ -179,11 +180,7 @@ export default function Sidebar({ activeTab, onSelectTab }) {
       </div>
 
       {/* DB Connection Status Widget Footer */}
-      <div style={{
-        padding: '1rem',
-        borderTop: '1px solid var(--border-subtle, #e2e8f0)',
-        backgroundColor: '#f8fafc',
-      }}>
+      <div className="sidebar-footer">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Database size={16} color="#059669" />
           <div style={{ flex: 1 }}>

@@ -19,12 +19,19 @@ import {
 } from '../services/api';
 
 const PRESET_USERS = [
-  { tier: 'SUPERADMIN', name: 'Global Superadmin', email: 'admin@coalmin.org', pass: 'Admin@12345', desc: 'Full system authority — manage workers & operations', icon: 'shield', color: '#d97706' },
-  { tier: 'WORKER', name: 'Field Worker', email: 'sollamaten@gmail.com', pass: 'Admin@12345', desc: 'Turnstile access, SOS beacon & hazard reporting', icon: 'user', color: '#64748b' },
+  {
+    tier: 'FIELD WORKER',
+    name: 'Field Worker (Nandha)',
+    email: 'sollamaten@gmail.com',
+    pass: 'Admin@12345',
+    desc: 'Turnstile check-in, SOS beacon, gas monitor & Form B shift muster',
+    icon: 'user',
+    color: '#0284c7',
+  },
 ];
 
 export const LoginScreen = ({ onLoginSuccess }) => {
-  const [login, setLogin] = useState('admin@coalmin.org');
+  const [login, setLogin] = useState('sollamaten@gmail.com');
   const [password, setPassword] = useState('Admin@12345');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -76,7 +83,7 @@ export const LoginScreen = ({ onLoginSuccess }) => {
       setHealthStatus({
         checking: false,
         ok: false,
-        message: 'No responsive backend found on port 5000.',
+        message: 'No responsive backend found on port 5001.',
       });
     }
   };
@@ -114,7 +121,7 @@ export const LoginScreen = ({ onLoginSuccess }) => {
             </View>
             <Text style={styles.title}>NexusMine Mobile</Text>
           </View>
-          <Text style={styles.subtitle}>Super Admin & Field Worker Operations</Text>
+          <Text style={styles.subtitle}>Field Worker Subterranean Terminal</Text>
         </View>
 
         {/* Real-time Server Link Status Badge */}
@@ -239,7 +246,7 @@ export const LoginScreen = ({ onLoginSuccess }) => {
 
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>SELECT YOUR ROLE</Text>
+          <Text style={styles.dividerText}>FIELD WORKER PROFILE</Text>
           <View style={styles.dividerLine} />
         </View>
 
@@ -287,7 +294,7 @@ export const LoginScreen = ({ onLoginSuccess }) => {
                 setServerHost(text);
                 setApiBaseUrl(text);
               }}
-              placeholder="http://localhost:5000/api/v1"
+              placeholder="http://localhost:5001/api/v1"
               placeholderTextColor="#94a3b8"
               autoCapitalize="none"
             />
@@ -299,7 +306,7 @@ export const LoginScreen = ({ onLoginSuccess }) => {
               <Text style={styles.scanAllBtnText}>Auto-Detect Working Server</Text>
             </TouchableOpacity>
             <Text style={styles.configNote}>
-              USB: localhost:5000 • Wi-Fi: 10.150.255.156:5000 • Emulator: 10.0.2.2:5000
+              USB: localhost:5001 • Wi-Fi: 10.232.78.180:5001 • Emulator: 10.0.2.2:5001
             </Text>
           </View>
         )}

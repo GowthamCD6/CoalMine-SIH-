@@ -21,7 +21,13 @@ import {
   Lock,
   KeyRound,
   Activity,
-  ArrowRight
+  ArrowRight,
+  Camera,
+  Image as ImageIcon,
+  Download,
+  ExternalLink,
+  MapPin,
+  FolderDown
 } from 'lucide-react';
 import { api, subscribeToApiLogs, getAccessToken } from '../../services/api.js';
 
@@ -43,6 +49,12 @@ export default function AuditLogsView({ onShowToast }) {
   const [networkSearch, setNetworkSearch] = useState('');
   const [networkMethodFilter, setNetworkMethodFilter] = useState('');
   const [copiedKey, setCopiedKey] = useState(null);
+
+  // Photo Evidence Upload Logs State
+  const [photoLogs, setPhotoLogs] = useState([]);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [photoSearch, setPhotoSearch] = useState('');
+  const [loadingPhotos, setLoadingPhotos] = useState(false);
 
   // RBAC Simulator State
   const [simPermission, setSimPermission] = useState('MINES_CREATE');
@@ -83,9 +95,23 @@ export default function AuditLogsView({ onShowToast }) {
     }
   };
 
+  const fetchPhotoLogs = async () => {
+    setLoadingPhotos(true);
+    try {
+      const res = await api.getUploadLogs();
+      const logs = res?.data?.logs || res?.logs || [];
+      setPhotoLogs(Array.isArray(logs) ? logs : []);
+    } catch (e) {
+      console.warn('Failed to load upload photo logs:', e);
+    } finally {
+      setLoadingPhotos(false);
+    }
+  };
+
   useEffect(() => {
     fetchDbLogs(1);
     fetchCurrentUser();
+    fetchPhotoLogs();
   }, [actionFilter, entityFilter]);
 
   // Subscribe to live API network traffic
@@ -198,8 +224,9 @@ export default function AuditLogsView({ onShowToast }) {
           {[
             { id: 'live_payloads', label: '1. Real-Time HTTP Traffic & Payloads', icon: Terminal, count: networkLogs.length },
             { id: 'db_audit', label: '2. Immutable Database Audit Trail', icon: FileText, count: meta.total || dbLogs.length },
-            { id: 'rbac_sim', label: '3. RBAC Scope Simulator', icon: ShieldAlert },
-            { id: 'jwt_session', label: '4. Active Session Token', icon: KeyRound },
+            { id: 'photo_logs', label: '3. Optical Hazard Photos (/uploads)', icon: Camera, count: photoLogs.length },
+            { id: 'rbac_sim', label: '4. RBAC Scope Simulator', icon: ShieldAlert },
+            { id: 'jwt_session', label: '5. Active Session Token', icon: KeyRound },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -695,7 +722,390 @@ export default function AuditLogsView({ onShowToast }) {
         </div>
       )}
 
-      {/* TAB 3: RBAC SIMULATOR */}
+      {/* TAB 3: OPTICAL HAZARD PHOTO EVIDENCE & UPLOADS LOGS */}
+      {activeTab === 'photo_logs' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Header Banner */}
+          <div style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem',
+          }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '3px 10px',
+                  borderRadius: '20px',
+                  backgroundColor: '#ecfdf5',
+                  color: '#059669',
+                  fontSize: '0.78rem',
+                  fontWeight: '700',
+                  border: '1px solid #a7f3d0'
+                }}>
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+                  Storage Directory: server/uploads/
+                </span>
+                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                  {photoLogs.length} Verified Evidence Photos
+                </span>
+              </div>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>
+                Subterranean Optical Hazard Evidence Logs
+              </h3>
+              <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.85rem' }}>
+                Captured by worker cameras and field units. Physical files are saved on disk in <code>server/uploads/</code> and served live.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={fetchPhotoLogs}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  backgroundColor: '#ffffff',
+                  color: '#334155',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                <RefreshCw size={14} className={loadingPhotos ? 'spin' : ''} />
+                Refresh Logs
+              </button>
+            </div>
+          </div>
+
+          {/* Search bar */}
+          <div style={{
+            display: 'flex',
+            gap: '1rem',
+            alignItems: 'center',
+            backgroundColor: '#ffffff',
+            padding: '12px 16px',
+            borderRadius: '10px',
+            border: '1px solid #e2e8f0',
+          }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input
+                type="text"
+                placeholder="Search photo logs by category, filename, worker, or zone..."
+                value={photoSearch}
+                onChange={(e) => setPhotoSearch(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px 8px 36px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.85rem',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Photo Cards Grid */}
+          {photoLogs.length === 0 ? (
+            <div style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              border: '1px solid #e2e8f0',
+              padding: '3rem',
+              textAlign: 'center',
+              color: '#94a3b8'
+            }}>
+              <Camera size={40} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
+              <div style={{ fontWeight: 600, fontSize: '1rem', color: '#475569' }}>No Photo Evidence Logs Found</div>
+              <div style={{ fontSize: '0.85rem', marginTop: '4px' }}>
+                Take photos using the Mobile App Hazard Camera to store images in the <code>uploads/</code> directory.
+              </div>
+            </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+              gap: '1.25rem'
+            }}>
+              {photoLogs
+                .filter((p) => {
+                  const q = photoSearch.toLowerCase();
+                  return (
+                    !photoSearch ||
+                    (p.category || '').toLowerCase().includes(q) ||
+                    (p.file_name || '').toLowerCase().includes(q) ||
+                    (p.reporter || '').toLowerCase().includes(q) ||
+                    (p.location || '').toLowerCase().includes(q) ||
+                    (p.zone_tag || '').toLowerCase().includes(q)
+                  );
+                })
+                .map((log) => {
+                  const fullUrl = `http://localhost:5001${log.photo_url || `/uploads/${log.file_name}`}`;
+                  return (
+                    <div
+                      key={log.id}
+                      style={{
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                      }}
+                    >
+                      {/* Image Preview Container */}
+                      <div
+                        onClick={() => setSelectedPhoto(log)}
+                        style={{
+                          height: '200px',
+                          backgroundColor: '#0f172a',
+                          position: 'relative',
+                          cursor: 'pointer',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <img
+                          src={fullUrl}
+                          alt={log.category || 'Hazard Evidence'}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                        <div style={{
+                          display: 'none',
+                          width: '100%',
+                          height: '100%',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexDirection: 'column',
+                          gap: '6px',
+                          color: '#94a3b8',
+                          fontSize: '0.8rem',
+                        }}>
+                          <ImageIcon size={32} />
+                          <span>Photo Record ({log.file_name})</span>
+                        </div>
+
+                        {/* Top Watermark Badge */}
+                        <div style={{
+                          position: 'absolute',
+                          top: '10px',
+                          left: '10px',
+                          backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          color: '#38bdf8',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                        }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+                          {log.depth || '-120m'} • {log.zone_tag || log.location || 'Shaft 4'}
+                        </div>
+
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '10px',
+                          right: '10px',
+                          backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                          color: '#ffffff',
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          fontSize: '0.72rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}>
+                          <Eye size={12} />
+                          Click to Expand
+                        </div>
+                      </div>
+
+                      {/* Card Body */}
+                      <div style={{ padding: '14px', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <span style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            backgroundColor: '#eff6ff',
+                            color: '#1d4ed8',
+                            border: '1px solid #bfdbfe',
+                          }}>
+                            {log.category || 'Hazard Evidence'}
+                          </span>
+                          <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                            {log.uploaded_at ? new Date(log.uploaded_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'}
+                          </span>
+                        </div>
+
+                        {/* File path tag */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '6px 10px',
+                          backgroundColor: '#f8fafc',
+                          borderRadius: '6px',
+                          border: '1px solid #f1f5f9',
+                          fontSize: '0.75rem',
+                          color: '#475569',
+                          fontFamily: 'monospace',
+                        }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px' }}>
+                            📁 {log.file_path || `uploads/${log.file_name}`}
+                          </span>
+                          <span style={{ color: '#059669', fontWeight: 600 }}>{log.file_size || 'Verified'}</span>
+                        </div>
+
+                        {log.notes && (
+                          <div style={{ fontSize: '0.82rem', color: '#334155', lineHeight: 1.4 }}>
+                            {log.notes}
+                          </div>
+                        )}
+
+                        <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                            Worker: <strong>{log.reporter || 'Field Worker'}</strong>
+                          </div>
+                          <a
+                            href={fullUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontSize: '0.78rem',
+                              fontWeight: 600,
+                              color: '#2563eb',
+                              textDecoration: 'none',
+                            }}
+                          >
+                            <ExternalLink size={12} />
+                            Full View
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+
+          {/* Modal Lightbox for Full Image Preview */}
+          {selectedPhoto && (
+            <div
+              onClick={() => setSelectedPhoto(null)}
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                zIndex: 9999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '2rem',
+              }}
+            >
+              <div
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  backgroundColor: '#ffffff',
+                  borderRadius: '12px',
+                  maxWidth: '750px',
+                  width: '100%',
+                  overflow: 'hidden',
+                  boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)',
+                }}
+              >
+                <div style={{
+                  padding: '12px 16px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  borderBottom: '1px solid #e2e8f0',
+                }}>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>
+                      {selectedPhoto.category || 'Hazard Evidence Photo'}
+                    </h4>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                      Disk Path: server/uploads/{selectedPhoto.file_name}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setSelectedPhoto(null)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div style={{ height: '420px', backgroundColor: '#020617', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <img
+                    src={`http://localhost:5001${selectedPhoto.photo_url || `/uploads/${selectedPhoto.file_name}`}`}
+                    alt="Full View"
+                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                  />
+                </div>
+
+                <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontSize: '0.8rem', color: '#475569' }}>
+                    <div>📍 Location: <strong>{selectedPhoto.location || selectedPhoto.zone_tag}</strong> ({selectedPhoto.depth || '-120m'})</div>
+                    <div>👤 Reporter: <strong>{selectedPhoto.reporter}</strong> ({selectedPhoto.reporter_code || 'EMP'})</div>
+                  </div>
+                  <a
+                    href={`http://localhost:5001${selectedPhoto.photo_url || `/uploads/${selectedPhoto.file_name}`}`}
+                    target="_blank"
+                    download={selectedPhoto.file_name}
+                    rel="noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      backgroundColor: '#2563eb',
+                      color: '#ffffff',
+                      textDecoration: 'none',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    <Download size={14} /> Download Evidence
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 4: RBAC SIMULATOR */}
       {activeTab === 'rbac_sim' && (
         <div style={{
           backgroundColor: '#ffffff',

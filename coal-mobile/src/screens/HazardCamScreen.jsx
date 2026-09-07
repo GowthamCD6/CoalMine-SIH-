@@ -13,7 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { Icon } from '../components/Icon';
-import { mobileApi } from '../services/api';
+import { mobileApi, getApiBaseUrl } from '../services/api';
 import {
   capturePhotoFromCamera,
   requestCameraPermission,
@@ -42,7 +42,19 @@ export const HazardCamScreen = ({ currentUser }) => {
 
   useEffect(() => {
     checkPermissionStatus();
+    loadPhotoLogs();
   }, []);
+
+  const loadPhotoLogs = async () => {
+    try {
+      const res = await mobileApi.getUploadLogs();
+      if (res?.logs && Array.isArray(res.logs) && res.logs.length > 0) {
+        setRecentReports(res.logs);
+      }
+    } catch (e) {
+      console.log('Error fetching photo logs:', e.message);
+    }
+  };
 
   const checkPermissionStatus = async () => {
     if (Platform.OS === 'android') {
@@ -98,7 +110,7 @@ export const HazardCamScreen = ({ currentUser }) => {
 
     setSaving(true);
     try {
-      await mobileApi.createHazard({
+      const payload = {
         hazard_type: hazardType,
         location_name: `Shaft 4 (${zoneTag})`,
         latitude: 23.7957,
@@ -107,21 +119,17 @@ export const HazardCamScreen = ({ currentUser }) => {
         zone_tag: zoneTag,
         notes: notes || 'Live hazard photo recorded by worker camera.',
         photo_url: photoUri,
-      });
+        photo_base64: photoBase64,
+        file_name: `hazard_${Date.now()}.jpg`,
+      };
 
-      Alert.alert('Report Dispatched', 'Live hazard photo and telemetry transmitted to safety control.');
-      setRecentReports([
-        {
-          id: Date.now(),
-          hazard_type: hazardType,
-          zone_tag: zoneTag,
-          depth_meters: depth,
-          notes: notes || 'Live photo captured.',
-          photoUri,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
-        ...recentReports,
-      ]);
+      await mobileApi.createHazard(payload);
+
+      Alert.alert(
+        '📸 Photo Stored & Logged',
+        'Your photo has been saved into the /uploads folder and logged to the central safety ledger.'
+      );
+      await loadPhotoLogs();
       setPhotoUri(null);
       setPhotoBase64(null);
       setNotes('');
@@ -132,13 +140,15 @@ export const HazardCamScreen = ({ currentUser }) => {
       );
       setRecentReports([
         {
-          id: Date.now(),
-          hazard_type: hazardType,
+          id: 'OFFLINE-' + Date.now(),
+          category: hazardType,
           zone_tag: zoneTag,
-          depth_meters: depth,
+          depth: `${depth}m`,
           notes: notes || 'Live photo captured (offline queue).',
           photoUri,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          file_name: `hazard_${Date.now()}.jpg`,
+          status: 'OFFLINE_QUEUED',
+          uploaded_at: new Date().toISOString(),
         },
         ...recentReports,
       ]);
@@ -327,29 +337,78 @@ export const HazardCamScreen = ({ currentUser }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Recent Submissions */}
+      {/* Photo Evidence & Submissions Log */}
       {recentReports.length > 0 && (
         <View style={styles.card}>
-          <Text style={styles.sectionLabel}>Submitted Reports Today</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <View>
+              <Text style={styles.sectionLabel}>Photo Evidence Logs (/uploads)</Text>
+              <Text style={{ fontSize: 11, color: '#64748b' }}>{recentReports.length} photo logs recorded on disk</Text>
+            </View>
+            <TouchableOpacity
+              onPress={loadPhotoLogs}
+              style={{ paddingHorizontal: 8, paddingVertical: 4, backgroundColor: '#f1f5f9', borderRadius: 4 }}
+            >
+              <Text style={{ fontSize: 11, color: '#0284c7', fontWeight: '600' }}>Refresh</Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.recentList}>
-            {recentReports.map((item) => (
-              <View key={item.id} style={styles.recentItem}>
-                <View style={styles.recentTop}>
-                  <Text style={styles.recentType}>{item.hazard_type}</Text>
-                  <Text style={styles.recentTime}>{item.time}</Text>
-                </View>
-                <Text style={styles.recentLocation}>{item.zone_tag} ({item.depth_meters}m)</Text>
-                {item.notes ? (
-                  <Text style={styles.recentNotes}>{item.notes}</Text>
-                ) : null}
-                {item.photoUri ? (
-                  <View style={styles.photoAttachedTag}>
-                    <Icon name="camera" size={11} color="#059669" style={{ marginRight: 4 }} />
-                    <Text style={styles.photoAttachedText}>Live photo attached</Text>
+            {recentReports.map((item) => {
+              const serverRoot = getApiBaseUrl().replace(/\/api\/v1\/?$/, '');
+              const imgUri = item.photo_url
+                ? (item.photo_url.startsWith('http') ? item.photo_url : `${serverRoot}${item.photo_url}`)
+                : item.photoUri;
+
+              return (
+                <View key={item.id} style={styles.recentItem}>
+                  <View style={styles.recentTop}>
+                    <Text style={styles.recentType}>{item.category || item.hazard_type || 'Optical Evidence'}</Text>
+                    <Text style={styles.recentTime}>
+                      {item.uploaded_at
+                        ? new Date(item.uploaded_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : item.time || 'Logged'}
+                    </Text>
                   </View>
-                ) : null}
-              </View>
-            ))}
+
+                  <Text style={styles.recentLocation}>
+                    {item.zone_tag || item.location || 'Shaft 4'} ({item.depth || `${item.depth_meters}m`})
+                  </Text>
+
+                  {item.notes ? (
+                    <Text style={styles.recentNotes}>{item.notes}</Text>
+                  ) : null}
+
+                  {imgUri ? (
+                    <View style={{ marginTop: 8, borderRadius: 8, overflow: 'hidden', backgroundColor: '#020617' }}>
+                      <Image
+                        source={{ uri: imgUri }}
+                        style={{ width: '100%', height: 160 }}
+                        resizeMode="cover"
+                      />
+                      <View style={{ padding: 6, backgroundColor: 'rgba(15, 23, 42, 0.95)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Icon name="camera" size={11} color="#34d399" style={{ marginRight: 4 }} />
+                          <Text style={{ color: '#38bdf8', fontSize: 10, fontWeight: '700' }}>
+                            📁 uploads/{item.file_name || 'evidence.jpg'}
+                          </Text>
+                        </View>
+                        {item.file_size ? (
+                          <Text style={{ color: '#94a3b8', fontSize: 10 }}>{item.file_size}</Text>
+                        ) : null}
+                      </View>
+                    </View>
+                  ) : (
+                    <View style={styles.photoAttachedTag}>
+                      <Icon name="camera" size={11} color="#059669" style={{ marginRight: 4 }} />
+                      <Text style={styles.photoAttachedText}>
+                        Stored in /uploads: {item.file_name || 'evidence.jpg'}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
           </View>
         </View>
       )}

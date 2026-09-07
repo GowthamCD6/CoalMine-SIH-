@@ -688,44 +688,55 @@ export default function MobileSimulatorView({ onShowToast }) {
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
                     <div style={{ backgroundColor: '#1e293b', padding: '10px', borderRadius: '8px' }}>
-                      <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Underground Staff</div>
-                      <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>1,248</div>
-                      <div style={{ fontSize: '0.65rem', color: '#4ade80' }}>▲ +12 in zones</div>
+                      <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>My Sector Zone</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#38bdf8' }}>Shaft 4 • L3</div>
+                      <div style={{ fontSize: '0.65rem', color: '#64748b' }}>-120m Subterranean</div>
                     </div>
                     <div style={{ backgroundColor: '#1e293b', padding: '10px', borderRadius: '8px' }}>
-                      <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Open Violations</div>
-                      <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>34</div>
-                      <div style={{ fontSize: '0.65rem', color: '#facc15' }}>▼ 5 resolved</div>
+                      <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Atmospheric AQI</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#22c55e' }}>Optimal</div>
+                      <div style={{ fontSize: '0.65rem', color: '#4ade80' }}>CH₄: 0.12% Safe</div>
                     </div>
                     <div style={{ backgroundColor: '#1e293b', padding: '10px', borderRadius: '8px' }}>
-                      <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Air Quality (AQI)</div>
-                      <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#22c55e' }}>Optimal</div>
-                      <div style={{ fontSize: '0.65rem', color: '#4ade80' }}>✓ Sensors nominal</div>
+                      <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Cap-Lamp Power</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#38bdf8' }}>94% Active</div>
+                      <div style={{ fontSize: '0.65rem', color: '#4ade80' }}>Mesh Locked</div>
                     </div>
                     <div style={{ backgroundColor: '#1e293b', padding: '10px', borderRadius: '8px' }}>
-                      <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Distress Alerts</div>
-                      <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#38bdf8' }}>0 Clear</div>
-                      <div style={{ fontSize: '0.65rem', color: '#4ade80' }}>✓ No SOS active</div>
+                      <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Sector Safety</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#22c55e' }}>All Clear</div>
+                      <div style={{ fontSize: '0.65rem', color: '#4ade80' }}>0 Distress Alerts</div>
                     </div>
                   </div>
 
                   <div style={{ backgroundColor: '#1e293b', borderRadius: '8px', padding: '10px', marginBottom: '12px' }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, marginBottom: '6px' }}>Daily Output Target</div>
-                    <div style={{ height: '6px', backgroundColor: '#0f172a', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ width: '88%', height: '100%', backgroundColor: '#3b82f6' }} />
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#94a3b8', marginTop: '4px' }}>
-                      <span>Actual: 4,520 T</span>
-                      <span>Target: 5,000 T</span>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, marginBottom: '6px' }}>Shift & Egress Readiness</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '0.7rem' }}>
+                      <div style={{ backgroundColor: '#0f172a', padding: '6px', borderRadius: '4px' }}>
+                        <div style={{ color: '#64748b', fontSize: '0.65rem' }}>Shift</div>
+                        <div style={{ color: '#f8fafc', fontWeight: 700 }}>Morning Shift A</div>
+                      </div>
+                      <div style={{ backgroundColor: '#0f172a', padding: '6px', borderRadius: '4px' }}>
+                        <div style={{ color: '#64748b', fontSize: '0.65rem' }}>Token</div>
+                        <div style={{ color: '#f8fafc', fontWeight: 700 }}>#CL-4102 Verified</div>
+                      </div>
+                      <div style={{ backgroundColor: '#0f172a', padding: '6px', borderRadius: '4px' }}>
+                        <div style={{ color: '#64748b', fontSize: '0.65rem' }}>Geofence</div>
+                        <div style={{ color: '#4ade80', fontWeight: 700 }}>Safe Perimeter</div>
+                      </div>
+                      <div style={{ backgroundColor: '#0f172a', padding: '6px', borderRadius: '4px' }}>
+                        <div style={{ color: '#64748b', fontSize: '0.65rem' }}>Primary Egress</div>
+                        <div style={{ color: '#f8fafc', fontWeight: 700 }}>Shaft 4 (140m)</div>
+                      </div>
                     </div>
                   </div>
 
                   <div style={{ backgroundColor: '#1e293b', borderRadius: '8px', padding: '10px' }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, marginBottom: '6px' }}>Live Operations Feed</div>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, marginBottom: '6px' }}>Pre-Shift Safety Confirmations</div>
                     <div style={{ fontSize: '0.7rem', color: '#cbd5e1', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <div>10:42 AM - Shift 2 Attendance Sync (Done)</div>
-                      <div>10:15 AM - Explosives Inventory Verified (Done)</div>
-                      <div>09:30 AM - O2 Sensor Calibrated Level 4 (Done)</div>
+                      <div>✓ Form B Digital Attendance & Cap-Lamp logged</div>
+                      <div>✓ Atmospheric multi-gas detector operational</div>
+                      <div>✓ Subterranean mesh distress receiver armed</div>
                     </div>
                   </div>
                 </div>
@@ -777,12 +788,13 @@ export default function MobileSimulatorView({ onShowToast }) {
                   {hazardCaptured && (
                     <div style={{ marginTop: '10px', backgroundColor: '#1e293b', borderRadius: '8px', padding: '10px' }}>
                       <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4ade80', marginBottom: '6px' }}>
-                        ✓ Ready to upload hazard report:
+                        ✓ Photo Captured (Stored to /uploads on submit):
                       </div>
                       <button
                         onClick={async () => {
                           try {
-                            await fetch('http://localhost:5000/api/v1/hazards', {
+                            const sampleBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACnSURBVHic7cExAQAAAMKg9U9tCy8gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgB81QAAAAcB05HIAAAAASUVORK5CYII=';
+                            await fetch('http://localhost:5001/api/v1/hazards', {
                               method: 'POST',
                               headers: {
                                 Authorization: `Bearer ${activeToken}`,
@@ -792,12 +804,17 @@ export default function MobileSimulatorView({ onShowToast }) {
                                 hazard_type: 'Roof Degradation Fissure',
                                 location_name: 'Shaft 4 Sector B',
                                 depth_meters: -120,
+                                zone_tag: 'Level 3 - Sector B',
+                                notes: 'Optical fissure record captured via HUD sensor.',
+                                photo_base64: sampleBase64,
+                                file_name: `simulator_hazard_${Date.now()}.png`,
                               }),
                             });
                             setHazardCaptured(false);
-                            if (onShowToast) onShowToast('Hazard report logged & synchronized!');
-                          } catch {
+                            if (onShowToast) onShowToast('📸 Photo saved to /uploads folder and logged to Audit Trail!');
+                          } catch (err) {
                             setHazardCaptured(false);
+                            if (onShowToast) onShowToast('Offline queue mode active: ' + err.message, true);
                           }
                         }}
                         style={{
@@ -812,7 +829,7 @@ export default function MobileSimulatorView({ onShowToast }) {
                           cursor: 'pointer',
                         }}
                       >
-                        SUBMIT GEOTAGGED REPORT
+                        SUBMIT & SAVE TO /uploads
                       </button>
                     </div>
                   )}

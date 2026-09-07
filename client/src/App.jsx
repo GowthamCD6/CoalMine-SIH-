@@ -11,7 +11,16 @@ import PagesManagement from './components/views/PagesManagement.jsx';
 import AuditLogsView from './components/views/AuditLogsView.jsx';
 import MobileSimulatorView from './components/views/MobileSimulatorView.jsx';
 import EmergencyAlertsView from './components/views/EmergencyAlertsView.jsx';
-
+import InspectionsView from './components/views/InspectionsView.jsx';
+import EmergencyConsoleView from './components/views/EmergencyConsoleView.jsx';
+import CommandMapView from './components/views/CommandMapView.jsx';
+import AnalyticsView from './components/views/AnalyticsView.jsx';
+import ComplianceView from './components/views/ComplianceView.jsx';
+import ResourceAllocationView from './components/views/ResourceAllocationView.jsx';
+import EnvironmentMonitoringView from './components/views/EnvironmentMonitoringView.jsx';
+import LaborDeploymentView from './components/views/LaborDeploymentView.jsx';
+import SmokeDetectionView from './components/views/SmokeDetectionView.jsx';
+import AttendanceSystemView from './components/views/AttendanceSystemView.jsx';
 import { api, subscribeToApiLogs, getAccessToken } from './services/api.js';
 import './App.css';
 
@@ -113,7 +122,7 @@ function App() {
   }
 
   return (
-    <div className="app-layout" style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
+    <div className="app-layout" style={{ display: 'flex', minHeight: '100vh' }}>
       {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
@@ -170,6 +179,66 @@ function App() {
 
           {(activeTab === 'audit' || activeTab === 'audit-logs') && (
             <AuditLogsView onShowToast={showToast} />
+          )}
+
+          {activeTab === 'inspections' && (
+            <div style={{ padding: '2rem' }}>
+              <InspectionsView onShowToast={showToast} />
+            </div>
+          )}
+
+          {activeTab === 'emergency' && (
+            <div style={{ padding: '2rem' }}>
+              <EmergencyConsoleView onShowToast={showToast} />
+            </div>
+          )}
+
+          {activeTab === 'command-map' && (
+            <div style={{ padding: '2rem' }}>
+              <CommandMapView onShowToast={showToast} />
+            </div>
+          )}
+
+          {activeTab === 'analytics' && (
+            <div style={{ padding: '2rem' }}>
+              <AnalyticsView onShowToast={showToast} />
+            </div>
+          )}
+
+          {activeTab === 'compliance' && (
+            <div style={{ padding: '2rem' }}>
+              <ComplianceView onShowToast={showToast} />
+            </div>
+          )}
+
+          {activeTab === 'environment' && (
+            <div style={{ padding: '2rem' }}>
+              <EnvironmentMonitoringView onShowToast={showToast} />
+            </div>
+          )}
+
+          {activeTab === 'labor' && (
+            <div style={{ padding: '2rem' }}>
+              <LaborDeploymentView onShowToast={showToast} onNavigateTo={(tab) => setActiveTab(tab)} />
+            </div>
+          )}
+
+          {activeTab === 'smoke-detection' && (
+            <div style={{ padding: '2rem' }}>
+              <SmokeDetectionView />
+            </div>
+          )}
+
+          {activeTab === 'attendance' && (
+            <div style={{ padding: '2rem' }}>
+              <AttendanceSystemView onShowToast={showToast} />
+            </div>
+          )}
+
+          {activeTab === 'resources' && (
+            <div style={{ padding: '2rem' }}>
+              <ResourceAllocationView onShowToast={showToast} />
+            </div>
           )}
         </main>
       </div>

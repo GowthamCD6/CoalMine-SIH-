@@ -37,43 +37,31 @@ export default function LoginPage({ onLoginSuccess }) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: '#0f172a',
-      backgroundImage: `
-        radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.18) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.12) 0px, transparent 50%),
-        radial-gradient(at 50% 50%, rgba(15, 23, 42, 1) 0px, transparent 100%)
-      `,
+      background: 'var(--bg-gradient)',
       padding: '1.5rem',
       fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
       boxSizing: 'border-box',
     }}>
-      <div style={{
+      <div className="glass-panel" style={{
         width: '100%',
         maxWidth: '440px',
-        backgroundColor: '#ffffff',
-        borderRadius: '20px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)',
         overflow: 'hidden',
       }}>
         {/* Top Header Banner */}
         <div style={{
-          backgroundColor: '#1e293b',
           padding: '2rem 2rem 1.75rem',
           textAlign: 'center',
-          borderBottom: '1px solid #334155',
-          color: '#ffffff',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.6)',
         }}>
-          <div style={{
+          <div className="sleek-card" style={{
             width: '52px',
             height: '52px',
-            borderRadius: '14px',
-            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#ffffff',
-            boxShadow: '0 8px 16px rgba(37, 99, 235, 0.35)',
+            color: 'var(--primary)',
             marginBottom: '1rem',
+            backgroundColor: 'rgba(255, 255, 255, 0.7)',
           }}>
             <Pickaxe size={26} />
           </div>
@@ -83,13 +71,13 @@ export default function LoginPage({ onLoginSuccess }) {
             fontSize: '1.45rem',
             fontWeight: 800,
             letterSpacing: '-0.02em',
-            color: '#ffffff',
+            color: 'var(--text-main)',
           }}>
             CoalMin Platform
           </h1>
           <p style={{
             margin: '6px 0 0 0',
-            color: '#94a3b8',
+            color: 'var(--text-muted)',
             fontSize: '0.85rem',
           }}>
             SIH26024 Multi-Tier Governance & RBAC Portal
@@ -140,22 +128,14 @@ export default function LoginPage({ onLoginSuccess }) {
                   type="text"
                   required
                   autoFocus
+                  className="sleek-input"
                   placeholder="admin@coalmin.org or superadmin"
                   value={loginInput}
                   onChange={(e) => setLoginInput(e.target.value)}
                   style={{
                     width: '100%',
-                    padding: '11px 14px 11px 42px',
-                    borderRadius: '10px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '0.9rem',
-                    color: '#0f172a',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    transition: 'border-color 0.15s ease',
+                    paddingLeft: '42px',
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#2563eb'}
-                  onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
                 />
               </div>
             </div>
@@ -182,22 +162,15 @@ export default function LoginPage({ onLoginSuccess }) {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
+                  className="sleek-input"
                   placeholder="••••••••••••"
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
                   style={{
                     width: '100%',
-                    padding: '11px 42px 11px 42px',
-                    borderRadius: '10px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '0.9rem',
-                    color: '#0f172a',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    transition: 'border-color 0.15s ease',
+                    paddingLeft: '42px',
+                    paddingRight: '42px',
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#2563eb'}
-                  onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
                 />
                 <button
                   type="button"
@@ -225,25 +198,16 @@ export default function LoginPage({ onLoginSuccess }) {
             <button
               type="submit"
               disabled={loading}
+              className="sleek-btn"
               style={{
                 marginTop: '0.5rem',
-                padding: '12px 18px',
-                backgroundColor: '#2563eb',
+                backgroundColor: 'var(--primary)',
                 color: '#ffffff',
-                border: 'none',
-                borderRadius: '10px',
-                fontWeight: 700,
-                fontSize: '0.95rem',
-                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                transition: 'background-color 0.15s ease',
-                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
             >
               {loading ? 'Verifying & Signing In...' : 'Sign In to Dashboard'}
               {!loading && <ArrowRight size={18} />}
@@ -270,16 +234,13 @@ export default function LoginPage({ onLoginSuccess }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <button
                 type="button"
+                className="sleek-btn"
                 onClick={() => handleFillCredentials('superadmin', 'Admin@12345')}
                 style={{
                   padding: '7px 10px',
-                  borderRadius: '8px',
-                  border: '1px solid #fde68a',
-                  backgroundColor: '#fefce8',
+                  backgroundColor: 'rgba(254, 252, 232, 0.5)',
                   fontSize: '0.78rem',
                   color: '#92400e',
-                  cursor: 'pointer',
-                  fontWeight: 600,
                   textAlign: 'left',
                 }}
               >
@@ -289,16 +250,13 @@ export default function LoginPage({ onLoginSuccess }) {
 
               <button
                 type="button"
+                className="sleek-btn"
                 onClick={() => handleFillCredentials('ecl_admin', 'Admin@12345')}
                 style={{
                   padding: '7px 10px',
-                  borderRadius: '8px',
-                  border: '1px solid #bfdbfe',
-                  backgroundColor: '#eff6ff',
+                  backgroundColor: 'rgba(239, 246, 255, 0.5)',
                   fontSize: '0.78rem',
                   color: '#1e40af',
-                  cursor: 'pointer',
-                  fontWeight: 600,
                   textAlign: 'left',
                 }}
               >
@@ -308,16 +266,13 @@ export default function LoginPage({ onLoginSuccess }) {
 
               <button
                 type="button"
+                className="sleek-btn"
                 onClick={() => handleFillCredentials('ecl_advisor', 'Admin@12345')}
                 style={{
                   padding: '7px 10px',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                  backgroundColor: '#f8fafc',
+                  backgroundColor: 'rgba(248, 250, 252, 0.5)',
                   fontSize: '0.78rem',
                   color: '#334155',
-                  cursor: 'pointer',
-                  fontWeight: 600,
                   textAlign: 'left',
                 }}
               >
@@ -327,16 +282,13 @@ export default function LoginPage({ onLoginSuccess }) {
 
               <button
                 type="button"
+                className="sleek-btn"
                 onClick={() => handleFillCredentials('rj_mine_admin', 'Admin@12345')}
                 style={{
                   padding: '7px 10px',
-                  borderRadius: '8px',
-                  border: '1px solid #a7f3d0',
-                  backgroundColor: '#ecfdf5',
+                  backgroundColor: 'rgba(236, 253, 245, 0.5)',
                   fontSize: '0.78rem',
                   color: '#065f46',
-                  cursor: 'pointer',
-                  fontWeight: 600,
                   textAlign: 'left',
                 }}
               >
@@ -349,12 +301,12 @@ export default function LoginPage({ onLoginSuccess }) {
 
         {/* Footer Note */}
         <div style={{
-          backgroundColor: '#f8fafc',
+          backgroundColor: 'rgba(248, 250, 252, 0.4)',
           padding: '1rem',
           textAlign: 'center',
-          borderTop: '1px solid #e2e8f0',
+          borderTop: '1px solid rgba(255, 255, 255, 0.6)',
           fontSize: '0.78rem',
-          color: '#64748b',
+          color: 'var(--text-muted)',
         }}>
           Personnel accounts are provisioned exclusively by authorized Administrators.
         </div>

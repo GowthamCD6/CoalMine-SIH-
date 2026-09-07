@@ -5,14 +5,15 @@ import { Icon } from '../components/Icon';
 export const DashboardScreen = ({ currentUser, onNavigate }) => {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Worker Telemetry Banner */}
       <View style={styles.welcomeBanner}>
         <View style={{ flex: 1 }}>
           <View style={styles.badgeRow}>
-            <Text style={styles.badgeText}>{currentUser?.mobileRole === 'SUPERADMIN' ? 'SUPER ADMIN' : 'FIELD WORKER'}</Text>
+            <Text style={styles.badgeText}>FIELD WORKER • ON DUTY</Text>
           </View>
           <Text style={styles.welcomeTitle}>Subterranean Field Operations</Text>
           <Text style={styles.welcomeSubtitle}>
-            {currentUser?.mobileRole === 'SUPERADMIN' ? 'Admin' : 'Worker'}: {currentUser.first_name || currentUser.username} ({currentUser.employee_code || 'Staff'})
+            Worker: {currentUser?.first_name || currentUser?.username || 'Field Miner'} ({currentUser?.employee_code || 'EMP-7729'})
           </Text>
         </View>
         <View style={styles.liveIndicator}>
@@ -21,221 +22,183 @@ export const DashboardScreen = ({ currentUser, onNavigate }) => {
         </View>
       </View>
 
-      {/* KPI Cards Grid */}
+      {/* Worker Safety & Environment KPIs (Strictly Worker Focused - No Total Users or Admin Details) */}
       <View style={styles.kpiGrid}>
+        {/* 1. Worker Current Zone */}
         <View style={styles.kpiCard}>
           <View style={styles.kpiHeader}>
-            <Text style={styles.kpiTitle}>Underground Staff</Text>
+            <Text style={styles.kpiTitle}>Current Location</Text>
             <View style={styles.kpiIconBox}>
-              <Icon name="users" size={14} color="#0284c7" />
+              <Icon name="map-pin" size={14} color="#0284c7" />
             </View>
           </View>
-          <Text style={styles.kpiVal}>1,248</Text>
-          <Text style={styles.trendSub}>+12 across 4 active shafts</Text>
+          <Text style={styles.kpiVal}>Shaft 4 • L3</Text>
+          <Text style={styles.trendSub}>-120m Subterranean Depth</Text>
         </View>
 
+        {/* 2. Atmospheric & Gas Safety */}
         <View style={styles.kpiCard}>
           <View style={styles.kpiHeader}>
-            <Text style={styles.kpiTitle}>Open Violations</Text>
+            <Text style={styles.kpiTitle}>Atmospheric AQI</Text>
             <View style={styles.kpiIconBox}>
-              <Icon name="clipboard" size={14} color="#d97706" />
-            </View>
-          </View>
-          <Text style={styles.kpiVal}>34</Text>
-          <Text style={styles.trendSub}>5 resolved during shift</Text>
-        </View>
-
-        <View style={styles.kpiCard}>
-          <View style={styles.kpiHeader}>
-            <Text style={styles.kpiTitle}>Ventilation AQI</Text>
-            <View style={styles.kpiIconBox}>
-              <Icon name="wifi" size={14} color="#059669" />
+              <Icon name="wind" size={14} color="#059669" />
             </View>
           </View>
           <Text style={[styles.kpiVal, { color: '#059669' }]}>Optimal</Text>
-          <Text style={styles.trendSub}>Atmospheric sensors 100%</Text>
+          <Text style={styles.trendSub}>CH₄: 0.12% • O₂: 20.9%</Text>
         </View>
 
+        {/* 3. Cap-Lamp & Telemetry */}
         <View style={styles.kpiCard}>
           <View style={styles.kpiHeader}>
-            <Text style={styles.kpiTitle}>Active Distress</Text>
+            <Text style={styles.kpiTitle}>Cap-Lamp Power</Text>
             <View style={styles.kpiIconBox}>
-              <Icon name="alert" size={14} color="#0284c7" />
+              <Icon name="lamp" size={14} color="#0284c7" />
             </View>
           </View>
-          <Text style={[styles.kpiVal, { color: '#0f172a' }]}>0 Alerts</Text>
-          <Text style={styles.trendSub}>Sector perimeter secure</Text>
+          <Text style={styles.kpiVal}>94% Active</Text>
+          <Text style={styles.trendSub}>Mesh telemetry locked</Text>
+        </View>
+
+        {/* 4. Emergency Sentinel Status */}
+        <View style={styles.kpiCard}>
+          <View style={styles.kpiHeader}>
+            <Text style={styles.kpiTitle}>Sector Safety</Text>
+            <View style={styles.kpiIconBox}>
+              <Icon name="alert" size={14} color="#059669" />
+            </View>
+          </View>
+          <Text style={[styles.kpiVal, { color: '#059669' }]}>All Clear</Text>
+          <Text style={styles.trendSub}>0 Distress • Perimeter safe</Text>
         </View>
       </View>
 
-      {/* Production Metric */}
+      {/* Worker Shift & Egress Readiness (Replaces Company Coal Production Target) */}
       <View style={styles.sectionCard}>
         <View style={styles.sectionHeaderRow}>
-          <Icon name="chart" size={15} color="#0284c7" style={{ marginRight: 8 }} />
-          <Text style={styles.sectionTitle}>Daily Coal Extraction Target</Text>
+          <Icon name="compass" size={15} color="#0284c7" style={{ marginRight: 8 }} />
+          <Text style={styles.sectionTitle}>Shift Status & Egress Readiness</Text>
         </View>
-        <View style={styles.progressContainer}>
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: '90%' }]} />
+
+        <View style={styles.statusGrid}>
+          <View style={styles.statusItem}>
+            <Text style={styles.statusLabel}>Assigned Shift</Text>
+            <Text style={styles.statusVal}>Morning Shift A</Text>
           </View>
-          <View style={styles.progressLabels}>
-            <Text style={styles.progressSub}>Output: 4,520 tons</Text>
-            <Text style={styles.progressSub}>Goal: 5,000 tons (90.4%)</Text>
+          <View style={styles.statusItem}>
+            <Text style={styles.statusLabel}>Cap-Lamp Token</Text>
+            <Text style={styles.statusVal}>#CL-4102 Verified</Text>
+          </View>
+          <View style={styles.statusItem}>
+            <Text style={styles.statusLabel}>Geofence Status</Text>
+            <Text style={[styles.statusVal, { color: '#059669' }]}>✓ Safe Zone (Shaft 4)</Text>
+          </View>
+          <View style={styles.statusItem}>
+            <Text style={styles.statusLabel}>Primary Egress</Text>
+            <Text style={styles.statusVal}>Shaft 4 Incline (140m)</Text>
           </View>
         </View>
       </View>
 
       {/* Operational Capabilities Hub */}
-      <Text style={styles.groupHeader}>
-        {currentUser?.mobileRole === 'SUPERADMIN' ? 'ADMINISTRATIVE DISPATCH' : 'STATUTORY FIELD MODULES'}
-      </Text>
+      <Text style={styles.groupHeader}>STATUTORY FIELD MODULES</Text>
       <View style={styles.toolGrid}>
-        {currentUser?.mobileRole === 'SUPERADMIN' ? (
-          <>
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('delegation')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#f0f9ff' }]}>
-                <Icon name="delegation" size={18} color="#0284c7" />
-              </View>
-              <Text style={styles.toolTitle}>Worker Management</Text>
-              <Text style={styles.toolDesc}>Manage field personnel</Text>
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.toolTile}
+          onPress={() => onNavigate('muster')}
+        >
+          <View style={[styles.toolIconBox, { backgroundColor: '#f0f9ff' }]}>
+            <Icon name="compass" size={18} color="#0284c7" />
+          </View>
+          <Text style={styles.toolTitle}>Shift Muster (Form B)</Text>
+          <Text style={styles.toolDesc}>Geofence & Cap-Lamp log</Text>
+        </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('emergency')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#fef2f2' }]}>
-                <Icon name="alert" size={18} color="#dc2626" />
-              </View>
-              <Text style={styles.toolTitle}>Crisis Console</Text>
-              <Text style={styles.toolDesc}>Muster & evacuation alarm</Text>
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.toolTile}
+          onPress={() => onNavigate('gas-monitor')}
+        >
+          <View style={[styles.toolIconBox, { backgroundColor: '#ecfdf5' }]}>
+            <Icon name="wind" size={18} color="#059669" />
+          </View>
+          <Text style={styles.toolTitle}>Gas & Ventilation</Text>
+          <Text style={styles.toolDesc}>CH₄/CO/O₂ & Strata check</Text>
+        </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('hazard-cam')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#fff7ed' }]}>
-                <Icon name="camera" size={18} color="#ea580c" />
-              </View>
-              <Text style={styles.toolTitle}>Hazard Camera</Text>
-              <Text style={styles.toolDesc}>Geotagged audit log</Text>
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.toolTile}
+          onPress={() => onNavigate('hazard-cam')}
+        >
+          <View style={[styles.toolIconBox, { backgroundColor: '#fff7ed' }]}>
+            <Icon name="camera" size={18} color="#ea580c" />
+          </View>
+          <Text style={styles.toolTitle}>Hazard Camera</Text>
+          <Text style={styles.toolDesc}>Snap near-miss & GPS HUD</Text>
+        </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('gas-monitor')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#ecfdf5' }]}>
-                <Icon name="wind" size={18} color="#059669" />
-              </View>
-              <Text style={styles.toolTitle}>Gas & Ventilation</Text>
-              <Text style={styles.toolDesc}>Atmospheric monitoring</Text>
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.toolTile}
+          onPress={() => onNavigate('sos-panic')}
+        >
+          <View style={[styles.toolIconBox, { backgroundColor: '#fef2f2' }]}>
+            <Icon name="sos" size={18} color="#dc2626" />
+          </View>
+          <Text style={styles.toolTitle}>Emergency SOS</Text>
+          <Text style={styles.toolDesc}>Siren, Strobe & Evacuation</Text>
+        </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('muster')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#eff6ff' }]}>
-                <Icon name="compass" size={18} color="#2563eb" />
-              </View>
-              <Text style={styles.toolTitle}>Shift Muster</Text>
-              <Text style={styles.toolDesc}>Form B attendance register</Text>
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.toolTile}
+          onPress={() => onNavigate('rfid-pass')}
+        >
+          <View style={[styles.toolIconBox, { backgroundColor: '#eff6ff' }]}>
+            <Icon name="id-card" size={18} color="#2563eb" />
+          </View>
+          <Text style={styles.toolTitle}>Digital RFID Pass</Text>
+          <Text style={styles.toolDesc}>Worker badge & gate scan</Text>
+        </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('offline-sync')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#f5f3ff' }]}>
-                <Icon name="wifi" size={18} color="#7c3aed" />
-              </View>
-              <Text style={styles.toolTitle}>Offline Sync</Text>
-              <Text style={styles.toolDesc}>Store & forward buffer</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <>
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('muster')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#f0f9ff' }]}>
-                <Icon name="compass" size={18} color="#0284c7" />
-              </View>
-              <Text style={styles.toolTitle}>Shift Muster (Form B)</Text>
-              <Text style={styles.toolDesc}>Geofence & Cap-Lamp log</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('gas-monitor')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#ecfdf5' }]}>
-                <Icon name="wind" size={18} color="#059669" />
-              </View>
-              <Text style={styles.toolTitle}>Gas & Ventilation</Text>
-              <Text style={styles.toolDesc}>CH₄/CO/O₂ & Strata check</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('hazard-cam')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#fff7ed' }]}>
-                <Icon name="camera" size={18} color="#ea580c" />
-              </View>
-              <Text style={styles.toolTitle}>Hazard Camera</Text>
-              <Text style={styles.toolDesc}>Snap near-miss & GPS HUD</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.toolTile}
-              onPress={() => onNavigate('sos-panic')}
-            >
-              <View style={[styles.toolIconBox, { backgroundColor: '#fef2f2' }]}>
-                <Icon name="sos" size={18} color="#dc2626" />
-              </View>
-              <Text style={styles.toolTitle}>Emergency SOS</Text>
-              <Text style={styles.toolDesc}>Siren, Strobe & Evacuation</Text>
-            </TouchableOpacity>
-          </>
-        )}
+        <TouchableOpacity
+          style={styles.toolTile}
+          onPress={() => onNavigate('offline-sync')}
+        >
+          <View style={[styles.toolIconBox, { backgroundColor: '#f5f3ff' }]}>
+            <Icon name="wifi" size={18} color="#7c3aed" />
+          </View>
+          <Text style={styles.toolTitle}>Offline Sync</Text>
+          <Text style={styles.toolDesc}>Store & forward buffer</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Live Operations Feed */}
+      {/* Pre-Shift Safety Protocol & Verification Checklist (Replaces generic Operations Ledger) */}
       <View style={styles.sectionCard}>
         <View style={styles.sectionHeaderRow}>
-          <Icon name="activity" size={15} color="#0284c7" style={{ marginRight: 8 }} />
-          <Text style={styles.sectionTitle}>Real-time Operations Ledger</Text>
+          <Icon name="check-circle" size={15} color="#059669" style={{ marginRight: 8 }} />
+          <Text style={styles.sectionTitle}>Pre-Shift Safety Confirmations</Text>
         </View>
 
         <View style={styles.feedList}>
           <View style={styles.feedItem}>
-            <Text style={styles.feedTime}>14:45</Text>
-            <Text style={styles.feedText}>Shaft 3 ventilation damper B calibrated</Text>
+            <Text style={styles.feedBullet}>✓</Text>
+            <Text style={styles.feedText}>Form B Digital Attendance & Cap-Lamp logged</Text>
             <View style={styles.doneBadge}>
-              <Text style={styles.doneBadgeText}>Done</Text>
+              <Text style={styles.doneBadgeText}>Verified</Text>
             </View>
           </View>
 
           <View style={styles.feedItem}>
-            <Text style={styles.feedTime}>14:12</Text>
-            <Text style={styles.feedText}>Shift A team cleared entrance turnstile</Text>
+            <Text style={styles.feedBullet}>✓</Text>
+            <Text style={styles.feedText}>Atmospheric multi-gas detector operational</Text>
             <View style={styles.doneBadge}>
-              <Text style={styles.doneBadgeText}>Active</Text>
+              <Text style={styles.doneBadgeText}>Optimal</Text>
             </View>
           </View>
 
           <View style={styles.feedItem}>
-            <Text style={styles.feedTime}>13:30</Text>
-            <Text style={styles.feedText}>Level 4 water sump maintenance pending</Text>
-            <View style={styles.pendingBadge}>
-              <Text style={styles.pendingBadgeText}>Pending</Text>
+            <Text style={styles.feedBullet}>✓</Text>
+            <Text style={styles.feedText}>Subterranean mesh distress receiver active</Text>
+            <View style={styles.activeBadge}>
+              <Text style={styles.activeBadgeText}>Armed</Text>
             </View>
           </View>
         </View>
@@ -358,7 +321,7 @@ const styles = StyleSheet.create({
   },
   kpiVal: {
     color: '#0f172a',
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: '700',
     marginVertical: 4,
   },
@@ -383,36 +346,38 @@ const styles = StyleSheet.create({
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   sectionTitle: {
     color: '#0f172a',
     fontSize: 13,
     fontWeight: '600',
   },
-  progressContainer: {
-    marginTop: 4,
-  },
-  progressBar: {
-    height: 7,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#0284c7',
-    borderRadius: 4,
-  },
-  progressLabels: {
+  statusGrid: {
+    display: 'flex',
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 6,
+    flexWrap: 'wrap',
+    gap: 10,
   },
-  progressSub: {
+  statusItem: {
+    flexBasis: '47%',
+    flexGrow: 1,
+    backgroundColor: '#f8fafc',
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  statusLabel: {
+    fontSize: 10.5,
     color: '#64748b',
-    fontSize: 11,
     fontWeight: '500',
+    marginBottom: 2,
+  },
+  statusVal: {
+    fontSize: 12.5,
+    color: '#0f172a',
+    fontWeight: '700',
   },
   groupHeader: {
     color: '#64748b',
@@ -475,10 +440,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#f1f5f9',
   },
-  feedTime: {
-    color: '#64748b',
-    fontSize: 11,
-    fontWeight: '600',
+  feedBullet: {
+    color: '#10b981',
+    fontWeight: '900',
+    fontSize: 12,
     marginRight: 8,
   },
   feedText: {
@@ -499,16 +464,16 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     fontWeight: '600',
   },
-  pendingBadge: {
-    backgroundColor: '#fffbeb',
+  activeBadge: {
+    backgroundColor: '#eff6ff',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#fde68a',
+    borderColor: '#bfdbfe',
   },
-  pendingBadgeText: {
-    color: '#b45309',
+  activeBadgeText: {
+    color: '#1d4ed8',
     fontSize: 9.5,
     fontWeight: '600',
   },

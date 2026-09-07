@@ -21,10 +21,8 @@ export default function Header({
   onLogout,
 }) {
   return (
-    <header style={{
+    <header className="glass-header" style={{
       height: '70px',
-      backgroundColor: '#ffffff',
-      borderBottom: '1px solid #e2e8f0',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -32,7 +30,6 @@ export default function Header({
       position: 'sticky',
       top: 0,
       zIndex: 40,
-      boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
     }}>
       {/* Title / Scope info */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -92,20 +89,14 @@ export default function Header({
 
         {/* Swagger Docs Link */}
         <a
-          href="http://localhost:5000/api/docs"
+          href="http://localhost:5001/api/docs"
           target="_blank"
           rel="noreferrer"
+          className="sleek-btn"
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            padding: '7px 12px',
-            backgroundColor: '#ffffff',
-            border: '1px solid #cbd5e1',
-            borderRadius: '8px',
-            fontSize: '0.8rem',
-            color: '#334155',
-            fontWeight: 600,
             textDecoration: 'none',
           }}
         >
@@ -117,17 +108,11 @@ export default function Header({
         <button
           onClick={onToggleDiagnostics}
           title="Open API & Diagnostics Inspector"
+          className="sleek-btn"
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            padding: '7px 12px',
-            backgroundColor: '#ffffff',
-            border: '1px solid #cbd5e1',
-            borderRadius: '8px',
-            fontSize: '0.8rem',
-            color: '#334155',
-            fontWeight: 600,
             cursor: 'pointer',
           }}
         >
@@ -149,13 +134,11 @@ export default function Header({
 
         {/* User Profile / Auth */}
         {currentUser && (
-          <div style={{
+          <div className="sleek-card" style={{
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
             padding: '4px 10px 4px 6px',
-            backgroundColor: '#f8fafc',
-            border: '1px solid #e2e8f0',
             borderRadius: '20px',
           }}>
             <div style={{

@@ -65,14 +65,9 @@ export const SosPanicScreen = ({ currentUser, onNavigate }) => {
   const [workerZone] = useState('Shaft 4 • Level 3');
   const [workerDepth] = useState(-180);
 
-  // Higher role dispatch state
-  const isHigherRole =
-    currentUser?.mobileRole === 'SUPERADMIN' ||
-    ['ADMIN', 'MANAGER', 'SUPERVISOR', 'SAFETY_OFFICER'].some((r) =>
-      (currentUser?.role || currentUser?.mobileRole || '').toUpperCase().includes(r)
-    );
-
-  const [mode, setMode] = useState(isHigherRole ? 'DISPATCH' : 'WORKER_SOS');
+  // Worker-focused SOS state
+  const isHigherRole = false;
+  const [mode, setMode] = useState('WORKER_SOS');
   const [targetSector, setTargetSector] = useState('SHAFT_4_L3');
   const [alertType, setAlertType] = useState('EVACUATION');
   const [severity, setSeverity] = useState('CRITICAL');
@@ -146,7 +141,7 @@ export const SosPanicScreen = ({ currentUser, onNavigate }) => {
         signal_node: selectedSectorObj.signal_node,
         exit_route: exitRoute,
         sender_name: `${currentUser?.username || 'Staff'} (Command)`,
-        sender_role: currentUser?.mobileRole || 'SUPERADMIN',
+        sender_role: 'FIELD_WORKER',
       };
 
       await mobileApi.createEmergencyAlert(payload);

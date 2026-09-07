@@ -3,32 +3,32 @@ import { Platform } from 'react-native';
 export const CANDIDATE_ENDPOINTS = [
   {
     id: 'usb',
-    label: 'USB ADB (localhost)',
-    url: 'http://localhost:5000/api/v1',
+    label: 'USB ADB (localhost:5001)',
+    url: 'http://localhost:5001/api/v1',
     desc: 'For physical phone connected via USB cable with adb reverse',
   },
   {
     id: 'wifi',
-    label: 'Wi-Fi LAN (10.150.255.156)',
-    url: 'http://10.150.255.156:5000/api/v1',
+    label: 'Wi-Fi LAN (10.232.78.180:5001)',
+    url: 'http://10.232.78.180:5001/api/v1',
     desc: 'For wireless phone connected to same Wi-Fi network',
   },
   {
-    id: 'emulator',
-    label: 'Android Emulator (10.0.2.2)',
-    url: 'http://10.0.2.2:5000/api/v1',
-    desc: 'For Android Studio virtual emulator',
+    id: 'usb_legacy',
+    label: 'USB ADB (localhost:5000)',
+    url: 'http://localhost:5000/api/v1',
+    desc: 'Legacy ADB reverse port forwarding to 5001',
   },
   {
-    id: 'ethernet',
-    label: 'LAN Ethernet (10.251.188.198)',
-    url: 'http://10.251.188.198:5000/api/v1',
-    desc: 'Secondary local network interface',
+    id: 'emulator',
+    label: 'Android Emulator (10.0.2.2:5001)',
+    url: 'http://10.0.2.2:5001/api/v1',
+    desc: 'For Android Studio virtual emulator',
   },
 ];
 
-// Default to localhost:5000 (works over USB via adb reverse, iOS, and desktop)
-let currentBaseUrl = 'http://localhost:5000/api/v1';
+// Default to localhost:5001 (server port)
+let currentBaseUrl = 'http://localhost:5001/api/v1';
 let activeAccessToken = null;
 let activeRefreshToken = null;
 let cachedCurrentUser = null;
@@ -185,7 +185,7 @@ async function request(endpoint, options = {}, retryOnNetworkError = true) {
 
 /**
  * Classify a user into a mobile-app role based on their subroles/permissions.
- * Returns: 'SUPERADMIN' | 'WORKER' | 'RESTRICTED'
+ * Returns: 'WORKER' | 'RESTRICTED_ADMIN'
  */
 export function getUserMobileRole(userProfile) {
   if (!userProfile) return 'WORKER';
@@ -193,28 +193,24 @@ export function getUserMobileRole(userProfile) {
   const permissions = userProfile.permissions || [];
   const subroles = userProfile.subroles || [];
 
-  // Check for global super admin (wildcard permission or SUPER_ADMIN role code)
-  const isSuperAdmin =
+  // Check for any admin roles or administrative permissions
+  const isAdmin =
     permissions.some((p) => p.permission_code === '*' || p.permission_code === 'ALL_PERMISSIONS') ||
-    subroles.some((sr) => sr.role_code === 'SUPER_ADMIN');
+    subroles.some((sr) => {
+      const code = (sr.role_code || '').toUpperCase();
+      return (
+        code.includes('SUPER_ADMIN') ||
+        code.includes('ORG_ADMIN') ||
+        code.includes('MINE_ADMIN') ||
+        code.includes('SITE_ADVISOR') ||
+        code.includes('EXECUTIVE') ||
+        code.includes('DIRECTOR')
+      );
+    });
 
-  if (isSuperAdmin) return 'SUPERADMIN';
+  if (isAdmin) return 'RESTRICTED_ADMIN';
 
-  // Check for intermediate admins (org admins, mine admins, site advisors, etc.)
-  const isIntermediateAdmin = subroles.some((sr) => {
-    const code = (sr.role_code || '').toUpperCase();
-    return (
-      code.includes('ORG_ADMIN') ||
-      code.includes('MINE_ADMIN') ||
-      code.includes('SITE_ADVISOR') ||
-      code.includes('EXECUTIVE') ||
-      code.includes('DIRECTOR')
-    );
-  });
-
-  if (isIntermediateAdmin) return 'RESTRICTED';
-
-  // Everyone else is a worker / field user
+  // Field worker
   return 'WORKER';
 }
 
@@ -241,22 +237,21 @@ export const mobileApi = {
       const profile = await request('/auth/me');
       const mobileRole = getUserMobileRole(profile);
 
-      if (mobileRole === 'RESTRICTED') {
-        // Clear auth since this user isn't allowed on mobile
+      if (mobileRole === 'RESTRICTED_ADMIN') {
+        // Clear auth since admin users must use Web Portal
         clearAuth();
         throw new Error(
-          'Access Denied: Organization Admins, Mine Admins, and Site Advisors must use the NexusMine Web Portal. Only Super Admins and Field Workers can use this mobile app.'
+          'Access Denied: Administrators must use the NexusMine Web Portal. This mobile application is dedicated strictly to Field Workers.'
         );
       }
 
-      // Attach the mobile role and enriched profile to the response
-      res.user = { ...res.user, ...profile, mobileRole };
+      // Attach worker role and enriched profile to response
+      res.user = { ...res.user, ...profile, mobileRole: 'WORKER' };
       setCurrentCachedUser(res.user);
     } catch (err) {
       if (err.message?.includes('Access Denied')) {
         throw err;
       }
-      // If /auth/me fails, allow login with basic info (offline/fallback)
       if (res?.user) {
         res.user.mobileRole = 'WORKER';
       }
@@ -314,7 +309,7 @@ export const mobileApi = {
     });
   },
 
-  // Hazards (Camera)
+  // Hazards (Camera & Uploads)
   async getHazards() {
     return request('/hazards');
   },
@@ -324,6 +319,10 @@ export const mobileApi = {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  },
+
+  async getUploadLogs() {
+    return request('/uploads/logs');
   },
 
   // Emergency & SOS
