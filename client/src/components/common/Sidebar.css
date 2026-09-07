@@ -25,13 +25,15 @@
 
 /* ===== SIDEBAR HEADER ===== */
 .sidebar-header {
-  padding: 16px;
+  height: 64px;
+  max-height: 64px;
+  padding: 0 16px;
   border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   position: relative;
   background: #ffffff;
-  min-height: 64px;
+  box-sizing: border-box;
 }
 
 .header-content {
@@ -43,7 +45,6 @@
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 12px;
   flex: 1;
   min-width: 0;
 }
@@ -70,9 +71,12 @@
 }
 
 .company-name {
+  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
 }
@@ -83,6 +87,7 @@
   color: #0f172a;
   letter-spacing: -0.035em;
   line-height: 1.1;
+  text-align: center;
 }
 
 /* ===== TOGGLE BUTTON & CLOSE ===== */
@@ -132,8 +137,8 @@
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: #94a3b8;
+  letter-spacing: 0.7px;
+  color: #64748b;
   display: block;
 }
 
@@ -144,7 +149,7 @@
   gap: 12px;
   padding: 9px 12px;
   margin: 1px 0;
-  color: #475569;
+  color: #334155;
   text-decoration: none;
   transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 8px;
@@ -156,6 +161,8 @@
   text-align: left;
   font-family: inherit;
   font-size: 13.5px;
+  font-weight: 550;
+  -webkit-font-smoothing: antialiased;
 }
 
 .nav-item:hover {
@@ -166,7 +173,7 @@
 .nav-item.active {
   background: #eff6ff;
   color: #2563eb;
-  font-weight: 600;
+  font-weight: 650;
 }
 
 .active-indicator {
@@ -183,7 +190,7 @@
 
 .nav-icon {
   flex-shrink: 0;
-  stroke-width: 2;
+  stroke-width: 2.1;
   color: inherit;
   display: flex;
   align-items: center;
@@ -192,7 +199,8 @@
 
 .nav-label {
   font-size: 13.5px;
-  font-weight: 500;
+  font-weight: 550;
+  letter-spacing: -0.01em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -200,7 +208,7 @@
 }
 
 .nav-item.active .nav-label {
-  font-weight: 600;
+  font-weight: 650;
 }
 
 /* Badge styles */
@@ -260,21 +268,30 @@
   font-size: 13px;
   margin: 1px 0;
   position: relative;
-  color: #64748b;
+  color: #475569;
+  font-weight: 500;
 }
 
 .nav-item.sub-item .nav-icon {
   width: 16px;
   height: 16px;
+  stroke-width: 2.1;
 }
 
 .nav-item.sub-item .nav-label {
-  font-size: 12.8px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
 .nav-item.sub-item.active {
   background: #eff6ff;
   color: #2563eb;
+  font-weight: 600;
+}
+
+.nav-item.sub-item.active .nav-label {
+  font-weight: 600;
 }
 
 .nav-item.sub-item:hover {
