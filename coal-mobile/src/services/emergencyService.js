@@ -301,8 +301,9 @@ export const emergencyService = {
     pollInterval = setInterval(async () => {
       try {
         const zoneToCheck = targetZone || currentLocation.zone;
-        const res = await apiInstance.getEmergencyAlerts(zoneToCheck);
-        const broadcasts = res?.broadcasts || res?.data?.broadcasts || [];
+        // Fetch all active broadcasts so no evacuation or emergency message is missed
+        const res = await apiInstance.getEmergencyAlerts();
+        const broadcasts = res?.broadcasts || res?.all_broadcasts || res?.data?.broadcasts || [];
 
         const currentUsername = String(currentUser?.username || '').toLowerCase();
         const currentUserId = String(currentUser?.id || '');
@@ -313,10 +314,15 @@ export const emergencyService = {
           // CRITICAL: If user pressed the green safe/evacuated button, NEVER alarm again!
           if (acknowledgedAlertIds.has(b.id)) return false;
 
-          // DO NOT alert the distressed worker on their own phone with "Help him"!
+          // 1. Evacuation Orders: ALL workers in or near the mine MUST receive the evacuation alarm!
+          if (b.type === 'EVACUATION') {
+            return true;
+          }
+
+          // 2. Colleague SOS Distress: Alert nearby workers, but don't alarm the distressed worker on their own phone with "Help him"
           if (
             b.type === 'WORKER_DISTRESS' &&
-            ((currentUserId && (b.sender_id === currentUserId || b.distress_worker_id === currentUserId)) ||
+            ((currentUserId && (String(b.sender_id) === currentUserId || String(b.distress_worker_id) === currentUserId)) ||
              (currentUsername && (b.sender_name?.toLowerCase().includes(currentUsername) || b.distress_worker_name?.toLowerCase().includes(currentUsername))))
           ) {
             return false;
