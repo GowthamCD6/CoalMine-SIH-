@@ -19,6 +19,7 @@ import {
   Fuel,
   MapPin,
   User,
+  RefreshCw,
 } from 'lucide-react';
 
 const INITIAL_MACHINERY = [
@@ -195,59 +196,126 @@ export default function ResourceAllocationView({ onShowToast }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Header Banner */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', boxSizing: 'border-box' }}>
+
+      {/* Top Header Bar */}
       <div
-        className="glass-panel"
         style={{
-          padding: '1.5rem 2rem',
+          padding: '0.65rem 1.25rem',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          flexWrap: 'wrap',
           gap: '16px',
+          borderRadius: '12px',
+          backgroundColor: '#ffffff',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+          border: '1px solid #e2e8f0',
+          overflowX: 'auto',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
           <div
             style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '12px',
-              backgroundColor: 'rgba(37, 99, 235, 0.12)',
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              backgroundColor: '#eff6ff',
               color: 'var(--primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
-            <Tractor size={26} />
+            <Tractor size={20} />
           </div>
-          <div>
-            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>
-              HEMM Resource & Heavy Machinery Allocation
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.015em', whiteSpace: 'nowrap' }}>
+              HEMM Resource & Machinery Allocation
             </h2>
-            <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-              Real-time Heavy Earth Moving Machinery dispatch, workshop maintenance & fuel telematics
-            </p>
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                backgroundColor: '#ecfdf5',
+                color: '#059669',
+                border: '1px solid #a7f3d0',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+              TELEMATICS DISPATCH ACTIVE
+            </span>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
           <button
-            className="sleek-btn"
+            onClick={() => {
+              if (onShowToast) onShowToast('Telemetry & equipment status refreshed');
+            }}
             style={{
-              backgroundColor: 'var(--primary)',
-              color: '#ffffff',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-            }}
-            onClick={() => {
-              if (onShowToast) onShowToast('Fleet Telematics Synced');
+              padding: '6px 14px',
+              borderRadius: '8px',
+              backgroundColor: '#f8fafc',
+              border: '1px solid #cbd5e1',
+              color: '#334155',
+              fontWeight: 700,
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
             }}
           >
-            <Activity size={16} /> Live GPS Telematics
+            <RefreshCw size={13} /> Refresh
+          </button>
+          <button
+            onClick={() => {
+              if (onShowToast) onShowToast('GPS Fleet Telematics synced with subterranean transponders');
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              backgroundColor: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              color: '#1d4ed8',
+              fontWeight: 700,
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <Activity size={14} /> Live GPS Telematics
+          </button>
+          <button
+            onClick={() => setModalType('NEW')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              backgroundColor: '#2563eb',
+              border: 'none',
+              color: '#ffffff',
+              fontWeight: 700,
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(37, 99, 235, 0.2)',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <Plus size={14} /> Deploy Machinery
           </button>
         </div>
       </div>

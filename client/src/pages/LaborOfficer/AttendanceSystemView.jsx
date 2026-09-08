@@ -1108,93 +1108,159 @@ export default function AttendanceSystemView({ onShowToast }) {
   const attendanceRate = totalWorkersCount > 0 ? Math.round((todayPunchedWorkers / totalWorkersCount) * 100) : 0;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {/* Top Banner Header */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', boxSizing: 'border-box' }}>
+
+      {/* Top Header Bar */}
       <div
-        className="glass-panel"
         style={{
-          padding: '24px',
+          padding: '0.65rem 1.25rem',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          flexWrap: 'wrap',
           gap: '16px',
+          borderRadius: '12px',
+          backgroundColor: '#ffffff',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+          border: '1px solid #e2e8f0',
+          overflowX: 'auto',
         }}
       >
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h2 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <UserCheck size={28} color="var(--primary)" />
-              Coal Mine Smart Attendance System
-            </h2>
-            <span
-              className="badge-pill"
-              style={{
-                backgroundColor: 'rgba(37, 99, 235, 0.12)',
-                color: 'var(--primary)',
-                border: '1px solid var(--primary-border)',
-                fontWeight: 700,
-                fontSize: '0.75rem',
-              }}
-            >
-              ML FACIAL BIOMETRICS
-            </span>
-          </div>
-          <p style={{ margin: '6px 0 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            Live face scanning, instant on-camera enrollment, and TiDB database shift muster.
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
           <div
             style={{
-              padding: '6px 14px',
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              backgroundColor: '#eff6ff',
+              color: 'var(--primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <UserCheck size={20} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.015em', whiteSpace: 'nowrap' }}>
+              AI Facial Attendance & Muster
+            </h2>
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                backgroundColor: '#ecfdf5',
+                color: '#059669',
+                border: '1px solid #a7f3d0',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+              DGMS FORM B ACTIVE
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          <div
+            style={{
+              padding: '4px 10px',
               borderRadius: '8px',
               backgroundColor: dbConnected ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
               border: `1px solid ${dbConnected ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
               color: dbConnected ? '#059669' : '#d97706',
-              fontSize: '0.85rem',
-              fontWeight: 600,
+              fontSize: '0.78rem',
+              fontWeight: 700,
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '5px',
             }}
           >
-            <Database size={15} />
-            {dbConnected ? 'TiDB Cloud Synced' : 'Local Buffer Active'}
+            <Database size={13} />
+            {dbConnected ? 'TiDB Cloud' : 'Local Buffer'}
           </div>
 
           <div
             style={{
-              padding: '6px 14px',
+              padding: '4px 10px',
               borderRadius: '8px',
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-subtle)',
-              color: 'var(--text-main)',
-              fontSize: '0.85rem',
+              backgroundColor: '#f8fafc',
+              border: '1px solid #cbd5e1',
+              color: '#334155',
+              fontSize: '0.78rem',
               fontWeight: 700,
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '5px',
               fontFamily: 'monospace',
             }}
           >
-            <Clock size={15} color="var(--primary)" />
+            <Clock size={13} color="var(--primary)" />
             {clock}
           </div>
 
           <button
             onClick={() => setSoundEnabled(!soundEnabled)}
-            className="sleek-btn"
             style={{
-              padding: '8px 12px',
-              backgroundColor: soundEnabled ? 'rgba(37, 99, 235, 0.1)' : 'var(--bg-surface)',
-              color: soundEnabled ? 'var(--primary)' : 'var(--text-muted)',
-              border: '1px solid var(--border-subtle)',
+              padding: '6px 10px',
+              borderRadius: '8px',
+              backgroundColor: soundEnabled ? '#eff6ff' : '#f8fafc',
+              color: soundEnabled ? '#2563eb' : '#64748b',
+              border: '1px solid #cbd5e1',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
             title={soundEnabled ? 'Mute Audio Chimes' : 'Enable Audio Chimes'}
           >
-            {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+            {soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
+          </button>
+
+          <button
+            onClick={exportToCSV}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              backgroundColor: '#f8fafc',
+              border: '1px solid #cbd5e1',
+              color: '#334155',
+              fontWeight: 700,
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <Download size={13} /> Export Roster
+          </button>
+
+          <button
+            onClick={openRegisterModal}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              backgroundColor: '#059669',
+              border: 'none',
+              color: '#ffffff',
+              fontWeight: 700,
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(5, 150, 105, 0.2)',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <Camera size={14} /> Register Face
           </button>
         </div>
       </div>

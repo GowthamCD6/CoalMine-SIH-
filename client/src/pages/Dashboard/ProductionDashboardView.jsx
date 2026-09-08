@@ -109,36 +109,66 @@ export default function ProductionDashboardView({ onShowToast }) {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%', paddingBottom: '2rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', boxSizing: 'border-box' }}>
 
-      {/* Page Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        flexWrap: 'wrap',
-        gap: '1rem',
-        borderBottom: '1px solid #e2e8f0',
-        paddingBottom: '1.25rem',
-      }}>
-        <div>
-          <h1 style={{
-            fontSize: '1.75rem',
-            fontWeight: 800,
-            color: '#0f172a',
-            letterSpacing: '-0.025em',
-            margin: 0,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-          }}>
-            <Pickaxe size={26} color="#2563eb" />
-            Production & Mining Operations
-          </h1>
+      {/* Top Header Bar */}
+      <div
+        style={{
+          padding: '0.65rem 1.25rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+          borderRadius: '12px',
+          backgroundColor: '#ffffff',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+          border: '1px solid #e2e8f0',
+          overflowX: 'auto',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+          <div
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              backgroundColor: '#eff6ff',
+              color: 'var(--primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Pickaxe size={20} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.015em', whiteSpace: 'nowrap' }}>
+              Production & Mining Operations
+            </h2>
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                backgroundColor: '#ecfdf5',
+                color: '#059669',
+                border: '1px solid #a7f3d0',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+              DGMS EXTRACTION ACTIVE
+            </span>
+          </div>
         </div>
 
         {/* Header Action Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
           <button
             onClick={loadData}
             title="Refresh production records"
@@ -146,18 +176,18 @@ export default function ProductionDashboardView({ onShowToast }) {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 14px',
+              padding: '6px 14px',
               borderRadius: '8px',
-              backgroundColor: '#ffffff',
+              backgroundColor: '#f8fafc',
               border: '1px solid #cbd5e1',
               color: '#334155',
-              fontWeight: 600,
-              fontSize: '0.85rem',
+              fontWeight: 700,
+              fontSize: '0.8rem',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
             }}
           >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
             <span>Refresh</span>
           </button>
 
@@ -167,18 +197,18 @@ export default function ProductionDashboardView({ onShowToast }) {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 14px',
+              padding: '6px 14px',
               borderRadius: '8px',
-              backgroundColor: '#ffffff',
+              backgroundColor: '#f8fafc',
               border: '1px solid #cbd5e1',
               color: '#334155',
-              fontWeight: 600,
-              fontSize: '0.85rem',
+              fontWeight: 700,
+              fontSize: '0.8rem',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
             }}
           >
-            <Target size={14} color="#2563eb" />
+            <Target size={13} color="#2563eb" />
             <span>Set Targets</span>
           </button>
 
@@ -188,18 +218,18 @@ export default function ProductionDashboardView({ onShowToast }) {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 14px',
+              padding: '6px 14px',
               borderRadius: '8px',
-              backgroundColor: '#ffffff',
-              border: '1px solid #cbd5e1',
-              color: '#334155',
-              fontWeight: 600,
-              fontSize: '0.85rem',
+              backgroundColor: '#fffbeb',
+              border: '1px solid #fde68a',
+              color: '#92400e',
+              fontWeight: 700,
+              fontSize: '0.8rem',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
             }}
           >
-            <AlertTriangle size={14} color="#d97706" />
+            <AlertTriangle size={13} color="#d97706" />
             <span>Log Bottleneck</span>
           </button>
 
@@ -209,20 +239,20 @@ export default function ProductionDashboardView({ onShowToast }) {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 16px',
+              padding: '6px 14px',
               borderRadius: '8px',
               backgroundColor: '#2563eb',
               border: 'none',
               color: '#ffffff',
-              fontWeight: 600,
-              fontSize: '0.85rem',
+              fontWeight: 700,
+              fontSize: '0.8rem',
               cursor: 'pointer',
               boxShadow: '0 1px 2px rgba(37, 99, 235, 0.2)',
               transition: 'all 0.15s ease',
             }}
           >
-            <Plus size={16} />
-            <span>Record Shift Output</span>
+            <Plus size={14} />
+            <span>Record Output</span>
           </button>
         </div>
       </div>

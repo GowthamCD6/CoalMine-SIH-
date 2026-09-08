@@ -6,6 +6,7 @@ import {
   RefreshCw,
   LogOut,
   ShieldCheck,
+  Shield,
   Activity,
   Map,
   BrainCircuit,
@@ -23,28 +24,49 @@ import {
   Building2,
   Users,
   FolderTree,
+  Pickaxe,
+  Briefcase,
+  MessageSquare,
+  Flame,
 } from 'lucide-react';
 import './Header.css';
 
 const TAB_METADATA = {
+  // Dashboards
   dashboard: { category: 'Platform Overview', title: 'System Overview & Health', icon: Activity },
+  'mine-dashboard': { category: 'Mine Operations', title: 'Mine Site Executive Dashboard', icon: Activity },
+  'corporate-dashboard': { category: 'Corporate Governance', title: 'Corporate Consolidated Dashboard', icon: Activity },
+  'regulatory-dashboard': { category: 'Regulatory Oversight', title: 'DGMS Regulatory Dashboard', icon: ShieldCheck },
   'command-map': { category: 'Platform Overview', title: 'National GIS Command Map', icon: Map },
   analytics: { category: 'Platform Overview', title: 'AI Risk Analytics', icon: BrainCircuit },
-  compliance: { category: 'Smart Governance', title: 'AI Statutory Hub', icon: FileCheck },
-  'smoke-detection': { category: 'Smart Governance', title: 'AI Smoke CCTV', icon: Camera },
-  attendance: { category: 'Smart Governance', title: 'AI Facial Attendance', icon: UserCheck },
-  environment: { category: 'Smart Governance', title: 'Environmental Control', icon: Cloud },
-  labor: { category: 'Smart Governance', title: 'Labor & Safety Tracking', icon: HardHat },
+
+  // Smart Governance
+  compliance: { category: 'Smart Governance', title: 'AI Statutory & Compliance Hub', icon: Shield },
+  inspections: { category: 'Smart Governance', title: 'Inspections & Violations', icon: ClipboardList },
+  incidents: { category: 'Smart Governance', title: 'Incident Management', icon: Flame },
+  'smoke-detection': { category: 'Smart Governance', title: 'AI Smoke CCTV Surveillance', icon: Camera },
+  environment: { category: 'Smart Governance', title: 'Environmental Control & Sensors', icon: Cloud },
   'audit-logs': { category: 'Smart Governance', title: 'Blockchain Audit Log', icon: FileText },
-  inspections: { category: 'Core Operations', title: 'Inspections & Violations', icon: ClipboardList },
-  emergency: { category: 'Core Operations', title: 'Emergency & SOS Console', icon: Ambulance },
-  resources: { category: 'Core Operations', title: 'Resource Allocation', icon: Tractor },
-  alerts: { category: 'Field Dispatch', title: 'Emergency Alerts & Dispatch', icon: ShieldAlert },
-  'mobile-app': { category: 'Field Dispatch', title: 'Mobile App & Delegation', icon: Smartphone },
+  audit: { category: 'Smart Governance', title: 'Blockchain Audit Log', icon: FileText },
+
+  // Operations
+  production: { category: 'Operations', title: 'Production & Mining Operations', icon: Pickaxe },
+  attendance: { category: 'Operations', title: 'AI Facial Attendance & Muster', icon: UserCheck },
+  labor: { category: 'Operations', title: 'Labor & Shift Operations', icon: HardHat },
+  contractors: { category: 'Operations', title: 'Contractor Workforce Governance', icon: Briefcase },
+  grievances: { category: 'Operations', title: 'Worker Grievance Redressal Board', icon: MessageSquare },
+  emergency: { category: 'Operations', title: 'Emergency Console & Rescue', icon: Ambulance },
+  resources: { category: 'Operations', title: 'HEMM Resource & Machinery Allocation', icon: Tractor },
+  alerts: { category: 'Operations', title: 'Emergency Alerts & Dispatch', icon: ShieldAlert },
+  'mobile-app': { category: 'Operations', title: 'Mobile App Simulator', icon: Smartphone },
+
+  // Administration
   organizations: { category: 'Administration', title: 'Organizations & Mines', icon: Building2 },
+  mines: { category: 'Administration', title: 'Mine Sites Management', icon: Building2 },
   users: { category: 'Administration', title: 'User Directory & Provisioning', icon: Users },
   rbac: { category: 'Administration', title: 'Roles & Subroles (RBAC)', icon: ShieldCheck },
   pages: { category: 'Administration', title: 'Pages & Hierarchy Tree', icon: FolderTree },
+  evaluator: { category: 'Administration', title: 'RBAC Policy Evaluator', icon: ShieldCheck },
 };
 
 export default function Header({
@@ -59,7 +81,7 @@ export default function Header({
   onLogout,
 }) {
   const currentMeta = TAB_METADATA[activeTab] || {
-    category: 'CoalMin Console',
+    category: 'Operations',
     title: 'Management View',
     icon: Activity,
   };
@@ -88,9 +110,25 @@ export default function Header({
         )}
 
         <div className="topbar-title-group">
-          <div className="topbar-heading">
-            <TabIcon size={18} color="#2563eb" />
-            <span>{currentMeta.title}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              color: currentMeta.category === 'Operations' ? '#2563eb' : currentMeta.category === 'Smart Governance' ? '#059669' : '#64748b',
+              backgroundColor: currentMeta.category === 'Operations' ? '#eff6ff' : currentMeta.category === 'Smart Governance' ? '#ecfdf5' : '#f1f5f9',
+              padding: '2px 8px',
+              borderRadius: '6px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              whiteSpace: 'nowrap',
+            }}>
+              {currentMeta.category}
+            </span>
+            <span style={{ color: '#cbd5e1', fontSize: '0.75rem' }}>/</span>
+            <div className="topbar-heading">
+              <TabIcon size={18} color="#2563eb" />
+              <span>{currentMeta.title}</span>
+            </div>
           </div>
         </div>
       </div>
